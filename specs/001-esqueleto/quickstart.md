@@ -50,7 +50,8 @@ y anotar los tiempos (SC-001).
 | 1.6 | Sin `.env` o sin contraseña | `Rename-Item .env .env.bak; docker compose config -q; Rename-Item .env.bak .env` | Error que nombra `POSTGRES_PASSWORD`. Repetir con `POSTGRES_PASSWORD=` vacía: mismo error |
 | 1.7 | Sin contraseña por defecto en el código | `Select-String -Path compose.yaml,.env.example -Pattern 'POSTGRES_PASSWORD'` | `compose.yaml` usa `:?`; `.env.example` con valor vacío |
 | 1.8 | Endpoints de la API | `Invoke-RestMethod http://127.0.0.1:8000/health; Get-Obs-Status` | `status: ok`; estado con `base_de_datos: conectada`, `eventos_reales: 0`, `eventos_sinteticos: 0`, `ultimo_evento: null` |
-| 1.9 | Sin rutas de administración ni documentación | `foreach ($p in '/docs','/redoc','/openapi.json','/admin') { try { (Invoke-WebRequest "http://127.0.0.1:8000$p" -UseBasicParsing).StatusCode } catch { $_.Exception.Response.StatusCode.value__ } }` | `404` en todas |
+| 1.9 | Catálogo cargado (US5, sin mensajes aún) | `docker compose logs consumer --no-log-prefix \| Select-String 'component=catalogo'` | `result=listo component=catalogo paises=242 fuente=/catalogo/paises.geojson` en los primeros 30 s |
+| 1.10 | Sin rutas de administración ni documentación | `foreach ($p in '/docs','/redoc','/openapi.json','/admin') { try { (Invoke-WebRequest "http://127.0.0.1:8000$p" -UseBasicParsing).StatusCode } catch { $_.Exception.Response.StatusCode.value__ } }` | `404` en todas |
 
 Conflicto de puertos: si el arranque falla con «port is already allocated», identifica al
 proceso con `Get-NetTCPConnection -LocalPort 8000,9092 | Select-Object LocalPort, OwningProcess` y

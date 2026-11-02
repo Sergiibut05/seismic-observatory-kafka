@@ -314,10 +314,10 @@ No quedan «NEEDS CLARIFICATION» abiertos; los riesgos residuales están al fin
   `motivo=no_almacenable` y el `SQLSTATE` en `detalle`. Los errores de
   **conexión** (`OperationalError`, `InterfaceError`) nunca van a cuarentena:
   se reintenta el mismo mensaje sin confirmar offset.
-- **Interpretación de FR-012 (a confirmar)**: «reenviar el mismo mensaje
-  rechazado no duplica la entrada» se interpreta como **reentrega** del mismo
-  registro Kafka (misma posición). Un mensaje inválido **republicado** recibe
-  otro offset y crea otra entrada: es otra ocurrencia. Ver riesgo RK-04.
+- **Interpretación de FR-012 (confirmada, recogida en spec.md «Casos límite»)**:
+  la idempotencia de la cuarentena es **por posición Kafka**. Una **reentrega** del
+  mismo registro no duplica la entrada; un mensaje inválido **republicado**
+  recibe otro offset y crea otra entrada (es otra ocurrencia). RK-04 resuelto.
 - **Alternativas descartadas**: `text` para el original (pierde bytes);
   unicidad por hash del contenido (ocultaría ocurrencias repetidas y obliga a
   decidir qué hash); no persistir y solo registrar en log (incumple el cambio
@@ -418,7 +418,8 @@ No quedan «NEEDS CLARIFICATION» abiertos; los riesgos residuales están al fin
     `postgres`, `catalogo`; API `postgres`.
   - El healthcheck de Compose ejecuta
     `python -m observatorio.common.healthcheck`, que hace un `GET` a
-    `http://127.0.0.1:$HEALTH_PORT/health` con `urllib` (código de salida 0/1).
+    `http://127.0.0.1:$HEALTH_PORT/health` con `urllib` (código de salida 0/1);
+    la URL se deriva solo de `HEALTH_PORT` (no hay variable `HEALTH_URL`).
     Usa `127.0.0.1` **dentro del propio contenedor**; FR-006 prohíbe `localhost`
     para direcciones **entre servicios**.
   - **Sondas activas**: una tarea periódica (`HEALTH_PROBE_INTERVAL_SECONDS=5`)
@@ -673,7 +674,7 @@ agente. Único fichero creado fuera de `specs/001-esqueleto/`: `docs/CONTRATO-AP
 | RK-01 | Comportamiento de aiokafka 0.15.0 al **reiniciar el broker con el cliente vivo** (reconexión del consumidor/grupo) | Supervisor con recreación de la sesión (R-13) + prueba de quickstart §3 (reiniciar `kafka`) |
 | RK-02 | `describe_configs` justo tras `alter_configs` puede devolver el valor anterior | No se verifica en el acto; se comprueba con `kafka-configs.sh` |
 | RK-03 | `python:3.12-slim` y dependencias transitivas flotan | Fijar tag de parche/digest y `pip freeze` como restricciones en 007 si hace falta |
-| RK-04 | FR-012: ¿«reenviar el mismo mensaje rechazado» = reentrega o republicación? | Se implementa como reentrega (unicidad por posición); pedir al analista que lo aclare |
+| RK-04 | FR-012: ¿«reenviar el mismo mensaje rechazado» = reentrega o republicación? | **Resuelto**: idempotencia por posición Kafka (reentrega no duplica; republicación con otro offset crea otra entrada). Escrito en spec.md «Casos límite» |
 | RK-05 | La spec mezclaba `result=published` y `result=rechazado` | Resuelto: español en todo; US2.1 y la regla del repositorio unificadas |
 | RK-06 | API con rol de escritura sin usarlo | Rol de solo lectura en la 005 |
 | RK-07 | El esquema evoluciona por SQL idempotente sin checksum | Disciplina + guarda de versión; revisar en la 003 |

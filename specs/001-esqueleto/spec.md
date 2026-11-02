@@ -264,6 +264,11 @@ arranque y la prueba de humo.
   partición, offset) y el original (FR-012). Las reglas de validación del
   contenido del evento USGS (coordenadas, tipo, magnitud...) son de la
   feature 003, que amplía esta misma cuarentena.
+- **Idempotencia de la cuarentena** (FR-012): es **por posición Kafka**
+  (`topic`, partición, `offset`). La reentrega del mismo registro (p. ej. el
+  consumidor cae antes de confirmar el offset) no duplica la entrada; en cambio,
+  el mismo contenido inválido **publicado de nuevo** recibe otro offset, es un
+  mensaje distinto y genera otra entrada.
 - **Catálogo ausente o inválido**: historia 5.
 - **`.env` ausente o variable obligatoria sin definir**: el arranque falla con
   el nombre de la variable; no se usan secretos por defecto.
@@ -406,7 +411,7 @@ arranque y la prueba de humo.
   fallida y MUST NOT sustituir los recuentos por 0 (los informa como no
   disponibles).
   *(Enunciado §2, §8 «Estado del sistema», §11 «Recibir un evento nuevo»;
-  Constitución I)*
+  Constitución VII)*
 - **FR-024**: Ningún endpoint MUST devolver secretos, cadenas de conexión ni
   detalles internos de infraestructura, y la API MUST NOT ofrecer rutas de
   administración. *(Enunciado §9; Constitución VII)*
@@ -526,6 +531,9 @@ arranque y la prueba de humo.
   (FR-012) en vez de solo en el log, para no incumplir el principio IV de la
   constitución hasta la feature 003. La 003 añade las reglas de validación del
   contenido y amplía esa misma estructura; no la sustituye.
+- **Evolución del esquema en un volumen existente**: SQL idempotente en
+  `db/init/` más una guarda de versión de esquema al conectar (decisión del plan,
+  `research.md` R-07); no se usa herramienta de migraciones.
 - **Catálogo defectuoso**: el consumidor no reintenta la lectura (es un
   fichero local); permanece en ejecución pero «unhealthy», sin consumir, hasta
   que se corrige el catálogo y se reinicia el servicio. No se verifica la
@@ -556,7 +564,9 @@ arranque y la prueba de humo.
 
 - Consulta real de USGS, `all_day.geojson`, estado de versiones publicadas,
   reintentos HTTP y retención de originales: feature 002.
-- Validación, cuarentena persistente, punto en polígono, país por evento,
+- Reglas de validación del contenido del evento USGS y la ampliación de la
+  cuarentena (la cuarentena mínima por incumplimiento del contrato **sí** es de
+  esta feature, FR-012), punto en polígono, país por evento,
   «Sin país asignado», modelo conceptual/lógico/físico de eventos, estado
   actual frente a historial: feature 003.
 - Histórico 2025, replay, topic y esquema de replay, etiqueta «REPRODUCCIÓN»:

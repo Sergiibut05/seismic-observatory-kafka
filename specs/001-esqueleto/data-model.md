@@ -90,7 +90,7 @@ Grano: un registro Kafka rechazado (una ocurrencia).
 | `recibido_en` | instante UTC | no | reloj de la BD al guardar |
 
 Restricciones: **`UNIQUE (topic, particion, offset_kafka)`**: la reentrega del
-mismo registro no duplica la entrada (FR-012; interpretación en R-09 / RK-04).
+mismo registro no duplica la entrada (FR-012; idempotencia por posición Kafka, ver spec «Casos límite» y R-09; una republicación con otro offset es otra entrada).
 
 ### 2.3 `ingesta.version_esquema`
 

@@ -162,7 +162,7 @@ más `common/`, tal como se decidió; sin directorio `frontend/` (feature 006). 
 | `postgres` | `postgres:17.11-alpine` | **ninguno** | `postgres_data:/var/lib/postgresql/data`; `./db/init:/docker-entrypoint-initdb.d:ro` | `pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"` (5 s, 10 reintentos, 20 s de gracia) | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?…}` |
 | `producer` | `x-backend` (`observatorio-backend:local`) | **ninguno** | — | `python -m observatorio.common.healthcheck` (10 s, timeout 5 s, 3 reintentos, 30 s de gracia) | Kafka, topic, retención, backoff, sonda, log; **sin** `POSTGRES_*` |
 | `consumer` | ídem | **ninguno** | `./catalogo:/catalogo:ro` | ídem | Kafka, topic, grupo, `POSTGRES_*`, `CATALOGO_PATH`, backoff, sonda, log |
-| `api` | ídem | `127.0.0.1:8000:8000` | — | ídem apuntando a `:8000` | `POSTGRES_*`, backoff, sonda, log |
+| `api` | ídem | `127.0.0.1:8000:8000` | — | ídem con `HEALTH_PORT=8000` (la API sirve su `/health` en 8000; el healthcheck solo lee `HEALTH_PORT`) | `POSTGRES_*`, backoff, sonda, log |
 
 Comunes: `restart: unless-stopped`; **sin** `depends_on` de salud; `command` distinto por servicio
 (`python -m observatorio.producer|consumer|api`); sin `env_file`; volúmenes con nombre
