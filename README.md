@@ -1,86 +1,67 @@
-# Cinta de mercado
+# Observatorio de actividad sísmica
 
-Laboratorio local de streaming. Una fuente pública de cotizaciones entra en
-Kafka, un consumidor la reenvía y un panel en JavaScript muestra el precio, la
-variación, la actividad, el máximo, el mínimo y el ritmo de llegada.
+Proyecto de Sistemas de Big Data (sesiones 1–8, RA1). Recoge terremotos de
+USGS, los transporta por Kafka, los valida y los cruza con el catálogo de
+países de Natural Earth, los guarda en PostgreSQL y los sirve con FastAPI a un
+panel Angular + Leaflet publicado en Netlify.
 
-No hace falta API key ni cuenta.
+La pregunta que responde: **¿dónde se está registrando actividad sísmica y cómo
+se compara con un periodo histórico equivalente?**
+
+> Estado: Fase 0 (andamiaje). Los servicios se construyen feature a feature en
+> `specs/`. El enunciado completo está en [docs/ENUNCIADO.md](docs/ENUNCIADO.md).
+
+## Arquitectura
+
+```text
+USGS all_day.geojson ─► producer ─┐
+                                  ├─► kafka ─► consumer ─► postgres ─► api ─► ngrok (HTTPS) ─► Angular (Netlify)
+histórico 2025 ──────► replay ────┘                ▲
+                                     paises.geojson (Natural Earth)
+```
+
+| Servicio | Tecnología | Papel |
+| --- | --- | --- |
+| `producer` | Python + aiokafka | Consulta USGS cada 60 s y publica eventos nuevos o revisados |
+| `kafka` | Apache Kafka 4.1 (KRaft) | Transporte y retención de mensajes |
+| `consumer` | Python + aiokafka | Validación, cuarentena, integración geográfica y escritura idempotente |
+| `postgres` | PostgreSQL | Estado actual, historial de versiones, originales y estado de ingesta |
+| `api` | FastAPI | Consulta de datos ya procesados; único servicio expuesto por el túnel |
 
 ## Requisitos
 
 - Docker con Compose v2
-- Un navegador de escritorio
-- Los puertos `8088` y `9092` libres
-- Salida a Internet hacia `data-stream.binance.vision`
+- Node.js LTS (solo para compilar el frontend)
+- Python 3.12+ (scripts de descarga y notebooks)
+- Cuenta gratuita de ngrok y de Netlify (para la demostración)
 
 ## Arranque
 
 ```bash
-docker compose up --build
+cp .env.example .env   # en PowerShell: Copy-Item .env.example .env
+docker compose up --build -d
 ```
 
-Abre [http://localhost:8088](http://localhost:8088). En menos de tres minutos
-deberías ver BTC, ETH, SOL y BNB moverse solos.
+## Datos de partida
 
-Para parar:
+- Catálogo geográfico: `python scripts/descargar_paises.py`, que descarga
+  Natural Earth Admin 0 (1:50m) y valida `ADM0_A3`. Véase
+  [docs/FUENTES-Y-LICENCIAS.md](docs/FUENTES-Y-LICENCIAS.md).
+- Histórico 2025: se añade en la feature 004.
 
-```bash
-docker compose down
-```
+## Cómo se desarrolla
 
-## Qué hace cada pieza
+El proyecto sigue Spec-Driven Development con
+[GitHub Spec Kit](https://github.com/github/spec-kit) y cuatro subagentes de
+Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
+`.cursor/agents/`. Cada feature vive en `specs/NNN-nombre/`:
 
-| Servicio | Papel |
+| Feature | Alcance |
 | --- | --- |
-| `producer` | Lee el mini ticker público de Binance y publica lecturas en el topic `market.tickers`. |
-| `kafka` | Broker en modo KRaft. Desde el portátil escucha en `localhost:9092`. |
-| `consumer` | Lee el grupo `panel` y reenvía cada lectura por WebSocket. |
-| `panel` | Sirve la página y hace de proxy de `/ws`. El navegador no habla con Kafka. |
-
-La URL de la fuente se puede sustituir con la variable `BINANCE_WS_URL` del
-productor. El valor por defecto es el stream combinado de
-`data-stream.binance.vision` para `btcusdt`, `ethusdt`, `solusdt` y `bnbusdt`.
-
-## Ver el recorrido
-
-Con el panel en «En vivo»:
-
-```bash
-docker compose stop producer
-```
-
-A los pocos segundos el panel pasa a «Flujo interrumpido» y conserva el último
-precio. No hace falta recargar.
-
-```bash
-docker compose start producer
-```
-
-Para leer el topic desde el host:
-
-```bash
-docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
-  --topic market.tickers \
-  --max-messages 4
-```
-
-## Pruebas de unidad
-
-```bash
-python3 -m venv .venv
-.venv/bin/pip install -r producer/requirements-dev.txt
-.venv/bin/pytest producer/tests
-
-cd consumer
-npm test
-```
-
-## Especificación
-
-El diseño vive en `specs/001-streaming-metrics-dashboard/`. La guía de
-validación completa está en
-[quickstart.md](specs/001-streaming-metrics-dashboard/quickstart.md).
-
-Las cifras del panel son una demostración de streaming, no una recomendación
-de inversión.
+| 001-esqueleto | Compose con los 5 servicios, healthchecks y esquema SQL |
+| 002-ingesta-live | Productor USGS, estado de versiones publicadas, reintentos |
+| 003-consumidor | Calidad, cuarentena, point-in-polygon, upsert por versión |
+| 004-historico-replay | Descarga 2025 y reproducción acelerada aislada |
+| 005-api | FastAPI, contrato, CORS |
+| 006-panel | Angular + Leaflet, filtros, gráficos, Netlify + ngrok |
+| 007-memoria | Calidad, rendimiento, costes y conclusiones |

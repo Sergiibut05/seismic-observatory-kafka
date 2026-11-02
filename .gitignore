@@ -1,13 +1,27 @@
+# Python
 .venv/
 venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-consumer/node_modules/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Node / Angular
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Secretos (ngrok authtoken, contraseñas de PostgreSQL)
 .env
 .env.*
 !.env.example
+ngrok.yml
+
+# Datos descargados y volúmenes: se regeneran con los scripts de scripts/
+data/
+!data/README.md
+
 .DS_Store
 *.log
-.coverage
-htmlcov/

@@ -7,3 +7,7 @@
 *.log
 .env
 .env.*
+frontend
+notebooks
+specs
+data
