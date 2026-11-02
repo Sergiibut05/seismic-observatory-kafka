@@ -1,0 +1,2 @@
+ts=2026-11-02T13:54:35.333Z level=INFO service=producer result=listo component=topic action=topic_conforme topic=eventos.live partitions=3 retention_ms=604800000
+ts=2026-11-02T13:54:35.349Z level=INFO service=producer result=publicado event_id=synthetic-smoke-0001 updated=1767225600000 topic=eventos.live partition=2 offset=26

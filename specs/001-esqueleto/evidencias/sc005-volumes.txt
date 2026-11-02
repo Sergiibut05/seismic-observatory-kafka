@@ -1,0 +1,3 @@
+DRIVER    VOLUME NAME
+local     seismic-observatory_kafka_data
+local     seismic-observatory_postgres_data

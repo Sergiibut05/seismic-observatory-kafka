@@ -1,0 +1,8 @@
+ts=2026-11-02T13:42:35.520Z level=ERROR service=consumer result=error msg="Unable connect to \"kafka:19092\": [Errno 111] Connect call failed ('172.21.0.4', 19092)"
+ts=2026-11-02T13:42:35.520Z level=INFO service=consumer result=reintento dependency=kafka attempt=1 wait_s=1 reason=KafkaConnectionError
+ts=2026-11-02T13:42:36.523Z level=ERROR service=consumer result=error msg="Unable connect to \"kafka:19092\": [Errno 111] Connect call failed ('172.21.0.4', 19092)"
+ts=2026-11-02T13:42:36.524Z level=INFO service=consumer result=reintento dependency=kafka attempt=2 wait_s=2 reason=KafkaConnectionError
+ts=2026-11-02T13:44:07.961Z level=INFO service=consumer result=reintento dependency=postgres attempt=1 wait_s=1 reason=AdminShutdown topic=eventos.live partition=0 offset=2
+ts=2026-11-02T13:44:08.571Z level=WARNING service=consumer result=error component=postgres reason=sonda_fallida
+ts=2026-11-02T13:44:12.951Z level=INFO service=consumer result=reintento dependency=postgres attempt=1 wait_s=1 reason=OperationalError
+ts=2026-11-02T13:44:17.910Z level=INFO service=consumer result=reintento dependency=postgres attempt=2 wait_s=2 reason=OperationalError

@@ -1,0 +1,5 @@
+ilegible health=starting log=ts=2026-11-02T13:53:21.351Z level=ERROR service=consumer result=error component=catalogo motivo=catalogo_ilegible fuente=/cat-prueba/ilegible.geojson detalle="/cat-prueba/ilegible.geojson no es JSON válido"
+vacio health=starting log=ts=2026-11-02T13:53:31.107Z level=ERROR service=consumer result=error component=catalogo motivo=catalogo_vacio fuente=/cat-prueba/vacio.geojson detalle="/cat-prueba/vacio.geojson no contiene entidades"
+punto health=starting log=ts=2026-11-02T13:53:41.032Z level=ERROR service=consumer result=error component=catalogo motivo=geometria_no_poligonal fuente=/cat-prueba/punto.geojson detalle="ADM0_A3=AAA tipo=Point"
+sin_adm0 health=starting log=ts=2026-11-02T13:53:50.948Z level=ERROR service=consumer result=error component=catalogo motivo=adm0_a3_ausente fuente=/cat-prueba/sin_adm0.geojson detalle="entidad en la posición 0"
+repetido health=starting log=ts=2026-11-02T13:54:00.676Z level=ERROR service=consumer result=error component=catalogo motivo=adm0_a3_repetido fuente=/cat-prueba/repetido.geojson detalle="ADM0_A3=AAA"

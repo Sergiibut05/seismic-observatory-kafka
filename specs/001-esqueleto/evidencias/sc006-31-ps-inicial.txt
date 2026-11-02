@@ -1,0 +1,4 @@
+api Up 16 seconds (health: starting)
+consumer Up 16 seconds (health: starting)
+kafka Up 16 seconds (healthy)
+producer Up 16 seconds (healthy)

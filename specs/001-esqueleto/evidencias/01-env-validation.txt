@@ -1,0 +1,16 @@
+sin .env: docker : error while interpolating services.postgres.environment.POSTGRES_PASSWORD: required variable 
+POSTGRES_PASSWORD is missing a value: Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una 
+contraseña
+En línea: 7 Carácter: 7
++ $e1 = docker compose config -q 2>&1 | Out-String
++       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error while int... una contraseña:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+password vacia: docker : error while interpolating services.postgres.environment.POSTGRES_PASSWORD: required variable 
+POSTGRES_PASSWORD is missing a value: Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una 
+contraseña
+En línea: 13 Carácter: 7
++ $e2 = docker compose config -q 2>&1 | Out-String
++       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (error while int... una contraseña:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError

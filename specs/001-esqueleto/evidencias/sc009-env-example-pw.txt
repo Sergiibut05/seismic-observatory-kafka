@@ -1,0 +1,1 @@
+C:\Users\mnsa1\Desktop\Paginas Web y Proyectos\seismic-observatory-kafka\.env.example:8:POSTGRES_PASSWORD=

@@ -1,0 +1,5 @@
+ts=2026-11-02T13:43:14.387Z level=INFO service=consumer result=omitido event_id=synthetic-smoke-0001 updated=1767225600000 reason=duplicado topic=eventos.live partition=2 offset=16
+ts=2026-11-02T13:43:14.396Z level=INFO service=consumer result=omitido event_id=synthetic-smoke-0001 updated=1767225600000 reason=duplicado topic=eventos.live partition=2 offset=17
+ts=2026-11-02T13:43:14.404Z level=INFO service=consumer result=omitido event_id=synthetic-smoke-0001 updated=1767225600000 reason=duplicado topic=eventos.live partition=2 offset=18
+ts=2026-11-02T13:43:14.412Z level=INFO service=consumer result=omitido event_id=synthetic-smoke-0001 updated=1767225600000 reason=duplicado topic=eventos.live partition=2 offset=19
+ts=2026-11-02T13:43:14.419Z level=INFO service=consumer result=omitido event_id=synthetic-smoke-0001 updated=1767225600000 reason=duplicado topic=eventos.live partition=2 offset=20

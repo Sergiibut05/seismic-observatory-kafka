@@ -1,0 +1,5 @@
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                          HOST            CLIENT-ID
+consumidor-live eventos.live    1          2               2               0               aiokafka-0.15.0-6b229817-0f87-4e22-b660-e0483069af9b /172.21.0.2     aiokafka-0.15.0
+consumidor-live eventos.live    0          3               3               0               aiokafka-0.15.0-6b229817-0f87-4e22-b660-e0483069af9b /172.21.0.2     aiokafka-0.15.0
+consumidor-live eventos.live    2          22              22              0               aiokafka-0.15.0-6b229817-0f87-4e22-b660-e0483069af9b /172.21.0.2     aiokafka-0.15.0

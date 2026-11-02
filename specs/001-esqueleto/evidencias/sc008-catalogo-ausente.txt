@@ -1,0 +1,2 @@
+ts=2026-11-02T13:54:10.925Z level=ERROR service=consumer result=error component=catalogo motivo=catalogo_ausente fuente=/catalogo/no_existe.geojson detalle="no existe /catalogo/no_existe.geojson"
+starting

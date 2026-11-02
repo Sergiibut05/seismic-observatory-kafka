@@ -1,0 +1,4 @@
+nBefore=1 1
+afterStart sinteticos=2
+final sinteticos=2
+filas= count  -------      2 (1 row) 

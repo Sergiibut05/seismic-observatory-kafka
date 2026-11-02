@@ -1,0 +1,7 @@
+{
+    "base_de_datos":  "fallida",
+    "eventos_reales":  null,
+    "eventos_sinteticos":  null,
+    "ultimo_evento":  null,
+    "generated_at":  "2026-11-02T13:48:39.045Z"
+}

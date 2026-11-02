@@ -1,0 +1,3 @@
+Dynamic configs for topic eventos.live are:
+  retention.ms=604800000 sensitive=false synonyms={DYNAMIC_TOPIC_CONFIG:retention.ms=604800000}
+  segment.ms=86400000 sensitive=false synonyms={DYNAMIC_TOPIC_CONFIG:segment.ms=86400000}

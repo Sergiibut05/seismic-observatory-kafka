@@ -1,0 +1,20 @@
+.cursor/agents/verifier.md:6. Comprueba también: que no hay secretos en Git (`git grep -i -E "authtoken|password="`),
+.cursor/skills/postgresql-best-practices/references/azure-postgresql-entra-id-auth.md:    password=token.token,
+.cursor/skills/postgresql-best-practices/references/azure-postgresql-entra-id-auth.md:12. **[MEDIUM] Driver-specific auth quirks**: Match token injection to the driver: psycopg2 uses `password=token`, Npgsql uses `Password`, JDBC uses `authenticationPluginClassName`
+.gitignore:# Secretos (ngrok authtoken, contraseñas de PostgreSQL)
+.specify/memory/constitution.md:MUST NOT contener secretos: el authtoken de ngrok y las contraseñas viven en
+README.md:$texto = [IO.File]::ReadAllText("$PWD\.env") -replace '(?m)^POSTGRES_PASSWORD=[^\r\n]*', "POSTGRES_PASSWORD=$pw"
+backend/observatorio/common/config.py:        password=_obligatoria(env, "POSTGRES_PASSWORD"),
+backend/tests/unit/test_config.py:    assert a.postgres.password == CONTRASENA
+backend/tests/unit/test_db.py:                raise psycopg.OperationalError(f"conexión perdida con password={CONTRASENA}")
+backend/tests/unit/test_db.py:    ajustes = AjustesPostgres(host="postgres", port=5432, user="obs", db="obsdb", password="p@ss w/ord=1")
+backend/tests/unit/test_db.py:    ajustes = AjustesPostgres(host="postgres", port=5432, user="obs", db="obsdb", password="x")
+backend/tests/unit/test_db.py:        psycopg.OperationalError(f"fallo de autenticación password={CONTRASENA}"),
+docs/ENUNCIADO.md:  incluyas el authtoken de ngrok en Angular ni en Git.
+specs/001-esqueleto/contracts/variables-entorno.md:- `.env.example` enumera **todas** las variables anteriores con su valor por defecto, `POSTGRES_PASSWORD=` vacío y comentarios en español; las de origen `compose` van comentadas.
+specs/001-esqueleto/quickstart.md:$texto = [IO.File]::ReadAllText("$PWD\.env") -replace '(?m)^POSTGRES_PASSWORD=[^\r\n]*', "POSTGRES_PASSWORD=$pw"
+specs/001-esqueleto/quickstart.md:| 1.6 | Sin `.env` o sin contraseña | `Rename-Item .env .env.bak; docker compose config -q; Rename-Item .env.bak .env` | Error que nombra `POSTGRES_PASSWORD`. Repetir con `POSTGRES_PASSWORD=` vacía: mismo error |
+specs/001-esqueleto/quickstart.md:| 3.7 | Sin secretos en logs | `docker compose logs --no-log-prefix \| Select-String -SimpleMatch $pw` y `... \| Select-String 'postgresql://\|password='` | Sin coincidencias |
+specs/001-esqueleto/research.md:  (`host=`, `user=`, `password=`…), nunca con una URL, para que contraseñas con
+specs/001-esqueleto/research.md:- T058 (seguridad ligera): el valor de la contraseña no aparece en ningún fichero versionado ni en logs (0 coincidencias en las 5 000+ líneas de logs ni en `postgresql://`/`password=`); `git grep -i "password|secret"` fuera de `specs`/`docs` solo encuentra nombres de variable y la redacción de secretos de `common/logging.py`; `producer`, `consumer` y `api` corren como `appuser` (uid 10001); solo `127.0.0.1:8000` y `127.0.0.1:9092` publicados (`5432/tcp` es puerto expuesto); `.env`, `data/` y `__pycache__` fuera de Git. Limitaciones aceptadas (R-08): `docker compose config` imprime la contraseña interpolada en la terminal (no en el repositorio) y `docker inspect` la muestra en las variables del contenedor, ambas solo en local.
+specs/001-esqueleto/tasks.md:- [X] T005 [P] Crear `.env.example` enumerando **todas** las variables de [contracts/variables-entorno.md](contracts/variables-entorno.md) (incluida `HEALTH_PORT`) con su valor por defecto, comentarios en español, `POSTGRES_PASSWORD=` **vacío** y las de origen `compose` como comentario; verificar que `.gitignore` ya ignora `.env` y no `.env.example` (`git check-ignore .env`; `git check-ignore -v .env.example` sin salida)

@@ -1,0 +1,8 @@
+            motivo            | count 
+------------------------------+-------
+ clave_distinta_de_id         |     2
+ json_ilegible                |     2
+ mode_no_corresponde_al_topic |     2
+ schema_version_no_soportada  |     1
+(4 rows)
+

@@ -1,0 +1,9 @@
+
+run project   seconds healthy status                                                                                   
+--- -------   ------- ------- ------                                                                                   
+  1 obsverif1    16,5    True {api Up 12 seconds (healthy), consumer Up 12 seconds (healthy), kafka Up 12 seconds (h...
+  2 obsverif2    16,5    True {api Up 12 seconds (healthy), consumer Up 12 seconds (healthy), kafka Up 12 seconds (h...
+  3 obsverif3    16,8    True {api Up 13 seconds (healthy), consumer Up 13 seconds (healthy), kafka Up 13 seconds (h...
+
+
+

@@ -1,0 +1,1 @@
+ts=2026-11-02T13:54:35.357Z level=INFO service=consumer result=persistido event_id=synthetic-smoke-0001 updated=1767225600000 topic=eventos.live partition=2 offset=26

@@ -193,10 +193,10 @@ description: "Lista de tareas de la feature 001-esqueleto"
 ## Phase 9: Polish y transversales
 
 - [X] T056 Ejecutar `docker compose run --rm --no-deps consumer pytest -q` en la imagen final: todas las pruebas en verde sin Kafka ni PostgreSQL en marcha ([quickstart.md §7](quickstart.md#7-pruebas-unitarias-en-la-imagen-python-312))
-- [ ] T057 Ejecutar de principio a fin [quickstart.md §1–§6](quickstart.md) **tres veces** desde cero (`docker compose down -v`) y registrar tiempos y resultados en `specs/001-esqueleto/evidencias/` (SC-001, SC-002, SC-003, SC-004, SC-005, SC-006, SC-007, SC-008, SC-009, SC-010)
+- [X] T057 Ejecutar de principio a fin [quickstart.md §1–§6](quickstart.md) **tres veces** desde cero (`docker compose down -v`) y registrar tiempos y resultados en `specs/001-esqueleto/evidencias/` (SC-001, SC-002, SC-003, SC-004, SC-005, SC-006, SC-007, SC-008, SC-009, SC-010)
 - [X] T058 [P] Revisión de seguridad ligera: `docker compose config` no muestra la contraseña en claro en el repositorio; `git grep -n -i "password\|secret" -- . ":!specs" ":!docs"` solo encuentra nombres de variable; ningún log contiene el valor de la contraseña (§3.7); imagen con usuario no root (`docker compose exec consumer id`); solo dos puertos publicados
 - [X] T059 [P] Si cualquier verificación contradice una decisión de [research.md](research.md) o [plan.md](plan.md) (p. ej. RK-01, RK-02), **actualizar primero research/plan** (Constitución, «un cambio de comportamiento MUST actualizar spec o plan antes que el código») y luego el código
-- [ ] T060 Entregar al `verifier`: repetir los comandos del quickstart guardando las evidencias en `specs/001-esqueleto/evidencias/`; confirmar que no se ha creado ningún fichero de contexto de agente y que `/speckit-analyze` sigue sin hallazgos CRITICAL/HIGH
+- [X] T060 Entregar al `verifier`: repetir los comandos del quickstart guardando las evidencias en `specs/001-esqueleto/evidencias/`; confirmar que no se ha creado ningún fichero de contexto de agente y que `/speckit-analyze` sigue sin hallazgos CRITICAL/HIGH
 
 ---
 

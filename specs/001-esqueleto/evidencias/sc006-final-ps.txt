@@ -1,0 +1,5 @@
+api Up 3 minutes (healthy)
+consumer Up 3 minutes (healthy)
+kafka Up 30 seconds (healthy)
+postgres Up About a minute (healthy)
+producer Up 3 minutes (healthy)

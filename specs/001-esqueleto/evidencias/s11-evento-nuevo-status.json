@@ -1,0 +1,13 @@
+{
+    "base_de_datos":  "conectada",
+    "eventos_reales":  0,
+    "eventos_sinteticos":  1,
+    "ultimo_evento":  {
+                          "event_id":  "synthetic-smoke-0001",
+                          "updated":  "2026-01-01T00:00:00.000Z",
+                          "source":  "synthetic-smoke",
+                          "sintetico":  true,
+                          "processed_at":  "2026-11-02T13:54:35.353Z"
+                      },
+    "generated_at":  "2026-11-02T13:54:40.645Z"
+}

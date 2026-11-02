@@ -1,0 +1,4 @@
+api Up About a minute (unhealthy)
+consumer Up About a minute (unhealthy)
+kafka Up About a minute (healthy)
+producer Up About a minute (healthy)

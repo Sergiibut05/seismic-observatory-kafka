@@ -1,0 +1,2 @@
+nBefore=1 1
+mid sinteticos=1

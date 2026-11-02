@@ -1,0 +1,1 @@
+drwxrwxr-x 56 appuser root 4096 Nov  2 13:52 /var/lib/kafka/data

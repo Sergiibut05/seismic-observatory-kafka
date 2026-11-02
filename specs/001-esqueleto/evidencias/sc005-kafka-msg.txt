@@ -1,0 +1,2 @@
+{"schema_version":1,"source":"usgs","ingested_at":"2026-11-02T12:00:00.000Z","mode":"replay","event":{"id":"us2","properties":{"updated":1767225600000}}}
+Processed a total of 1 messages

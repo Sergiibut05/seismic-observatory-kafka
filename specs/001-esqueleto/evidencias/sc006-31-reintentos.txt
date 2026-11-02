@@ -1,0 +1,7 @@
+ts=2026-11-02T13:46:12.184Z level=INFO service=consumer result=reintento dependency=kafka attempt=1 wait_s=1 reason=KafkaConnectionError
+ts=2026-11-02T13:46:13.184Z level=INFO service=consumer result=reintento dependency=kafka attempt=2 wait_s=2 reason=KafkaConnectionError
+ts=2026-11-02T13:46:16.540Z level=INFO service=api result=reintento dependency=postgres attempt=1 wait_s=1 reason=OperationalError
+ts=2026-11-02T13:46:20.146Z level=INFO service=consumer result=reintento dependency=postgres attempt=1 wait_s=1 reason=OperationalError
+ts=2026-11-02T13:46:25.118Z level=INFO service=consumer result=reintento dependency=postgres attempt=2 wait_s=2 reason=OperationalError
+ts=2026-11-02T13:46:21.483Z level=INFO service=api result=reintento dependency=postgres attempt=2 wait_s=2 reason=OperationalError
+ts=2026-11-02T13:46:27.445Z level=INFO service=api result=reintento dependency=postgres attempt=3 wait_s=4 reason=OperationalError

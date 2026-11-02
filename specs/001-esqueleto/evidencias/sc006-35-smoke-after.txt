@@ -1,0 +1,4 @@
+{
+    "eventos_sinteticos":  2,
+    "eventos_reales":  0
+}

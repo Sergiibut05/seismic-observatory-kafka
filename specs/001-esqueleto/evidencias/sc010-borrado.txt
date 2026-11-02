@@ -1,0 +1,2 @@
+antes_reales=1 sinteticos=4
+despues_reales=1 sinteticos=0
