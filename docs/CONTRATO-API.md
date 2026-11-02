@@ -10,7 +10,7 @@
 ## Convenciones
 
 - Base: `http://127.0.0.1:8000` (publicado solo en el bucle local; HTTPS lo aporta ngrok).
-- Formato: JSON UTF-8. Instantes en **UTC**, ISO 8601 con `Z` (`2026-11-02T12:00:00.123Z`).
+- Formato: JSON UTF-8. Instantes en **UTC**, ISO 8601 con `Z` y **siempre con milisegundos** (`2026-11-02T12:00:00.123Z`; un instante redondo se escribe `2026-01-01T00:00:00.000Z`).
 - Sin autenticación (CORS no es autenticación; ver feature 005). Sin rutas de administración.
 - Nombres de campo: los que vienen del contrato Kafka/USGS (`event_id`, `updated`, `source`,
   `processed_at`, `generated_at`) en inglés; los conceptos propios en español.
@@ -55,7 +55,7 @@ Tras la prueba de humo:
   "eventos_sinteticos": 1,
   "ultimo_evento": {
     "event_id": "synthetic-smoke-0001",
-    "updated": "2026-01-01T00:00:00Z",
+    "updated": "2026-01-01T00:00:00.000Z",
     "source": "synthetic-smoke",
     "sintetico": true,
     "processed_at": "2026-11-02T12:00:00.456Z"

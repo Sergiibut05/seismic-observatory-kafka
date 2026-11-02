@@ -22,7 +22,7 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 | `RETRY_FACTOR` | producer, consumer, api | `2` | no | `.env` | Factor multiplicador |
 | `RETRY_MAX_SECONDS` | producer, consumer, api | `30` | no | `.env` | Tope de espera |
 | `HEALTH_PROBE_INTERVAL_SECONDS` | producer, consumer, api | `5` | no | `.env` | Periodo de las sondas de dependencias |
-| `PROBE_FALLOS_REINICIO` | producer, consumer | `3` | no | `.env` | Fallos consecutivos de la sonda de Kafka tras los que se recrea la sesión |
+| `PROBE_FALLOS_REINICIO` | producer, consumer, api | `3` | no | `.env` | Fallos consecutivos de la sonda (Kafka en productor y consumidor; PostgreSQL en consumidor y API) tras los que se recrea la sesión |
 | `HEALTH_PORT` | producer, consumer, api (solo su healthcheck) | `8081` | no | compose | Puerto del `/health` que consulta `common/healthcheck.py` (siempre `http://127.0.0.1:<HEALTH_PORT>/health`, dentro del propio contenedor). En productor y consumidor es además el puerto del servidor de salud interno (no se publica); en la API `compose.yaml` lo fija a `8000` solo para el healthcheck, porque la API sirve su `/health` en 8000. **No existe `HEALTH_URL`**: la URL es una constante derivada, no configurable |
 | `SMOKE_TIMEOUT_SECONDS` | producer (humo) | `30` | no | `.env` | Tiempo máximo para obtener el acuse de Kafka en la prueba de humo |
 | `LOG_LEVEL` | producer, consumer, api | `INFO` | no | `.env` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |

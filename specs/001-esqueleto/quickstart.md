@@ -15,7 +15,9 @@ Modelo: [data-model.md](data-model.md) · Decisiones: [research.md](research.md)
 Copy-Item .env.example .env
 # Genera una contraseña aleatoria y la escribe en .env (no se imprime ni se sube a Git)
 $pw = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 24 | ForEach-Object { [char]$_ })
-(Get-Content .env) -replace '^POSTGRES_PASSWORD=.*', "POSTGRES_PASSWORD=$pw" | Set-Content .env
+# .env en UTF-8 sin BOM (Set-Content de Windows PowerShell 5.1 lo escribiría en ANSI y rompería las tildes)
+$texto = [IO.File]::ReadAllText("$PWD\.env") -replace '(?m)^POSTGRES_PASSWORD=[^\r\n]*', "POSTGRES_PASSWORD=$pw"
+[IO.File]::WriteAllText("$PWD\.env", $texto, (New-Object Text.UTF8Encoding($false)))
 git check-ignore .env        # debe imprimir ".env" (ignorado por Git)
 ```
 
@@ -42,9 +44,9 @@ y anotar los tiempos (SC-001).
 
 | # | Comprobación | Orden | Esperado |
 | --- | --- | --- | --- |
-| 1.1 | Puertos publicados | `docker ps --format "{{.Names}}  {{.Ports}}"` | Solo `127.0.0.1:8000->8000/tcp` (api) y `127.0.0.1:9092->9092/tcp` (kafka); `postgres`, `producer` y `consumer` sin puertos (SC-007) |
+| 1.1 | Puertos publicados | `docker ps --format "{{.Names}}  {{.Ports}}"` | Solo `127.0.0.1:8000->8000/tcp` (api) y `127.0.0.1:9092->9092/tcp` (kafka) están **publicados**; `postgres`, `producer` y `consumer` no publican ningún puerto (SC-007). `docker ps` muestra `5432/tcp` en `postgres`: es el puerto **expuesto** por la imagen, no publicado; el criterio es que no aparezca ningún `127.0.0.1:…->` ni `0.0.0.0:…->` salvo 8000 y 9092 |
 | 1.2 | Esquemas e inicialización | `Invoke-Obs-Sql "SELECT nspname FROM pg_namespace WHERE nspname IN ('live','replay','ingesta') ORDER BY 1;"` | `ingesta`, `live`, `replay` |
-| 1.3 | Tablas mínimas | `Invoke-Obs-Sql "\dt live.* ingesta.*"` | `live.versiones_evento`, `ingesta.cuarentena`, `ingesta.version_esquema` |
+| 1.3 | Tablas mínimas | `Invoke-Obs-Sql "SELECT schemaname, tablename FROM pg_tables WHERE schemaname IN ('live','replay','ingesta') ORDER BY 1,2;"` (`\dt` con varios patrones solo aplica el primero) | `ingesta.cuarentena`, `ingesta.version_esquema`, `live.versiones_evento` |
 | 1.4 | Versión de esquema | `Invoke-Obs-Sql "SELECT * FROM ingesta.version_esquema;"` | Fila `1 / esquema_base` |
 | 1.5 | Misma imagen en los tres servicios Python | `docker inspect --format "{{.Name}} {{.Image}} {{.Config.Cmd}}" (docker compose ps -q producer consumer api)` | Las tres líneas muestran el **mismo ID de imagen** (`sha256:…`); solo cambia el comando |
 | 1.6 | Sin `.env` o sin contraseña | `Rename-Item .env .env.bak; docker compose config -q; Rename-Item .env.bak .env` | Error que nombra `POSTGRES_PASSWORD`. Repetir con `POSTGRES_PASSWORD=` vacía: mismo error |

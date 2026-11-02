@@ -8,8 +8,9 @@ panel Angular + Leaflet publicado en Netlify.
 La pregunta que responde: **¿dónde se está registrando actividad sísmica y cómo
 se compara con un periodo histórico equivalente?**
 
-> Estado: Fase 0 (andamiaje). Los servicios se construyen feature a feature en
-> `specs/`. El enunciado completo está en [docs/ENUNCIADO.md](docs/ENUNCIADO.md).
+> Estado: feature `001-esqueleto` implementada (pila de cinco servicios, prueba de humo,
+> recuperación ante caídas y catálogo de países validado). USGS, replay, API analítica y panel
+> llegan en las features 002–006. El enunciado completo está en [docs/ENUNCIADO.md](docs/ENUNCIADO.md).
 
 ## Arquitectura
 
@@ -30,18 +31,111 @@ histórico 2025 ──────► replay ────┘                ▲
 
 ## Requisitos
 
-- Docker con Compose v2
+- Docker con Compose v2 (puertos 8000 y 9092 libres en 127.0.0.1)
 - Node.js LTS (solo para compilar el frontend)
 - Python 3.12+ (scripts de descarga y notebooks)
 - Cuenta gratuita de ngrok y de Netlify (para la demostración)
 
-## Arranque
+## Puertos, listeners y arranque
 
-```bash
-cp .env.example .env   # en PowerShell: Copy-Item .env.example .env
+Todas las órdenes son de **PowerShell** y se ejecutan desde la raíz del repositorio.
+
+### Puertos publicados
+
+| Puerto en el anfitrión | Servicio | Para qué |
+| --- | --- | --- |
+| `127.0.0.1:8000` | `api` | `GET /health` y `GET /status` (el túnel ngrok apuntará aquí) |
+| `127.0.0.1:9092` | `kafka` | Solo inspección desde el anfitrión (listener `HOST`) |
+
+PostgreSQL (`5432`) **no** se publica: solo es accesible dentro de la red de Compose. Tampoco se publican los
+puertos de salud internos (`8081` en productor y consumidor). `docker ps` puede mostrar `5432/tcp` en `postgres`:
+es el puerto que la imagen **expone**, no uno publicado; solo los que llevan `127.0.0.1:…->` lo están.
+
+### Listeners de Kafka
+
+| Listener | Dirección | Úsalo desde |
+| --- | --- | --- |
+| `INTERNAL` | `kafka:19092` | Otros contenedores (productor, consumidor) y órdenes con `docker compose exec` |
+| `HOST` | `localhost:9092` | Herramientas del anfitrión (inspección) |
+
+Dentro de Compose usa siempre el nombre del servicio (`kafka:19092`, `postgres:5432`), nunca `localhost`.
+
+### Arranque
+
+```powershell
+Copy-Item .env.example .env
+# Define POSTGRES_PASSWORD (aquí, una aleatoria) y guarda .env en UTF-8 sin BOM. No se sube a Git.
+$pw = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 24 | ForEach-Object { [char]$_ })
+$texto = [IO.File]::ReadAllText("$PWD\.env") -replace '(?m)^POSTGRES_PASSWORD=[^\r\n]*', "POSTGRES_PASSWORD=$pw"
+[IO.File]::WriteAllText("$PWD\.env", $texto, (New-Object Text.UTF8Encoding($false)))
+git check-ignore .env                 # debe imprimir ".env"
+
 docker compose up --build -d
+docker compose ps                     # los cinco servicios en "healthy" en ≈ 2 minutos
+Invoke-RestMethod http://127.0.0.1:8000/status
 ```
 
+El orden de arranque no está garantizado ni hace falta: cada servicio reintenta con backoff (1, 2, 4, 8, 16, 30 s…)
+hasta que su dependencia responde, sin reiniciar el contenedor. Toda orden de `docker compose` exige
+`POSTGRES_PASSWORD` en `.env` (sin él, Compose falla nombrando la variable).
+
+### Parada, reinicio y borrado
+
+```powershell
+docker compose down        # para y elimina los contenedores; los datos se conservan
+docker compose up -d       # vuelve a arrancar con los mismos datos
+```
+
+**`docker compose down -v` es la única orden que borra datos** (volúmenes `kafka_data` y `postgres_data`).
+
+### Retención de Kafka
+
+El topic `eventos.live` conserva los mensajes **7 días** por defecto (`TOPIC_RETENTION_MS=604800000`). Para
+cambiarla, edita `TOPIC_RETENTION_MS` en `.env` y recrea el productor: `docker compose up -d producer`. Reconcilia el
+topic existente (`action=topic_reconciliado` en el log); no hace falta tocar `compose.yaml`.
+
+### Prueba de humo
+
+Publica un evento sintético (`synthetic-smoke-0001`) con acuse de Kafka y el consumidor lo guarda:
+
+```powershell
+docker compose exec producer python -m observatorio.producer.smoke              # una vez
+docker compose exec producer python -m observatorio.producer.smoke --repeat 5   # la misma versión 5 veces: se omite como duplicado
+docker compose exec producer python -m observatorio.producer.smoke --unico      # otro evento sintético distinto
+Invoke-RestMethod http://127.0.0.1:8000/status                                  # eventos_sinteticos
+```
+
+Eliminar solo los datos sintéticos (los reales no se tocan):
+
+```powershell
+Get-Content -Raw scripts/borrar_sinteticos.sql | docker compose exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER -d $POSTGRES_DB'
+```
+
+### Esquema de PostgreSQL en un volumen existente
+
+`db/init/*.sql` solo se ejecuta sobre un volumen **vacío**. Los ficheros son idempotentes: para aplicar un cambio
+de esquema sin perder datos (ver [research.md R-07](specs/001-esqueleto/research.md#r-07--evolución-del-esquema-sobre-volúmenes-existentes)):
+
+```powershell
+docker compose exec postgres sh -c 'for f in /docker-entrypoint-initdb.d/*.sql; do psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER -d $POSTGRES_DB -f $f || exit 1; done'
+```
+
+### Pruebas
+
+Se ejecutan dentro de la imagen (Python 3.12), sin Kafka ni PostgreSQL:
+
+```powershell
+docker compose run --rm --no-deps consumer pytest -q
+```
+
+### Si un puerto está ocupado
+
+Si `docker compose up` falla con «port is already allocated», busca quién usa el puerto y detenlo:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8000,9092 -State Listen | Select-Object LocalPort, OwningProcess
+Get-Process -Id <OwningProcess>
+```
 ## Datos de partida
 
 - Catálogo geográfico: `catalogo/paises.geojson` (Natural Earth Admin 0
@@ -60,7 +154,7 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 
 | Feature | Alcance |
 | --- | --- |
-| 001-esqueleto | Compose con los 5 servicios, healthchecks y esquema SQL |
+| 001-esqueleto | **Hecha.** Compose con los 5 servicios, healthchecks, esquema SQL, prueba de humo y recuperación ante caídas |
 | 002-ingesta-live | Productor USGS, estado de versiones publicadas, reintentos |
 | 003-consumidor | Calidad, cuarentena, point-in-polygon, upsert por versión |
 | 004-historico-replay | Descarga 2025 y reproducción acelerada aislada |

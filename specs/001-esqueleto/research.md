@@ -756,3 +756,21 @@ Hallazgos de la validación de US5:
 - Catálogo entregado: `paises=242 geometrias_invalidas=0` a los 0,14 s de `result=iniciado` (SC-008: ≤ 30 s); SHA-256 de `catalogo/paises.geojson` = el del manifiesto (`94e49353…636af6`); el fichero no se modificó.
 - `touch /catalogo/prueba` → `Read-only file system` (el montaje `./catalogo:/catalogo:ro` ya existía).
 - Seis casos (ausente, ilegible, vacío, punto, sin `ADM0_A3`, `ADM0_A3` repetido): motivos `catalogo_ausente`, `catalogo_ilegible`, `catalogo_vacio`, `geometria_no_poligonal`, `adm0_a3_ausente`, `adm0_a3_repetido`; cada contenedor solo escribe `result=iniciado` y `result=error component=catalogo …` (sin `component=postgres|kafka` ni `dependency=`, es decir, sin conexión a PostgreSQL ni a Kafka) y ningún `result=persistido|omitido|rechazado`; el proceso sigue vivo (0 reinicios), pasa por `starting` y a los ~60 s queda `unhealthy`; nunca `healthy`.
+
+### Tanda 2 · US6 (T052–T055)
+
+| ID | Decisión | Motivo |
+| --- | --- | --- |
+| R-43 | `PROBE_FALLOS_REINICIO` se documenta para `producer, consumer, api` y para ambas dependencias en `contracts/variables-entorno.md` y `.env.example` | El supervisor (R-35) también sondea PostgreSQL y la API lo usa. Es el único cambio del contrato de variables de la tanda; el resto de variables coincide con `.env.example` |
+| R-44 | Los ejemplos de `updated` de `docs/CONTRATO-API.md` y `contracts/api.openapi.yaml` pasan a `2026-01-01T00:00:00.000Z` y el contrato fija «siempre con milisegundos» | Es lo que escribe el servicio (R-27); respuestas reales de `/health` y `/status` (200, 503, base vacía, base caída) coinciden campo a campo con ambos documentos |
+| R-45 | El `.env` se escribe con `[IO.File]::WriteAllText(…, UTF8Encoding($false))` y se lee con `[IO.File]::ReadAllText` (README y quickstart §0) | `Set-Content` y `Get-Content` de Windows PowerShell 5.1 usan ANSI por defecto y rompen las tildes de los comentarios |
+| R-46 | En T053, `Select-String -Recurse` no existe: la comprobación equivalente es `Get-ChildItem backend/observatorio -Recurse -Filter *.py \| Select-String 'environ\|getenv'` | Solo `config.py` y `healthcheck.py` leen `os.environ` (4 usos) |
+
+Hallazgos de la validación de US6 (arranque en frío en un proyecto temporal `-p obsfrio6`, ya eliminado):
+
+- Arranque en frío con volúmenes vacíos: `up -d` 2,7 s y los cinco servicios `healthy` a los 13,5 s (imágenes ya construidas).
+- `/status` con base vacía: `eventos_reales: 0`, `eventos_sinteticos: 0`, `ultimo_evento: null` (coincide con el ejemplo `baseVacia`).
+- `topic_no_existe` aparece con volumen vacío (`attempt=1 wait_s=1`) hasta que el productor crea el topic (`topic_creado`).
+- SC-009: 68 líneas de `producer`/`consumer`/`api`, **`invalidas=0`**; cinco líneas de evento (publicado, persistido, omitido, rechazado) con `event_id` y `updated`; ninguna con la contraseña. Son líneas `result=error` de aiokafka al arrancar en frío (broker aún sin escuchar o coordinador no disponible) y quedan en formato `clave=valor`.
+- `.env` no versionado; `Get-FileHash` del ejemplo del contrato = el de la copia de pruebas (`True`).
+- SC-011 (cronometrar a una persona externa siguiendo solo el README ≤ 15 min) **no se puede hacer aquí**: queda pendiente para una persona que no haya escrito la pila (T055 sin marcar).
