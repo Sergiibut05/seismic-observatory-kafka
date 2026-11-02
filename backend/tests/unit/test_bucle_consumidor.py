@@ -68,7 +68,7 @@ class BdFalsa:
         self.reconexiones += 1
         self.conectada = True
 
-    def transaccion(self):
+    def transaccion(self, timeout=10):
         return _TransaccionFalsa()
 
 
@@ -77,7 +77,7 @@ def escrituras(monkeypatch):
     """Sustituye la persistencia y anota las llamadas en orden."""
     estado = SimpleNamespace(llamadas=[], versiones=[1], cuarentenas=[], fallos=[])
 
-    async def guardar_version(db, version, reg, esquema):
+    async def guardar_version(db, version, reg, esquema, contenido=None, pais_codigo=None, pais_nombre=None):
         estado.llamadas.append("guardar_version")
         if estado.fallos:
             raise estado.fallos.pop(0)

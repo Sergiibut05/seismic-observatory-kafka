@@ -143,6 +143,15 @@ La reproducción, dentro del productor ya levantado, manda 40 eventos por Kafka 
 docker compose exec producer python -m observatorio.replay
 ```
 
+### País y estado actual
+
+El país de cada evento sale de contener el punto en `catalogo/paises.geojson`
+(`ADM0_A3`), no del texto `place`. Si no cae en ningún polígono, el nombre es
+«Sin país asignado» y el código queda vacío. `live.evento_actual` guarda una
+fila por evento y solo la sustituye cuando `updated` es más reciente; el
+historial `(event_id, updated)` no se pisa. `/status` cuenta esa tabla.
+Magnitud o profundidad ausentes se quedan en nulo.
+
 Eliminar solo los datos sintéticos (los reales no se tocan):
 
 ```powershell
@@ -194,7 +203,7 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | --- | --- |
 | 001-esqueleto | **Hecha.** Compose con los 5 servicios, healthchecks, esquema SQL, prueba de humo y recuperación ante caídas |
 | 002-ingesta-live | **Hecha.** Productor USGS, estado de versiones publicadas, reintentos |
-| 003-consumidor | Calidad, cuarentena, point-in-polygon, upsert por versión |
+| 003-consumidor | **Hecha.** Calidad, cuarentena, point-in-polygon, estado actual por versión |
 | 004-historico-replay | **Hecha.** Descarga 2025 y reproducción acelerada aislada |
 | 005-api | FastAPI, contrato, CORS |
 | 006-panel | Angular + Leaflet, filtros, gráficos, Netlify + ngrok |

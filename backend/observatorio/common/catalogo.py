@@ -1,13 +1,17 @@
 """Carga y validación del catálogo de países al arrancar el consumidor (R-18).
 
-Solo se valida; las geometrías no se conservan en memoria (la asignación de país es de la 003).
+`cargar_catalogo` solo valida. `construir_indice` conserva los polígonos para
+asignar el país de cada evento (feature 003).
 """
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from shapely.geometry import shape
+from shapely import STRtree
+from shapely.geometry import Point, shape
+
+SIN_PAIS = "Sin país asignado"
 
 MOTIVOS = (
     "catalogo_ausente",
@@ -82,3 +86,76 @@ def cargar_catalogo(ruta: str | Path) -> Catalogo:
         except Exception as exc:
             raise CatalogoError("catalogo_ilegible", f"geometría de {codigo}: {type(exc).__name__}") from None
     return Catalogo(total=len(entidades), fuente=str(ruta), geometrias_invalidas=invalidas)
+
+
+def _texto(propiedades: dict, clave: str) -> str | None:
+    valor = propiedades.get(clave)
+    return valor if isinstance(valor, str) and valor else None
+
+
+def _poligono(geometria: dict):
+    """Polígono utilizable. Una geometría inválida se repara; si no queda polígono, se omite."""
+    figura = shape(geometria)
+    if not figura.is_valid:
+        figura = figura.buffer(0)
+    if figura.is_empty or figura.geom_type not in _TIPOS_POLIGONALES:
+        return None
+    return figura
+
+
+@dataclass(frozen=True)
+class IndicePaises:
+    """Polígonos listos para punto-en-polígono. El área desempata solapes."""
+
+    codigos: tuple[str, ...]
+    nombres: tuple[str, ...]
+    continentes: tuple[str | None, ...]
+    subregiones: tuple[str | None, ...]
+    areas: tuple[float, ...]
+    arbol: STRtree | None
+
+    def asignar(self, longitud: float, latitud: float) -> tuple[str | None, str]:
+        """Código `ADM0_A3` y nombre. Sin contención: `(None, «Sin país asignado»)`."""
+        if self.arbol is None:
+            return None, SIN_PAIS
+        indices = self.arbol.query(Point(longitud, latitud), predicate="intersects")
+        if len(indices) == 0:
+            return None, SIN_PAIS
+        elegido = min(indices, key=lambda indice: (self.areas[int(indice)], int(indice)))
+        posicion = int(elegido)
+        return self.codigos[posicion], self.nombres[posicion]
+
+    def filas(self) -> tuple[tuple[str, str, str | None, str | None], ...]:
+        return tuple(zip(self.codigos, self.nombres, self.continentes, self.subregiones, strict=True))
+
+
+def construir_indice(ruta: str | Path) -> IndicePaises:
+    """Lee el mismo GeoJSON ya validado y construye el índice espacial."""
+    entidades = _leer(Path(ruta))["features"]
+    codigos: list[str] = []
+    nombres: list[str] = []
+    continentes: list[str | None] = []
+    subregiones: list[str | None] = []
+    areas: list[float] = []
+    figuras = []
+    for entidad in entidades:
+        propiedades = entidad.get("properties") or {}
+        figura = _poligono(entidad["geometry"])
+        if figura is None:
+            continue
+        codigo = propiedades["ADM0_A3"]
+        codigos.append(codigo)
+        nombres.append(_texto(propiedades, "NAME_ES") or _texto(propiedades, "ADMIN") or codigo)
+        continentes.append(_texto(propiedades, "CONTINENT"))
+        subregiones.append(_texto(propiedades, "SUBREGION"))
+        areas.append(figura.area)
+        figuras.append(figura)
+    arbol = STRtree(figuras) if figuras else None
+    return IndicePaises(
+        codigos=tuple(codigos),
+        nombres=tuple(nombres),
+        continentes=tuple(continentes),
+        subregiones=tuple(subregiones),
+        areas=tuple(areas),
+        arbol=arbol,
+    )

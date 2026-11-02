@@ -13,15 +13,15 @@ from observatorio.common.tiempo import iso_utc  # noqa: F401  (reexportado)
 
 _log = logging.getLogger("observatorio.api")
 
-# Eventos distintos (no versiones): una versión es una fila y un evento puede tener varias (R-19).
+# Una fila de `evento_actual` por evento: las revisiones no suman (R-19).
 SQL_RECUENTOS = (
-    "SELECT count(DISTINCT event_id) FILTER (WHERE NOT sintetico), "
-    "count(DISTINCT event_id) FILTER (WHERE sintetico) "
-    "FROM live.versiones_evento"
+    "SELECT count(*) FILTER (WHERE NOT sintetico), "
+    "count(*) FILTER (WHERE sintetico) "
+    "FROM live.evento_actual"
 )
 SQL_ULTIMO_EVENTO = (
     "SELECT event_id, updated, source, sintetico, processed_at "
-    "FROM live.versiones_evento ORDER BY processed_at DESC LIMIT 1"
+    "FROM live.evento_actual ORDER BY processed_at DESC LIMIT 1"
 )
 
 

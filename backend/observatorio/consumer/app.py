@@ -10,7 +10,7 @@ from collections.abc import Awaitable, Callable
 
 from aiokafka import AIOKafkaConsumer, TopicPartition
 
-from observatorio.common.catalogo import CatalogoError, cargar_catalogo
+from observatorio.common.catalogo import SIN_PAIS, CatalogoError, IndicePaises, cargar_catalogo, construir_indice
 from observatorio.common.config import AjustesConsumidor
 from observatorio.common.db import Database, SinConexion
 from observatorio.common.health import EstadoSalud, servidor_salud
@@ -19,8 +19,9 @@ from observatorio.common.logging import registrar
 from observatorio.common.parada import esperar, evento_de_parada
 from observatorio.common.retry import Backoff, esperas, motivo_de, reintentar
 from observatorio.common.supervisor import supervisar
+from observatorio.consumer.calidad import Contenido, evaluar
 from observatorio.consumer.decision import Aceptar, clasificar_error_bd, decidir, resultado_escritura
-from observatorio.consumer.persistencia import guardar_cuarentena, guardar_version
+from observatorio.consumer.persistencia import asegurar_modelo, guardar_cuarentena, guardar_version
 
 _log = logging.getLogger("observatorio.consumer")
 
@@ -59,7 +60,13 @@ async def _abrir_consumidor(ajustes: AjustesConsumidor) -> AIOKafkaConsumer:
     return consumidor
 
 
-async def procesar_registro(db: Database, registro, logger: logging.Logger = _log, modo: str = MODO_POR_DEFECTO) -> str:
+async def procesar_registro(
+    db: Database,
+    registro,
+    logger: logging.Logger = _log,
+    modo: str = MODO_POR_DEFECTO,
+    indice: IndicePaises | None = None,
+) -> str:
     """Decide, escribe en una transacción y registra el resultado. Devuelve el `result`.
 
     Lanza ante fallos de conexión o errores no clasificados: quien llama reintenta el mismo registro.
@@ -69,8 +76,30 @@ async def procesar_registro(db: Database, registro, logger: logging.Logger = _lo
 
     if isinstance(decision, Aceptar):
         version = decision.version
+        contenido = evaluar(version.mensaje)
+        if not isinstance(contenido, Contenido):
+            await guardar_cuarentena(db, contenido.motivo, contenido.detalle, registro)
+            registrar(
+                logger,
+                "rechazado",
+                nivel="WARNING",
+                event_id=version.event_id,
+                updated=version.updated_ms,
+                motivo=contenido.motivo,
+                **posicion,
+            )
+            return "rechazado"
+        codigo, nombre = indice.asignar(contenido.longitud, contenido.latitud) if indice is not None else (None, SIN_PAIS)
         try:
-            filas = await guardar_version(db, version, registro, decision.esquema)
+            filas = await guardar_version(
+                db,
+                version,
+                registro,
+                decision.esquema,
+                contenido=contenido,
+                pais_codigo=codigo,
+                pais_nombre=nombre,
+            )
         except Exception as exc:
             if clasificar_error_bd(exc) != "cuarentena":
                 raise
@@ -92,7 +121,15 @@ async def procesar_registro(db: Database, registro, logger: logging.Logger = _lo
         extra = {"reason": "duplicado"} if resultado == "omitido" else {}
         if modo == "replay":
             extra["etiqueta"] = "REPRODUCCIÓN"
-        registrar(logger, resultado, event_id=version.event_id, updated=version.updated_ms, **extra, **posicion)
+        registrar(
+            logger,
+            resultado,
+            event_id=version.event_id,
+            updated=version.updated_ms,
+            **extra,
+            **posicion,
+            pais=nombre,
+        )
         return resultado
 
     await guardar_cuarentena(db, decision.motivo, decision.detalle, registro)
@@ -119,13 +156,14 @@ async def procesar_con_reintentos(
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     logger: logging.Logger = _log,
     modo: str = MODO_POR_DEFECTO,
+    indice: IndicePaises | None = None,
 ) -> str:
     """Reintenta el MISMO registro hasta lograrlo: nunca avanza, descarta ni confirma en silencio."""
     secuencia = esperas(config.inicial, config.factor, config.tope)
     intento = 0
     while True:
         try:
-            return await procesar_registro(db, registro, logger, modo)
+            return await procesar_registro(db, registro, logger, modo, indice)
         except Exception as exc:
             intento += 1
             espera = next(secuencia)
@@ -206,37 +244,13 @@ async def _cerrar_sesion_kafka(consumidor, sesion: SesionConsumo) -> None:
     await cerrar_sin_error(consumidor)
 
 
-async def _asegurar_replay(db: Database) -> None:
-    """Crea la tabla de replay en volúmenes que ya existían antes de esta feature."""
-    async with db.transaccion() as conn:
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS replay.versiones_evento (
-                event_id        text         NOT NULL CHECK (event_id <> ''),
-                updated         timestamptz  NOT NULL,
-                schema_version  smallint     NOT NULL,
-                source          text         NOT NULL,
-                mode            text         NOT NULL DEFAULT 'replay' CHECK (mode = 'replay'),
-                sintetico       boolean      NOT NULL,
-                ingested_at     timestamptz  NOT NULL,
-                processed_at    timestamptz  NOT NULL DEFAULT clock_timestamp(),
-                topic           text         NOT NULL,
-                particion       integer      NOT NULL,
-                offset_kafka    bigint       NOT NULL,
-                original        jsonb        NOT NULL,
-                CONSTRAINT versiones_replay_pk PRIMARY KEY (event_id, updated),
-                CONSTRAINT versiones_replay_sintetico_coherente CHECK (
-                    sintetico = (source LIKE 'synthetic-%')
-                    AND sintetico = (event_id LIKE 'synthetic-%'))
-            )
-            """
-        )
-        await conn.execute(
-            "INSERT INTO ingesta.version_esquema (version, nombre) VALUES (3, 'replay') ON CONFLICT (version) DO NOTHING"
-        )
-
-
-async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Database, parada: asyncio.Event) -> None:
+async def _consumir(
+    ajustes: AjustesConsumidor,
+    sesion: SesionConsumo,
+    db: Database,
+    parada: asyncio.Event,
+    indice: IndicePaises | None = None,
+) -> None:
     tabla_lista = False
     while not parada.is_set():
         consumidor = sesion.consumidor
@@ -246,11 +260,12 @@ async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Datab
             continue
         if not tabla_lista:
             try:
-                await _asegurar_replay(db)
+                relleno = await asegurar_modelo(db, indice)
             except Exception as exc:
-                registrar(_log, "error", nivel="ERROR", component="replay", reason=motivo_de(exc))
+                registrar(_log, "error", nivel="ERROR", component="estado", reason=motivo_de(exc))
                 await esperar(parada, 1)
                 continue
+            registrar(_log, "listo", component="estado", **{f"versiones_{esquema}": n for esquema, n in relleno.items()})
             tabla_lista = True
         try:
             registro = await asyncio.wait_for(consumidor.getone(), ESPERA_LECTURA)
@@ -267,6 +282,7 @@ async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Datab
             registro,
             ajustes.backoff,
             modo="replay" if registro.topic == getattr(ajustes, "topic_replay", None) else MODO_POR_DEFECTO,
+            indice=indice,
         )
         await confirmar_offset(consumidor, registro)
 
@@ -286,6 +302,7 @@ async def ejecutar(ajustes: AjustesConsumidor) -> None:
         # El catálogo se valida antes de conectar con PostgreSQL o Kafka (R-18).
         try:
             catalogo = cargar_catalogo(ajustes.catalogo_path)
+            indice = construir_indice(ajustes.catalogo_path)
         except CatalogoError as exc:
             registrar(
                 _log,
@@ -341,7 +358,7 @@ async def ejecutar(ajustes: AjustesConsumidor) -> None:
                     logger=_log,
                 )
             ),
-            asyncio.create_task(_consumir(ajustes, sesion, db, parada)),
+            asyncio.create_task(_consumir(ajustes, sesion, db, parada, indice)),
         }
         espera_parada = asyncio.create_task(parada.wait())
         try:
