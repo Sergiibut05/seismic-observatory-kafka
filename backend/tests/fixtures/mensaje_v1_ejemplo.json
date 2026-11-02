@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "source": "synthetic-smoke",
+  "ingested_at": "2026-11-02T12:00:00.123Z",
+  "mode": "live",
+  "event": {
+    "type": "Feature",
+    "id": "synthetic-smoke-0001",
+    "properties": {
+      "mag": 1.0,
+      "place": "SINTÉTICO · prueba de humo (no es un terremoto real)",
+      "time": 1767225600000,
+      "updated": 1767225600000,
+      "type": "earthquake",
+      "title": "M 1.0 - SINTÉTICO · prueba de humo"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-3.7, 40.4, 10.0]
+    }
+  }
+}

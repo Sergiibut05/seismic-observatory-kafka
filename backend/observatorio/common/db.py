@@ -148,5 +148,28 @@ class Database:
             await self._perder()
             raise
 
+    @contextlib.asynccontextmanager
+    async def transaccion(self, timeout: float = 10.0):
+        """Una transacción explícita sobre la conexión; el commit ocurre al salir del bloque sin error.
+
+        Un fallo de conexión o de tiempo marca la conexión como perdida; un error de dato no la pierde.
+        """
+        if self._conn is None:
+            raise SinConexion("sin conexión con PostgreSQL")
+        conn = self._conn
+        perdida = False
+        try:
+            async with self._lock:
+                try:
+                    async with asyncio.timeout(timeout):
+                        async with conn.transaction():
+                            yield conn
+                except (psycopg.OperationalError, psycopg.InterfaceError, TimeoutError, OSError):
+                    perdida = True
+                    raise
+        finally:
+            if perdida:
+                await self._perder()
+
     async def cerrar(self) -> None:
         await self._perder()

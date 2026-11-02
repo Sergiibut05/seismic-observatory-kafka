@@ -120,8 +120,10 @@ docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-se
 Get-Obs-Status
 ```
 
-**Esperado**: con PostgreSQL parado, `LAG ≥ 1` y reintentos del **mismo** mensaje; al volver, el
-mensaje se persiste **exactamente una vez** y el `LAG` baja a 0.
+**Esperado**: con PostgreSQL parado, en la partición del mensaje `LAG ≥ 1` (o `CURRENT-OFFSET` y `LAG` con `-`
+si esa partición aún no tenía ningún offset confirmado: es la misma señal, «sin confirmar») y reintentos del
+**mismo** mensaje; al volver, el mensaje se persiste **exactamente una vez** y el `LAG` baja a 0 (o `CURRENT-OFFSET`
+iguala a `LOG-END-OFFSET`).
 
 ### 2.5 Mensajes que incumplen el contrato → cuarentena (FR-012)
 

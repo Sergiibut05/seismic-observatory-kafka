@@ -102,8 +102,10 @@ async def abrir_admin(bootstrap_servers: str):
 
 
 async def cerrar_sin_error(recurso) -> None:
+    """Cierra un cliente aiokafka: productor y consumidor usan `stop()`, el admin usa `close()`."""
+    cerrar = getattr(recurso, "stop", None) or recurso.close
     try:
-        await asyncio.wait_for(recurso.close(), 5)
+        await asyncio.wait_for(cerrar(), 5)
     except Exception:
         pass
 

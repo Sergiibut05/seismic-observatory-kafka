@@ -707,3 +707,20 @@ Hallazgos de la validación de US1 que afectan a `quickstart.md` (corregir en la
   comentarios. Compose lo leyó bien, pero es más seguro escribir `.env` con `UTF8Encoding($false)`.
 - `docker compose` (incluido `run` y `config`) exige `.env` con `POSTGRES_PASSWORD` por el `:?` (RK-08); los tests
   en la imagen con `docker compose run` también.
+
+### Tanda 2 · US2 (T030–T041)
+
+| ID | Decisión | Motivo |
+| --- | --- | --- |
+| R-31 | `common/kafka.py::cerrar_sin_error` llama a `stop()` en productores y consumidores y a `close()` solo en el admin | Defecto de la tanda 1: `AIOKafkaProducer` no tiene `close()`, la excepción se tragaba y quedaba `Unclosed AIOKafkaProducer` en el log del proceso de humo. Cubierto por `test_cierre_clientes.py` |
+| R-32 | `Database.transaccion()` abre `conn.transaction()` con límite de 10 s; ante `OperationalError`, `InterfaceError`, `TimeoutError` u `OSError` suelta la conexión (`conectada=False`) y relanza | El consumidor distingue «conexión perdida» (reintentar el **mismo** registro sin confirmar offset) de «dato no almacenable» (cuarentena, SQLSTATE 22/23) |
+| R-33 | `smoke` acota **todo** (topic, conexión y envío) con `SMOKE_TIMEOUT_SECONDS`; al agotarse registra `result=error reason=sin_acuse` y sale con 1. `result=publicado` solo existe tras `send_and_wait` | FR-014: nunca declarar publicado sin acuse |
+| R-34 | Reentrega forzada para probar la idempotencia: `kafka-consumer-groups.sh … --reset-offsets --to-earliest --execute` con el consumidor parado | `restart consumer` no reentrega (los offsets ya están confirmados); el reinicio de grupo sí relee todo el topic |
+
+Hallazgos de la validación de US2 (cifras en el informe de la tanda):
+
+- Con PostgreSQL parado, `kafka-consumer-groups.sh --describe` muestra `CURRENT-OFFSET = -` y `LAG = -` (el grupo aún no
+  tiene ningún offset confirmado en esa partición) en lugar de `LAG ≥ 1`. Es la misma señal («offset sin confirmar»);
+  §2.4 del quickstart lo recoge.
+- Tras volver PostgreSQL, el consumidor persiste el mensaje retenido (una sola vez) pero la API sigue en
+  `base_de_datos: fallida` hasta reiniciarla: es el hueco que cubre US3 (T046).

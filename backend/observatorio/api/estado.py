@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from observatorio.common.db import Database, SinConexion
 from observatorio.common.logging import registrar
 from observatorio.common.retry import motivo_de
+from observatorio.common.tiempo import iso_utc  # noqa: F401  (reexportado)
 
 _log = logging.getLogger("observatorio.api")
 
@@ -22,12 +23,6 @@ SQL_ULTIMO_EVENTO = (
     "SELECT event_id, updated, source, sintetico, processed_at "
     "FROM live.versiones_evento ORDER BY processed_at DESC LIMIT 1"
 )
-
-
-def iso_utc(instante: datetime) -> str:
-    """ISO 8601 en UTC con milisegundos y `Z` (convención de docs/CONTRATO-API.md)."""
-    utc = instante.astimezone(timezone.utc)
-    return utc.strftime("%Y-%m-%dT%H:%M:%S.") + f"{utc.microsecond // 1000:03d}Z"
 
 
 def armar_estado(
