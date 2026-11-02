@@ -169,7 +169,7 @@ description: "Lista de tareas de la feature 001-esqueleto"
 
 **Prueba independiente**: [quickstart.md §5](quickstart.md#5-catálogo-de-países-us5--sc-008) (SC-008).
 
-- [ ] T051 [US5] Validar US5 con [quickstart.md §5](quickstart.md#5-catálogo-de-países-us5--sc-008): 242 países en ≤ 30 s con el catálogo entregado; escritura rechazada (montaje `./catalogo:/catalogo:ro`; si falta el `:ro` en `compose.yaml`, corregirlo); los seis casos de catálogo ausente/inválido con su motivo (`catalogo_ausente`, `catalogo_ilegible`, `catalogo_vacio`, `geometria_no_poligonal`, `adm0_a3_ausente`, `adm0_a3_repetido`), sin ningún `result=persistido/omitido/rechazado`, sin conexión a PostgreSQL ni Kafka y con la salud nunca `healthy`. Si algún escenario falla, corregir `common/catalogo.py` o `consumer/app.py` con su prueba en `test_catalogo.py` primero
+- [X] T051 [US5] Validar US5 con [quickstart.md §5](quickstart.md#5-catálogo-de-países-us5--sc-008): 242 países en ≤ 30 s con el catálogo entregado; escritura rechazada (montaje `./catalogo:/catalogo:ro`; si falta el `:ro` en `compose.yaml`, corregirlo); los seis casos de catálogo ausente/inválido con su motivo (`catalogo_ausente`, `catalogo_ilegible`, `catalogo_vacio`, `geometria_no_poligonal`, `adm0_a3_ausente`, `adm0_a3_repetido`), sin ningún `result=persistido/omitido/rechazado`, sin conexión a PostgreSQL ni Kafka y con la salud nunca `healthy`. Si algún escenario falla, corregir `common/catalogo.py` o `consumer/app.py` con su prueba en `test_catalogo.py` primero
 
 **Checkpoint**: US1–US5 completas.
 

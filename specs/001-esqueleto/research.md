@@ -746,3 +746,13 @@ Hallazgos de la validación de US3: con PostgreSQL parado, `unhealthy` aparece e
 | R-42 | Un error de `describe_configs`/`alter_configs` lanza `ErrorReconciliacionTopic`: el productor lo reintenta con backoff y `smoke` acaba en `sin_acuse` o `error` | Es preferible un fallo visible a arrancar con una retención que no es la configurada |
 
 Hallazgos de la validación de US4: `down` + `up` conserva recuento (4 sintéticos), último evento y mensajes del topic; el directorio de datos pertenece a `appuser` y contiene `eventos.live-0…2`, `__consumer_offsets-*` y `meta.properties` (nada en `/tmp`); con `TOPIC_RETENTION_MS=3600000` y recrear solo el productor, `kafka-configs.sh` muestra `retention.ms=3600000` y `segment.ms=3600000` en ≤ 20 s con `compose.yaml` intacto; al restaurar el valor vuelve a `604800000`/`86400000`. La respuesta de `describe_configs` es `DescribeConfigsResponse_v2`: cada entrada es `(nombre, valor, solo_lectura, origen, sensible, sinónimos)`.
+
+### Tanda 2 · US5 (T051)
+
+Sin decisiones nuevas: `common/catalogo.py` y `consumer/app.py` (tanda 1) cumplen el quickstart §5 sin cambios.
+
+Hallazgos de la validación de US5:
+
+- Catálogo entregado: `paises=242 geometrias_invalidas=0` a los 0,14 s de `result=iniciado` (SC-008: ≤ 30 s); SHA-256 de `catalogo/paises.geojson` = el del manifiesto (`94e49353…636af6`); el fichero no se modificó.
+- `touch /catalogo/prueba` → `Read-only file system` (el montaje `./catalogo:/catalogo:ro` ya existía).
+- Seis casos (ausente, ilegible, vacío, punto, sin `ADM0_A3`, `ADM0_A3` repetido): motivos `catalogo_ausente`, `catalogo_ilegible`, `catalogo_vacio`, `geometria_no_poligonal`, `adm0_a3_ausente`, `adm0_a3_repetido`; cada contenedor solo escribe `result=iniciado` y `result=error component=catalogo …` (sin `component=postgres|kafka` ni `dependency=`, es decir, sin conexión a PostgreSQL ni a Kafka) y ningún `result=persistido|omitido|rechazado`; el proceso sigue vivo (0 reinicios), pasa por `starting` y a los ~60 s queda `unhealthy`; nunca `healthy`.
