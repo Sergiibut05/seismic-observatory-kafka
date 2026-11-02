@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://observatorio.local/contratos/mensaje-kafka-v1.schema.json",
+  "title": "Mensaje Kafka v1 del observatorio sísmico",
+  "description": "Valor del registro Kafka (JSON UTF-8). La clave del registro es el id del evento original en UTF-8 y debe ser igual a event.id. Este esquema es documentación del contrato; la validación de ejecución está en backend/observatorio/common/contrato.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "ingested_at", "mode", "event"],
+  "properties": {
+    "schema_version": {
+      "description": "Versión del contrato. Un cambio incompatible incrementa este valor.",
+      "const": 1
+    },
+    "source": {
+      "description": "Origen del dato. Prefijo reservado 'synthetic-' = dato sintético (excluido de recuentos reales).",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,62}$",
+      "examples": ["usgs", "synthetic-smoke"]
+    },
+    "ingested_at": {
+      "description": "Instante de ingesta en UTC (ISO 8601 con zona y desplazamiento 0), con milisegundos.",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|\\+00:00)$",
+      "examples": ["2026-11-02T12:00:00.123Z"]
+    },
+    "mode": {
+      "description": "live = ingesta en tiempo real; replay = reproducción histórica. Debe corresponder al topic por el que viaja.",
+      "enum": ["live", "replay"]
+    },
+    "event": {
+      "description": "Feature GeoJSON original de USGS, sin alterar. En esta feature solo se exige event.id y event.properties.updated; el resto del contenido se valida en la feature 003.",
+      "type": "object",
+      "required": ["id", "properties"],
+      "properties": {
+        "id": {
+          "description": "Identificador USGS del evento. Igual a la clave del registro. Prefijo reservado 'synthetic-' solo si source empieza por 'synthetic-' (y al revés).",
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "type": "object",
+          "required": ["updated"],
+          "properties": {
+            "updated": {
+              "description": "Versión del evento: milisegundos desde epoch UTC. Entero (no booleano, no decimal), entre 0 y 4102444800000 (2100-01-01).",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4102444800000
+            }
+          }
+        }
+      }
+    }
+  }
+}

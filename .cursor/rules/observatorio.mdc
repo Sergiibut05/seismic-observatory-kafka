@@ -31,7 +31,8 @@ alwaysApply: true
 ## Convenciones
 
 - Español en documentación, commits, logs y comentarios.
-- Logs con formato `clave=valor` (`result=published event_id=us7000abcd updated=...`).
+- Logs con formato `clave=valor` (`service=producer result=publicado event_id=us7000abcd updated=...`);
+  valores de `result` en español: publicado, persistido, omitido, rechazado, error.
 - Sin secretos en Git ni en Angular: solo `.env.example` sin credenciales.
 - Shell del alumno: Windows + PowerShell. Los scripts de Spec Kit son `.specify/scripts/powershell/*.ps1`.
 - La plantilla original de Binance (patrones de backoff, health y creación de topic con aiokafka)

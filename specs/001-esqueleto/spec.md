@@ -81,7 +81,7 @@ eliminación de sintéticos (vuelve a 0).
 
 1. **Given** la pila sana y sin eventos, **When** el alumno ordena publicar el
    evento sintético, **Then** el log del productor registra
-   `result=published` con el `event_id` y la versión solo después del acuse de
+   `result=publicado` con el `event_id` y la versión solo después del acuse de
    Kafka, y en como máximo 10 s la API informa de 1 evento sintético y 0
    reales, e identifica el evento como sintético en «último evento
    procesado».

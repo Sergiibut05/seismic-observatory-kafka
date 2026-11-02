@@ -1,0 +1,131 @@
+openapi: 3.1.0
+info:
+  title: API del observatorio sísmico (feature 001, esqueleto)
+  version: 0.1.0
+  description: |
+    Solo salud y estado. Ambos endpoints son **públicos** (pueden consultarse a través
+    del túnel) y devuelven únicamente información agregada: sin secretos, cadenas de
+    conexión ni detalles internos (FR-024). La API en producción NO sirve este documento
+    (`openapi_url=None`); es la fuente del contrato junto con `docs/CONTRATO-API.md`.
+    Las consultas analíticas son de la feature 005.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Puerto publicado en el anfitrión (FR-022, FR-025)
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Salud de la API
+      description: |
+        200 solo si la API puede operar, incluida la conexión a PostgreSQL. 503 en otro caso.
+        El cuerpo no detalla componentes (la causa va a los logs).
+      responses:
+        "200":
+          description: La API puede operar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+              example: { status: ok }
+        "503":
+          description: La API no puede operar (p. ej. sin conexión a la base de datos)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+              example: { status: unhealthy }
+  /status:
+    get:
+      operationId: getStatus
+      summary: Estado del sistema
+      description: |
+        Responde **siempre 200** mientras la API esté viva. Si la base de datos no responde,
+        `base_de_datos` vale `fallida`, los recuentos y el último evento son `null`
+        («no disponible»; nunca se sustituyen por 0).
+        Los recuentos son de **eventos** distintos (`event_id`), no de versiones, y los
+        sintéticos nunca se suman a los reales.
+      responses:
+        "200":
+          description: Estado actual
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Status" }
+              examples:
+                conBaseDeDatos:
+                  summary: Tras la prueba de humo
+                  value:
+                    base_de_datos: conectada
+                    eventos_reales: 0
+                    eventos_sinteticos: 1
+                    ultimo_evento:
+                      event_id: synthetic-smoke-0001
+                      updated: "2026-01-01T00:00:00Z"
+                      source: synthetic-smoke
+                      sintetico: true
+                      processed_at: "2026-11-02T12:00:00.456Z"
+                    generated_at: "2026-11-02T12:00:05.000Z"
+                baseVacia:
+                  summary: Base conectada sin eventos
+                  value:
+                    base_de_datos: conectada
+                    eventos_reales: 0
+                    eventos_sinteticos: 0
+                    ultimo_evento: null
+                    generated_at: "2026-11-02T12:00:05.000Z"
+                baseCaida:
+                  summary: PostgreSQL no responde
+                  value:
+                    base_de_datos: fallida
+                    eventos_reales: null
+                    eventos_sinteticos: null
+                    ultimo_evento: null
+                    generated_at: "2026-11-02T12:00:05.000Z"
+components:
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, unhealthy]
+    Status:
+      type: object
+      additionalProperties: false
+      required: [base_de_datos, eventos_reales, eventos_sinteticos, ultimo_evento, generated_at]
+      properties:
+        base_de_datos:
+          type: string
+          enum: [conectada, fallida]
+        eventos_reales:
+          type: [integer, "null"]
+          minimum: 0
+          description: Eventos distintos no sintéticos; null si la base no responde
+        eventos_sinteticos:
+          type: [integer, "null"]
+          minimum: 0
+          description: Eventos distintos sintéticos; null si la base no responde
+        ultimo_evento:
+          description: Última versión procesada (mayor `processed_at`); null si no hay eventos o la base no responde
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/UltimoEvento"
+        generated_at:
+          type: string
+          format: date-time
+          description: Instante de generación de la respuesta (UTC)
+    UltimoEvento:
+      type: object
+      additionalProperties: false
+      required: [event_id, updated, source, sintetico, processed_at]
+      properties:
+        event_id: { type: string }
+        updated:
+          type: string
+          format: date-time
+          description: Versión del evento (UTC)
+        source: { type: string, examples: [usgs, synthetic-smoke] }
+        sintetico: { type: boolean }
+        processed_at:
+          type: string
+          format: date-time
+          description: Instante de procesamiento por el consumidor (UTC)
