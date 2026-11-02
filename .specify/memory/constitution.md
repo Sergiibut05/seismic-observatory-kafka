@@ -68,8 +68,10 @@ real ni en las conclusiones.
 
 ### VII. Superficie mínima expuesta y sin secretos
 Solo la API de consulta MAY publicarse, y solo a través de ngrok o en
-`127.0.0.1`. Kafka, PostgreSQL, rutas de administración y salud interna MUST
-NOT exponerse por el túnel. CORS MUST autorizar solo el origen exacto de
+`127.0.0.1`. Kafka, PostgreSQL, rutas de administración y los endpoints de
+salud internos de productor y consumidor MUST NOT exponerse por el túnel. La
+salud y el estado de la API MAY ser públicos si devuelven solo información
+agregada, porque el panel muestra el estado del sistema. CORS MUST autorizar solo el origen exacto de
 Netlify y el de desarrollo. El repositorio, la imagen y el bundle de Angular
 MUST NOT contener secretos: el authtoken de ngrok y las contraseñas viven en
 `.env` (ignorado por Git) y `.env.example` MUST ir sin credenciales. La API
@@ -134,4 +136,4 @@ comando, contrato versionado, idempotencia probada, cuarentena con motivo,
 aislamiento de replay, ausencia de secretos y ausencia de complejidad no
 justificada.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-11-02
+**Version**: 2.0.1 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-11-02
