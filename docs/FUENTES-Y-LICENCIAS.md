@@ -63,6 +63,19 @@ editorial de facto y no una posición oficial sobre territorios en disputa.
 | Leaflet | Mapa | BSD-2-Clause |
 | Teselas de fondo (se decide en la feature 006: OpenStreetMap o CARTO) | Fondo del mapa | OSM: ODbL, atribución «© OpenStreetMap contributors» y política de uso de teselas. CARTO: atribución «© CARTO» y límites de su plan gratuito. |
 
+## Skills de agente de terceros (`.cursor/skills/`)
+
+Copiadas sin modificar desde sus repositorios oficiales. Para actualizarlas,
+vuelve a copiar la carpeta desde un commit más reciente y actualiza esta tabla.
+
+| Skill | Repositorio | Commit | Licencia |
+| --- | --- | --- | --- |
+| `angular-developer`, `angular-new-app` | [angular/skills](https://github.com/angular/skills) | `2a2b801` | MIT (declarada en el `SKILL.md`) |
+| `frontend-design`, `webapp-testing` | [anthropics/skills](https://github.com/anthropics/skills) | `ca45fc4` | Apache 2.0 (`LICENSE.txt` incluido) |
+| `postgresql-best-practices` | [microsoft/postgres-skills](https://github.com/microsoft/postgres-skills) | `8066083` | MIT (`LICENSE` incluido) |
+
+Las skills `speckit-*` las genera GitHub Spec Kit 1.2.3 (MIT).
+
 ## Datos ficticios y sintéticos
 
 Cualquier evento ficticio (demo del mapa sin backend), caso dañado a propósito
