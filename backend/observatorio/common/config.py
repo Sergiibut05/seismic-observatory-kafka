@@ -6,6 +6,7 @@ nunca incluyen valores; la contraseña no aparece en `repr()` ni `str()`.
 
 import logging
 import os
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
@@ -110,9 +111,21 @@ class AjustesConsumidor(AjustesComunes):
         return (self.postgres.password,)
 
 
+ORIGEN_LOCAL = "http://localhost:4200"
+# `https://host[:puerto]`: sin ruta, sin `/` final y sin comodín.
+_ORIGEN_HTTPS = re.compile(r"https://[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:[0-9]{1,5})?")
+
+
 @dataclass(frozen=True)
 class AjustesApi(AjustesComunes):
     postgres: AjustesPostgres
+    # Origen exacto del panel en Netlify; vacío = solo `http://localhost:4200`.
+    cors_origen_netlify: str = ""
+    datos_desactualizados_segundos: int = 300
+
+    @property
+    def origenes_cors(self) -> list[str]:
+        return [ORIGEN_LOCAL] + ([self.cors_origen_netlify] if self.cors_origen_netlify else [])
 
     def secretos(self) -> tuple[str, ...]:
         return (self.postgres.password,)
@@ -184,9 +197,26 @@ def ajustes_consumidor(env: Mapping[str, str] | None = None) -> AjustesConsumido
     )
 
 
+def _origen_netlify(env: Mapping[str, str]) -> str:
+    valor = env.get("CORS_ORIGEN_NETLIFY") or ""
+    if not valor:
+        return ""
+    if not _ORIGEN_HTTPS.fullmatch(valor):
+        raise ConfigError("valor inválido en la variable CORS_ORIGEN_NETLIFY: debe ser https://host[:puerto], sin ruta, sin / final ni *")
+    port = valor.rpartition(":")[2]
+    if valor.count(":") == 2 and not 1 <= int(port) <= 65535:
+        raise ConfigError("valor inválido en la variable CORS_ORIGEN_NETLIFY: puerto fuera de rango")
+    return valor.lower()
+
+
 def ajustes_api(env: Mapping[str, str] | None = None) -> AjustesApi:
     env = os.environ if env is None else env
-    return AjustesApi(**_comunes(env), postgres=_postgres(env))
+    return AjustesApi(
+        **_comunes(env),
+        postgres=_postgres(env),
+        cors_origen_netlify=_origen_netlify(env),
+        datos_desactualizados_segundos=_entero(env, "DATOS_DESACTUALIZADOS_SEGUNDOS", 300, 60),
+    )
 
 
 def cargar_o_salir(servicio: str, fabrica: Callable[[], object]):

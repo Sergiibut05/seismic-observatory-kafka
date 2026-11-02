@@ -1,13 +1,20 @@
 openapi: 3.1.0
 info:
-  title: API del observatorio sísmico (feature 001, esqueleto)
-  version: 0.1.0
+  title: API del observatorio sísmico
+  version: 0.2.0
   description: |
-    Solo salud y estado. Ambos endpoints son **públicos** (pueden consultarse a través
-    del túnel) y devuelven únicamente información agregada: sin secretos, cadenas de
-    conexión ni detalles internos (FR-024). La API en producción NO sirve este documento
-    (`openapi_url=None`); es la fuente del contrato junto con `docs/CONTRATO-API.md`.
-    Las consultas analíticas son de la feature 005.
+    0.1.0 (feature 001): `/health` y `/status`. 0.2.0 (feature 005, **cambio aditivo**): consultas
+    analíticas de solo lectura, `/status` ampliado y CORS. Los campos de la 0.1.0 no cambian.
+
+    Todos los endpoints son **públicos** (pueden consultarse a través del túnel) y solo admiten `GET`
+    (y `OPTIONS` para CORS); cualquier otro método da 405. Devuelven información agregada o de eventos
+    sísmicos públicos: sin secretos, cadenas de conexión ni detalles internos. La API NO sirve este
+    documento (`openapi_url=None`, tampoco `/docs` ni `/redoc`); es la fuente del contrato junto con
+    `docs/CONTRATO-API.md`.
+
+    **Filtros comunes** (parámetros de consulta; desconocido o repetido = 400): `desde`/`hasta`,
+    `magnitud_min`/`magnitud_max`, `pais`, `subregion`, `incluir_sinteticos`. Toda cifra sale del
+    estado actual (una fila por evento), nunca de contar mensajes.
 servers:
   - url: http://127.0.0.1:8000
     description: Puerto publicado en el anfitrión (FR-022, FR-025)
@@ -38,8 +45,10 @@ paths:
       summary: Estado del sistema
       description: |
         Responde **siempre 200** mientras la API esté viva. Si la base de datos no responde,
-        `base_de_datos` vale `fallida`, los recuentos y el último evento son `null`
-        («no disponible»; nunca se sustituyen por 0).
+        `base_de_datos` vale `fallida` y todo dato de la base (recuentos, último evento,
+        `ultima_ingesta_correcta`, `periodo_consultado`, `datos_desactualizados`) es `null`
+        («no disponible»; nunca se sustituyen por 0). `umbral_datos_desactualizados_segundos`
+        es configuración y se informa siempre.
         Los recuentos son de **eventos** distintos (`event_id`), no de versiones, y los
         sintéticos nunca se suman a los reales.
       responses:
@@ -50,25 +59,35 @@ paths:
               schema: { $ref: "#/components/schemas/Status" }
               examples:
                 conBaseDeDatos:
-                  summary: Tras la prueba de humo
+                  summary: Datos recientes
                   value:
                     base_de_datos: conectada
-                    eventos_reales: 0
-                    eventos_sinteticos: 1
+                    eventos_reales: 254
+                    eventos_sinteticos: 2
                     ultimo_evento:
-                      event_id: synthetic-smoke-0001
-                      updated: "2026-01-01T00:00:00.000Z"
-                      source: synthetic-smoke
-                      sintetico: true
-                      processed_at: "2026-11-02T12:00:00.456Z"
-                    generated_at: "2026-11-02T12:00:05.000Z"
+                      event_id: mb90211798
+                      updated: "2026-11-02T15:59:20.370Z"
+                      source: usgs
+                      sintetico: false
+                      processed_at: "2026-11-02T16:00:27.936Z"
+                    ultima_ingesta_correcta: "2026-11-02T16:03:28.431Z"
+                    periodo_consultado:
+                      desde: "2026-11-01T15:04:56.675Z"
+                      hasta: "2026-11-02T15:47:36.330Z"
+                    datos_desactualizados: false
+                    umbral_datos_desactualizados_segundos: 300
+                    generated_at: "2026-11-02T16:03:31.832Z"
                 baseVacia:
-                  summary: Base conectada sin eventos
+                  summary: Base conectada sin eventos ni ingesta correcta
                   value:
                     base_de_datos: conectada
                     eventos_reales: 0
                     eventos_sinteticos: 0
                     ultimo_evento: null
+                    ultima_ingesta_correcta: null
+                    periodo_consultado: null
+                    datos_desactualizados: true
+                    umbral_datos_desactualizados_segundos: 300
                     generated_at: "2026-11-02T12:00:05.000Z"
                 baseCaida:
                   summary: PostgreSQL no responde
@@ -77,8 +96,349 @@ paths:
                     eventos_reales: null
                     eventos_sinteticos: null
                     ultimo_evento: null
+                    ultima_ingesta_correcta: null
+                    periodo_consultado: null
+                    datos_desactualizados: null
+                    umbral_datos_desactualizados_segundos: 300
                     generated_at: "2026-11-02T12:00:05.000Z"
+  /eventos:
+    get:
+      operationId: getEventos
+      summary: Lista paginada de eventos (tabla alternativa al mapa)
+      description: |
+        Orden `ocurrencia` descendente y `event_id` ascendente como desempate. `total` es el de eventos
+        que cumplen los filtros, no el de la página. Con filtro de magnitud, los eventos de magnitud
+        nula quedan fuera; sin él, entran con `magnitud: null`.
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+        - name: limite
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - name: desplazamiento
+          in: query
+          schema: { type: integer, minimum: 0, maximum: 100000, default: 0 }
+      responses:
+        "200":
+          description: Página de eventos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListaEventos" }
+              example:
+                eventos:
+                  - event_id: hv75067836
+                    ocurrencia: "2026-11-02T15:41:58.430Z"
+                    updated: "2026-11-02T15:45:31.280Z"
+                    magnitud: 2.1
+                    profundidad: 30.52
+                    longitud: -155.461
+                    latitud: 19.1575
+                    pais_codigo: null
+                    pais_nombre: Sin país asignado
+                    subregion: null
+                    sintetico: false
+                total: 254
+                limite: 100
+                desplazamiento: 0
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /eventos/mapa:
+    get:
+      operationId: getEventosMapa
+      summary: Eventos para el mapa (GeoJSON)
+      description: |
+        Mismos filtros que `/eventos`, sin paginar y con solo los campos del círculo y su ficha. Devuelve los
+        **más recientes** hasta un tope fijo (`limite`, 5000). Si hay más, `truncado=true` y `total` es el
+        total real: nunca un corte silencioso. Coordenadas `[longitud, latitud]`; la profundidad va en
+        `properties`.
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: FeatureCollection
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Mapa" }
+              example:
+                type: FeatureCollection
+                features:
+                  - type: Feature
+                    geometry: { type: Point, coordinates: [-155.461, 19.1575] }
+                    properties:
+                      event_id: hv75067836
+                      ocurrencia: "2026-11-02T15:41:58.430Z"
+                      updated: "2026-11-02T15:45:31.280Z"
+                      magnitud: 2.1
+                      profundidad: 30.52
+                      pais_nombre: Sin país asignado
+                      sintetico: false
+                total: 254
+                devueltos: 1
+                limite: 5000
+                truncado: false
+                generated_at: "2026-11-02T16:03:32.143Z"
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /recuentos/pais:
+    get:
+      operationId: getRecuentosPais
+      summary: Recuento de eventos por país
+      description: "«Sin país asignado» es una categoría más, con `codigo` null. Orden por recuento descendente."
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: Recuentos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecuentoPais" }
+              example:
+                total: 254
+                categorias:
+                  - { codigo: USA, nombre: Estados Unidos, recuento: 197 }
+                  - { codigo: null, nombre: Sin país asignado, recuento: 48 }
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /recuentos/subregion:
+    get:
+      operationId: getRecuentosSubregion
+      summary: Recuento de eventos por subregión
+      description: Los eventos sin país no tienen subregión y se cuentan como «Sin país asignado».
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: Recuentos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecuentoSubregion" }
+              example:
+                total: 254
+                categorias:
+                  - { nombre: Northern America, recuento: 198 }
+                  - { nombre: Sin país asignado, recuento: 48 }
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /recuentos/hora:
+    get:
+      operationId: getRecuentosHora
+      summary: Recuento por ventana fija de una hora UTC
+      description: |
+        Una ventana por cada hora UTC de `[desde, hasta)`, **con las horas de cero eventos incluidas**.
+        Sin `desde` ni `hasta`: últimas 24 h; solo `desde` llega hasta ahora; solo `hasta` retrocede 24 h.
+        Máximo 31 días (400 si se excede). La primera y la última ventana pueden ser parciales si
+        `desde`/`hasta` no son horas en punto. Un evento a las 10:59:59.999Z y otro a las 11:00:00.000Z
+        caen en ventanas distintas.
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: Ventanas horarias
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecuentoHora" }
+              example:
+                desde: "2026-11-02T06:00:00.000Z"
+                hasta: "2026-11-02T09:00:00.000Z"
+                total: 3
+                ventanas:
+                  - { inicio: "2026-11-02T06:00:00.000Z", recuento: 0 }
+                  - { inicio: "2026-11-02T07:00:00.000Z", recuento: 2 }
+                  - { inicio: "2026-11-02T08:00:00.000Z", recuento: 1 }
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /distribuciones/magnitud:
+    get:
+      operationId: getDistribucionMagnitud
+      summary: Distribución de magnitudes
+      description: |
+        Intervalos fijos `<0, 0–1, …, 8–9, ≥9` (el primero y el último son abiertos; `[desde, hasta)`).
+        Un valor nulo no cae en ningún intervalo ni se cuenta como 0: va a `sin_valor`.
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: Distribución
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Distribucion" }
+              example:
+                unidad: magnitud
+                total: 254
+                sin_valor: 0
+                intervalos:
+                  - { desde: null, hasta: 0, etiqueta: "< 0", recuento: 1 }
+                  - { desde: 0, hasta: 1, etiqueta: "0–1", recuento: 46 }
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /distribuciones/profundidad:
+    get:
+      operationId: getDistribucionProfundidad
+      summary: Distribución de profundidades (km)
+      description: Intervalos fijos `<0, 0–10, 10–30, 30–70, 70–150, 150–300, 300–500, 500–700, ≥700` km. Nulos a `sin_valor`.
+      parameters:
+        - $ref: "#/components/parameters/desde"
+        - $ref: "#/components/parameters/hasta"
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+        - $ref: "#/components/parameters/incluir_sinteticos"
+      responses:
+        "200":
+          description: Distribución
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Distribucion" }
+              example:
+                unidad: km
+                total: 254
+                sin_valor: 0
+                intervalos:
+                  - { desde: null, hasta: 0, etiqueta: "< 0", recuento: 3 }
+                  - { desde: 0, hasta: 10, etiqueta: "0–10", recuento: 142 }
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
+  /comparacion-historica:
+    get:
+      operationId: getComparacionHistorica
+      summary: Últimas 24 h frente a la media diaria de 2025
+      description: |
+        Eventos reales de las últimas 24 h (`ventana_actual`, fija hasta `generated_at`) con magnitud
+        **mínima efectiva = máx(4, `magnitud_min`)** frente a la media diaria de 2025 con los mismos
+        filtros de magnitud, país y subregión. Denominador: 365 días, incluidos los de cero.
+        `cociente = eventos de 24 h / media_diaria`; es `null` si la media es 0 o si el histórico no está
+        cargado (`historico_2025.estado = no_cargado`, con `eventos` y `media_diaria` `null`). `desde`,
+        `hasta` e `incluir_sinteticos` no aplican (400). `aviso` va siempre.
+      parameters:
+        - $ref: "#/components/parameters/magnitud_min"
+        - $ref: "#/components/parameters/magnitud_max"
+        - $ref: "#/components/parameters/pais"
+        - $ref: "#/components/parameters/subregion"
+      responses:
+        "200":
+          description: Comparación
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Comparacion" }
+              examples:
+                cargado:
+                  value:
+                    ventana_actual: { desde: "2026-11-01T16:03:32.143Z", hasta: "2026-11-02T16:03:32.143Z", eventos: 30 }
+                    historico_2025: { estado: cargado, eventos: 18302, dias: 365, media_diaria: 50.1425 }
+                    cociente: 0.6
+                    filtros_efectivos: { magnitud_min: 4.0, magnitud_max: null, pais: null, subregion: null }
+                    aviso: "El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después."
+                    generated_at: "2026-11-02T16:03:32.143Z"
+                noCargado:
+                  value:
+                    ventana_actual: { desde: "2026-11-01T16:04:51.483Z", hasta: "2026-11-02T16:04:51.483Z", eventos: 0 }
+                    historico_2025: { estado: no_cargado, eventos: null, dias: 365, media_diaria: null }
+                    cociente: null
+                    filtros_efectivos: { magnitud_min: 4.0, magnitud_max: null, pais: null, subregion: null }
+                    aviso: "El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después. El histórico de 2025 no está cargado: no hay media ni cociente."
+                    generated_at: "2026-11-02T16:04:51.483Z"
+        "400": { $ref: "#/components/responses/ParametroInvalido" }
+        "503": { $ref: "#/components/responses/ServicioNoDisponible" }
+        "500": { $ref: "#/components/responses/ErrorInterno" }
 components:
+  parameters:
+    desde:
+      name: desde
+      in: query
+      description: Instante ISO 8601 con zona (`Z` u offset; un `+` va como `%2B`). Sobre `ocurrencia`, **inclusivo**. Sin zona = 400.
+      schema: { type: string, format: date-time }
+    hasta:
+      name: hasta
+      in: query
+      description: Instante ISO 8601 con zona. Sobre `ocurrencia`, **exclusivo**. Debe ser posterior a `desde`.
+      schema: { type: string, format: date-time }
+    magnitud_min:
+      name: magnitud_min
+      in: query
+      description: Número finito entre −10 y 10 (sin notación científica). Con filtro, la magnitud nula queda fuera.
+      schema: { type: number, minimum: -10, maximum: 10 }
+    magnitud_max:
+      name: magnitud_max
+      in: query
+      description: Número finito entre −10 y 10, no menor que `magnitud_min`.
+      schema: { type: number, minimum: -10, maximum: 10 }
+    pais:
+      name: pais
+      in: query
+      description: Código `ADM0_A3` (tres mayúsculas) o «Sin país asignado» (eventos sin polígono).
+      schema: { type: string, examples: [USA, Sin país asignado] }
+    subregion:
+      name: subregion
+      in: query
+      description: Subregión del catálogo (texto de hasta 80 caracteres, igualdad exacta) o «Sin país asignado». Con `pais`, se combinan con Y.
+      schema: { type: string, maxLength: 80 }
+    incluir_sinteticos:
+      name: incluir_sinteticos
+      in: query
+      description: "`true` incluye los eventos sintéticos (marcados con `sintetico: true`). Por defecto `false`: solo reales. Nunca se leen datos de reproducción."
+      schema: { type: string, enum: ["true", "false"], default: "false" }
+  responses:
+    ParametroInvalido:
+      description: Parámetro mal formado, desconocido o repetido. Sin detalles internos ni el valor recibido.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorParametro" }
+          example: { error: parametro_invalido, parametro: magnitud_min }
+    ServicioNoDisponible:
+      description: La base de datos no responde (o se agotó el tiempo). Nunca una lista vacía ni ceros.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorGenerico" }
+          example: { error: servicio_no_disponible }
+    ErrorInterno:
+      description: Fallo no previsto. Cuerpo genérico, sin trazas ni rutas.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorGenerico" }
+          example: { error: error_interno }
   schemas:
     Health:
       type: object
@@ -91,7 +451,16 @@ components:
     Status:
       type: object
       additionalProperties: false
-      required: [base_de_datos, eventos_reales, eventos_sinteticos, ultimo_evento, generated_at]
+      required:
+        - base_de_datos
+        - eventos_reales
+        - eventos_sinteticos
+        - ultimo_evento
+        - ultima_ingesta_correcta
+        - periodo_consultado
+        - datos_desactualizados
+        - umbral_datos_desactualizados_segundos
+        - generated_at
       properties:
         base_de_datos:
           type: string
@@ -109,10 +478,39 @@ components:
           oneOf:
             - type: "null"
             - $ref: "#/components/schemas/UltimoEvento"
+        ultima_ingesta_correcta:
+          type: [string, "null"]
+          format: date-time
+          description: |
+            0.2.0. Fin de la última consulta al feed de USGS con HTTP 200 y sin error (UTC). null si
+            todavía no hubo ninguna o la base no responde.
+        periodo_consultado:
+          description: |
+            0.2.0. Primera y última `ocurrencia` de los eventos **reales** del estado actual. null sin
+            eventos reales o si la base no responde.
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/Periodo"
+        datos_desactualizados:
+          type: [boolean, "null"]
+          description: |
+            0.2.0. `true` si no hay ingesta correcta o la última supera el umbral; `false` si es reciente;
+            null si la base no responde.
+        umbral_datos_desactualizados_segundos:
+          type: integer
+          minimum: 60
+          description: 0.2.0. Umbral configurado (`DATOS_DESACTUALIZADOS_SEGUNDOS`, defecto 300)
         generated_at:
           type: string
           format: date-time
           description: Instante de generación de la respuesta (UTC)
+    Periodo:
+      type: object
+      additionalProperties: false
+      required: [desde, hasta]
+      properties:
+        desde: { type: string, format: date-time }
+        hasta: { type: string, format: date-time }
     UltimoEvento:
       type: object
       additionalProperties: false
@@ -129,3 +527,186 @@ components:
           type: string
           format: date-time
           description: Instante de procesamiento por el consumidor (UTC)
+    EventoLista:
+      type: object
+      additionalProperties: false
+      required:
+        [event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_codigo, pais_nombre, subregion, sintetico]
+      properties:
+        event_id: { type: string }
+        ocurrencia: { type: string, format: date-time, description: Instante del evento (UTC) }
+        updated: { type: string, format: date-time, description: Versión del evento (UTC) }
+        magnitud: { type: [number, "null"], description: "null = USGS no la informa; nunca 0" }
+        profundidad: { type: [number, "null"], description: "Kilómetros; null = sin valor; los negativos son válidos" }
+        longitud: { type: number }
+        latitud: { type: number }
+        pais_codigo: { type: [string, "null"], description: "`ADM0_A3`; null = sin país asignado" }
+        pais_nombre: { type: string, description: "«Sin país asignado» si no hay polígono" }
+        subregion: { type: [string, "null"], description: "null si no hay país" }
+        sintetico: { type: boolean }
+    ListaEventos:
+      type: object
+      additionalProperties: false
+      required: [eventos, total, limite, desplazamiento]
+      properties:
+        eventos:
+          type: array
+          items: { $ref: "#/components/schemas/EventoLista" }
+        total: { type: integer, minimum: 0, description: Eventos que cumplen los filtros (no los de la página) }
+        limite: { type: integer }
+        desplazamiento: { type: integer }
+    Mapa:
+      type: object
+      required: [type, features, total, devueltos, limite, truncado, generated_at]
+      properties:
+        type: { const: FeatureCollection }
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: { const: Feature }
+              geometry:
+                type: object
+                required: [type, coordinates]
+                properties:
+                  type: { const: Point }
+                  coordinates:
+                    type: array
+                    prefixItems: [{ type: number }, { type: number }]
+                    minItems: 2
+                    maxItems: 2
+                    description: "[longitud, latitud]"
+              properties:
+                type: object
+                required: [event_id, ocurrencia, updated, magnitud, profundidad, pais_nombre, sintetico]
+                properties:
+                  event_id: { type: string }
+                  ocurrencia: { type: string, format: date-time }
+                  updated: { type: string, format: date-time }
+                  magnitud: { type: [number, "null"] }
+                  profundidad: { type: [number, "null"] }
+                  pais_nombre: { type: string }
+                  sintetico: { type: boolean }
+        total: { type: integer, minimum: 0, description: Total real que cumple los filtros }
+        devueltos: { type: integer, minimum: 0 }
+        limite: { type: integer, description: Tope fijo (5000) }
+        truncado: { type: boolean, description: "`true` si hay más eventos que `devueltos`" }
+        generated_at: { type: string, format: date-time }
+    RecuentoPais:
+      type: object
+      additionalProperties: false
+      required: [total, categorias]
+      properties:
+        total: { type: integer, minimum: 0 }
+        categorias:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [codigo, nombre, recuento]
+            properties:
+              codigo: { type: [string, "null"], description: "`ADM0_A3`; null para «Sin país asignado»" }
+              nombre: { type: string }
+              recuento: { type: integer, minimum: 0 }
+    RecuentoSubregion:
+      type: object
+      additionalProperties: false
+      required: [total, categorias]
+      properties:
+        total: { type: integer, minimum: 0 }
+        categorias:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [nombre, recuento]
+            properties:
+              nombre: { type: string }
+              recuento: { type: integer, minimum: 0 }
+    RecuentoHora:
+      type: object
+      additionalProperties: false
+      required: [desde, hasta, total, ventanas]
+      properties:
+        desde: { type: string, format: date-time, description: Ventana efectiva (incluye los valores por defecto) }
+        hasta: { type: string, format: date-time }
+        total: { type: integer, minimum: 0 }
+        ventanas:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [inicio, recuento]
+            properties:
+              inicio: { type: string, format: date-time, description: Hora UTC en punto }
+              recuento: { type: integer, minimum: 0, description: "0 si no hubo eventos" }
+    Distribucion:
+      type: object
+      additionalProperties: false
+      required: [unidad, total, sin_valor, intervalos]
+      properties:
+        unidad: { type: string, enum: [magnitud, km] }
+        total: { type: integer, minimum: 0, description: Intervalos más `sin_valor` }
+        sin_valor: { type: integer, minimum: 0 }
+        intervalos:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [desde, hasta, etiqueta, recuento]
+            properties:
+              desde: { type: [number, "null"], description: "Inclusivo; null en el primer intervalo (abierto)" }
+              hasta: { type: [number, "null"], description: "Exclusivo; null en el último intervalo (abierto)" }
+              etiqueta: { type: string }
+              recuento: { type: integer, minimum: 0 }
+    Comparacion:
+      type: object
+      additionalProperties: false
+      required: [ventana_actual, historico_2025, cociente, filtros_efectivos, aviso, generated_at]
+      properties:
+        ventana_actual:
+          type: object
+          additionalProperties: false
+          required: [desde, hasta, eventos]
+          properties:
+            desde: { type: string, format: date-time }
+            hasta: { type: string, format: date-time }
+            eventos: { type: integer, minimum: 0 }
+        historico_2025:
+          type: object
+          additionalProperties: false
+          required: [estado, eventos, dias, media_diaria]
+          properties:
+            estado: { type: string, enum: [cargado, no_cargado] }
+            eventos: { type: [integer, "null"], minimum: 0, description: "null si no está cargado" }
+            dias: { const: 365 }
+            media_diaria: { type: [number, "null"], minimum: 0, description: "eventos / 365; 0 con filtros sin eventos en 2025; null si no está cargado" }
+        cociente:
+          type: [number, "null"]
+          description: "`ventana_actual.eventos / media_diaria`; null si la media es 0 o no está cargado"
+        filtros_efectivos:
+          type: object
+          additionalProperties: false
+          required: [magnitud_min, magnitud_max, pais, subregion]
+          properties:
+            magnitud_min: { type: number, description: máx(4, pedida) }
+            magnitud_max: { type: [number, "null"] }
+            pais: { type: [string, "null"] }
+            subregion: { type: [string, "null"] }
+        aviso: { type: string, description: Siempre presente; el último periodo puede estar incompleto }
+        generated_at: { type: string, format: date-time }
+    ErrorParametro:
+      type: object
+      additionalProperties: false
+      required: [error, parametro]
+      properties:
+        error: { const: parametro_invalido }
+        parametro: { type: string }
+    ErrorGenerico:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error: { type: string, enum: [servicio_no_disponible, error_interno] }

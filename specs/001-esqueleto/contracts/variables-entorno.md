@@ -18,7 +18,9 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 | `TOPIC_PARTITIONS` | producer | `3` | no | `.env` | Particiones al crear el topic |
 | `TOPIC_RETENTION_MS` | producer | `604800000` (7 días) | no | `.env` | `retention.ms` del topic; entero > 0 (finito). `segment.ms` = `min(TOPIC_RETENTION_MS, 86400000)` |
 | `CONSUMER_GROUP` | consumer | `consumidor-live` | no | `.env` | `group_id` de Kafka |
-| `CATALOGO_PATH` | consumer | `/catalogo/paises.geojson` | no | compose | Ruta (en el contenedor) del catálogo, montado en solo lectura |
+| `CATALOGO_PATH` | consumer, producer (solo `historico_cargar`) | `/catalogo/paises.geojson` | no | compose | Ruta (en el contenedor) del catálogo, montado en solo lectura. El productor lo monta desde la feature 005 para asignar país al cargar 2025 |
+| `HISTORICO_DIR` | producer (comandos sueltos) | `/data/historico` | no | comando | Carpeta del histórico (`<HISTORICO_DIR>/2025/eventos.geojson`); la lee `python -m observatorio.historico_cargar` (feature 005) |
+| `HISTORICO_CONEXION_SEGUNDOS` | producer (`historico_cargar`) | `30` | no | `.env` | Segundos máximos esperando a PostgreSQL; si se agotan, el cargador sale con código 1 |
 | `RETRY_INITIAL_SECONDS` | producer, consumer, api | `1` | no | `.env` | Primera espera del backoff |
 | `RETRY_FACTOR` | producer, consumer, api | `2` | no | `.env` | Factor multiplicador |
 | `RETRY_MAX_SECONDS` | producer, consumer, api | `30` | no | `.env` | Tope de espera |
@@ -32,6 +34,8 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 | `FEED_DIR` | producer | `/data/usgs` | no | compose | Carpeta del GeoJSON original (montada desde `data/usgs`) |
 | `FEED_RETENTION_HOURS` | producer | `48` | no | `.env` | Horas que se conservan las copias del original |
 | `LOG_LEVEL` | producer, consumer, api | `INFO` | no | `.env` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `CORS_ORIGEN_NETLIFY` | api | — (vacía) | no | `.env` | Origen exacto del panel en Netlify (feature 005): `https://host[:puerto]`, sin ruta, sin `/` final y sin `*`; si no, `ConfigError` (código 2, sin mostrar el valor). Vacía = solo `http://localhost:4200` y un aviso en el log. Sin credenciales CORS |
+| `DATOS_DESACTUALIZADOS_SEGUNDOS` | api | `300` | no | `.env` | Segundos sin consulta correcta a USGS (HTTP 200 y sin error) a partir de los cuales `/status` da `datos_desactualizados=true`; entero ≥ 60 (el productor consulta cada 60 s) |
 
 Reglas:
 

@@ -88,6 +88,7 @@ services:
     volumes:
       - ./data/usgs:/data/usgs
       - ./data/historico:/data/historico
+      - ./catalogo:/catalogo:ro
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
@@ -103,6 +104,7 @@ services:
       POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-60}
       HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-30}
       FEED_DIR: /data/usgs
+      CATALOGO_PATH: /catalogo/paises.geojson
       FEED_RETENTION_HOURS: ${FEED_RETENTION_HOURS:-48}
       RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
       RETRY_FACTOR: ${RETRY_FACTOR:-2}
@@ -154,6 +156,8 @@ services:
       HEALTH_PROBE_INTERVAL_SECONDS: ${HEALTH_PROBE_INTERVAL_SECONDS:-5}
       PROBE_FALLOS_REINICIO: ${PROBE_FALLOS_REINICIO:-3}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      CORS_ORIGEN_NETLIFY: ${CORS_ORIGEN_NETLIFY:-}
+      DATOS_DESACTUALIZADOS_SEGUNDOS: ${DATOS_DESACTUALIZADOS_SEGUNDOS:-300}
       # La API sirve su /health en el 8000; el healthcheck solo lee HEALTH_PORT.
       HEALTH_PORT: "8000"
 

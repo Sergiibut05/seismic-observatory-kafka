@@ -224,6 +224,7 @@ _DDL = (
     """,
     "CREATE INDEX IF NOT EXISTS evento_actual_pais_ocurrencia_idx ON live.evento_actual (pais_nombre, ocurrencia)",
     "CREATE INDEX IF NOT EXISTS evento_replay_pais_ocurrencia_idx ON replay.evento_actual (pais_nombre, ocurrencia)",
+    "CREATE INDEX IF NOT EXISTS evento_actual_ocurrencia_idx ON live.evento_actual (ocurrencia DESC, event_id)",
     "INSERT INTO ingesta.version_esquema (version, nombre) VALUES (4, 'estado_actual') ON CONFLICT (version) DO NOTHING",
 )
 

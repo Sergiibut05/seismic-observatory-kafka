@@ -215,3 +215,67 @@ def test_ajustes_inmutables():
 def test_los_tres_servicios_leen_probe_fallos_reinicio(fabrica):
     assert fabrica(entorno()).probe_fallos_reinicio == 3
     assert fabrica(entorno(PROBE_FALLOS_REINICIO="5")).probe_fallos_reinicio == 5
+
+
+# --- API: CORS y umbral de datos desactualizados (feature 005) -------------
+
+
+def test_api_sin_origen_netlify_solo_admite_localhost():
+    a = ajustes_api(entorno())
+    assert a.cors_origen_netlify == ""
+    assert a.origenes_cors == ["http://localhost:4200"]
+    assert ajustes_api(entorno(CORS_ORIGEN_NETLIFY="")).origenes_cors == ["http://localhost:4200"]
+
+
+def test_api_con_origen_netlify_admite_los_dos():
+    a = ajustes_api(entorno(CORS_ORIGEN_NETLIFY="https://observatorio-sismico.netlify.app"))
+    assert a.origenes_cors == ["http://localhost:4200", "https://observatorio-sismico.netlify.app"]
+
+
+def test_origen_netlify_con_puerto_y_mayusculas():
+    a = ajustes_api(entorno(CORS_ORIGEN_NETLIFY="https://Panel.Netlify.app:8443"))
+    assert a.cors_origen_netlify == "https://panel.netlify.app:8443"
+
+
+@pytest.mark.parametrize(
+    "valor",
+    [
+        "*",
+        "https://*.netlify.app",
+        "https://panel.netlify.app/",
+        "https://panel.netlify.app/ruta",
+        "http://panel.netlify.app",
+        "panel.netlify.app",
+        "https://",
+        "https://panel.netlify.app:99999",
+        "https://panel.netlify.app:0",
+        "https://panel.netlify.app\n",
+        "https://panel netlify.app",
+    ],
+)
+def test_origen_netlify_invalido_nombra_la_variable_y_no_el_valor(valor):
+    with pytest.raises(ConfigError) as exc:
+        ajustes_api(entorno(CORS_ORIGEN_NETLIFY=valor))
+    mensaje = str(exc.value)
+    assert "CORS_ORIGEN_NETLIFY" in mensaje
+    # El texto de ayuda menciona `https://` y `*`; cualquier otro valor no debe aparecer.
+    assert valor.strip() in ("*", "https://") or valor.strip() not in mensaje
+    assert CONTRASENA not in mensaje
+
+
+def test_umbral_de_datos_desactualizados():
+    assert ajustes_api(entorno()).datos_desactualizados_segundos == 300
+    assert ajustes_api(entorno(DATOS_DESACTUALIZADOS_SEGUNDOS="")).datos_desactualizados_segundos == 300
+    assert ajustes_api(entorno(DATOS_DESACTUALIZADOS_SEGUNDOS="60")).datos_desactualizados_segundos == 60
+    assert ajustes_api(entorno(DATOS_DESACTUALIZADOS_SEGUNDOS="900")).datos_desactualizados_segundos == 900
+
+
+@pytest.mark.parametrize("valor", ["59", "0", "-1", "cinco", "1.5"])
+def test_umbral_invalido(valor):
+    with pytest.raises(ConfigError) as exc:
+        ajustes_api(entorno(DATOS_DESACTUALIZADOS_SEGUNDOS=valor))
+    assert "DATOS_DESACTUALIZADOS_SEGUNDOS" in str(exc.value)
+
+
+def test_el_resto_de_servicios_ignoran_las_variables_de_la_api():
+    assert ajustes_consumidor(entorno(CORS_ORIGEN_NETLIFY="*")).topic_live == "eventos.live"
