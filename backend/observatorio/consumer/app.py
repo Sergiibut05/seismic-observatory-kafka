@@ -16,8 +16,9 @@ from observatorio.common.db import Database, SinConexion
 from observatorio.common.health import EstadoSalud, servidor_salud
 from observatorio.common.kafka import abrir_admin, cerrar_sin_error, sonda_kafka, wait_for_topic
 from observatorio.common.logging import registrar
-from observatorio.common.parada import esperar, evento_de_parada, hasta_parada
+from observatorio.common.parada import esperar, evento_de_parada
 from observatorio.common.retry import Backoff, esperas, motivo_de, reintentar
+from observatorio.common.supervisor import supervisar
 from observatorio.consumer.decision import Aceptar, clasificar_error_bd, decidir, resultado_escritura
 from observatorio.consumer.persistencia import guardar_cuarentena, guardar_version
 
@@ -175,11 +176,45 @@ async def confirmar_offset(consumidor, registro, logger: logging.Logger = _log) 
     return True
 
 
-async def _consumir(ajustes: AjustesConsumidor, consumidor, db: Database, parada: asyncio.Event) -> None:
+class SesionConsumo:
+    """Referencia al `AIOKafkaConsumer` vigente: el supervisor lo sustituye al recrear la sesión."""
+
+    def __init__(self):
+        self.consumidor = None
+
+
+# Cada cuánto el bucle revisa si el supervisor ha recreado el consumidor mientras esperaba un mensaje.
+ESPERA_LECTURA = 2.0
+
+
+async def _abrir_sesion_kafka(ajustes: AjustesConsumidor, sesion: SesionConsumo) -> AIOKafkaConsumer:
+    """Espera el topic y abre el consumidor; se vuelve a llamar al recrear la sesión (T045)."""
+    await _esperar_topic(ajustes)
+    consumidor = await _abrir_consumidor(ajustes)
+    sesion.consumidor = consumidor
+    return consumidor
+
+
+async def _cerrar_sesion_kafka(consumidor, sesion: SesionConsumo) -> None:
+    if sesion.consumidor is consumidor:
+        sesion.consumidor = None
+    await cerrar_sin_error(consumidor)
+
+
+async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Database, parada: asyncio.Event) -> None:
     while not parada.is_set():
+        consumidor = sesion.consumidor
+        # Sin consumidor o sin PostgreSQL no se lee: así no se avanza ni se acumula nada en memoria.
+        if consumidor is None or not db.conectada:
+            await esperar(parada, 0.5)
+            continue
         try:
-            registro = await consumidor.getone()
+            registro = await asyncio.wait_for(consumidor.getone(), ESPERA_LECTURA)
+        except asyncio.TimeoutError:
+            continue  # sin mensajes: se revisa si la sesión sigue siendo la misma
         except Exception as exc:
+            if sesion.consumidor is not consumidor:
+                continue  # el supervisor lo cerró para recrearlo: no es un error nuevo
             registrar(_log, "error", nivel="ERROR", component="kafka", action="lectura", reason=motivo_de(exc))
             await esperar(parada, 1)
             continue
@@ -187,15 +222,8 @@ async def _consumir(ajustes: AjustesConsumidor, consumidor, db: Database, parada
         await confirmar_offset(consumidor, registro)
 
 
-async def _sondear(ajustes: AjustesConsumidor, consumidor, db: Database, estado: EstadoSalud, parada: asyncio.Event):
-    while not await esperar(parada, ajustes.health_probe_interval_seconds):
-        await db.sonda()
-        try:
-            await sonda_kafka(consumidor.topics)
-            estado.marcar("kafka", True)
-        except Exception as exc:
-            registrar(_log, "error", nivel="WARNING", component="kafka", reason=motivo_de(exc))
-            estado.marcar("kafka", False)
+async def _sondear_kafka(consumidor) -> None:
+    await sonda_kafka(consumidor.topics)
 
 
 async def ejecutar(ajustes: AjustesConsumidor) -> None:
@@ -204,7 +232,7 @@ async def ejecutar(ajustes: AjustesConsumidor) -> None:
     registrar(_log, "iniciado", component="consumer")
     servidor = await servidor_salud(estado, ajustes.health_port)
     db = Database.desde_ajustes(ajustes.postgres, ajustes.backoff, estado=estado)
-    consumidor = None
+    sesion = SesionConsumo()
     try:
         # El catálogo se valida antes de conectar con PostgreSQL o Kafka (R-18).
         try:
@@ -232,25 +260,39 @@ async def ejecutar(ajustes: AjustesConsumidor) -> None:
         )
         estado.marcar("catalogo", True)
 
-        _, parado = await hasta_parada(db.conectar(), parada)
-        if parado:
-            return
+        async def abrir_db() -> Database:
+            await db.conectar()
+            return db
 
-        _, parado = await hasta_parada(_esperar_topic(ajustes), parada)
-        if parado:
-            return
-        consumidor, parado = await hasta_parada(
-            reintentar(lambda: _abrir_consumidor(ajustes), dependency="kafka", config=ajustes.backoff, logger=_log),
-            parada,
-        )
-        if parado:
-            return
-        estado.marcar("kafka", True)
-        registrar(_log, "listo", component="kafka", topic=ajustes.topic_live, group=ajustes.consumer_group)
+        async def sondear_db(base: Database) -> bool:
+            return await base.sonda()
 
+        # Un supervisor por dependencia: reconectan con backoff sin reiniciar el contenedor (T045).
         tareas = {
-            asyncio.create_task(_consumir(ajustes, consumidor, db, parada)),
-            asyncio.create_task(_sondear(ajustes, consumidor, db, estado, parada)),
+            asyncio.create_task(
+                supervisar(
+                    abrir_db,
+                    sondear_db,
+                    "postgres",
+                    estado,
+                    ajustes,
+                    cerrar=Database.cerrar,
+                    logger=_log,
+                    registrar_listo=False,  # Database.conectar ya escribe su `result=listo`
+                )
+            ),
+            asyncio.create_task(
+                supervisar(
+                    lambda: _abrir_sesion_kafka(ajustes, sesion),
+                    _sondear_kafka,
+                    "kafka",
+                    estado,
+                    ajustes,
+                    cerrar=lambda consumidor: _cerrar_sesion_kafka(consumidor, sesion),
+                    logger=_log,
+                )
+            ),
+            asyncio.create_task(_consumir(ajustes, sesion, db, parada)),
         }
         espera_parada = asyncio.create_task(parada.wait())
         try:
@@ -266,6 +308,4 @@ async def ejecutar(ajustes: AjustesConsumidor) -> None:
     finally:
         registrar(_log, "detenido", component="consumer")
         servidor.close()
-        if consumidor is not None:
-            await cerrar_sin_error(consumidor)
         await db.cerrar()

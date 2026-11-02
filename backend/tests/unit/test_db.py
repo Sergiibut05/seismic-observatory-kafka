@@ -355,3 +355,51 @@ def test_cerrar_cierra_la_conexion(logger):
     asyncio.run(escenario())
     assert conexion.cerrada
     assert not db.conectada
+
+# --- conexión concurrente e idempotente (supervisor + bucle de consumo) ---
+
+
+def test_conectar_con_conexion_abierta_no_abre_otra(logger):
+    fabrica = fabrica_con(ConexionFalsa())
+    db, _ = crear(fabrica, logger)
+
+    async def principal():
+        await db.conectar()
+        await db.conectar()
+
+    asyncio.run(principal())
+    assert len(fabrica.llamadas) == 1
+
+
+def test_dos_conectar_concurrentes_abren_una_sola_conexion(logger):
+    fabrica_base = fabrica_con(ConexionFalsa(), ConexionFalsa())
+    llamadas = []
+
+    async def fabrica():
+        llamadas.append(1)
+        await asyncio.sleep(0.05)
+        return await fabrica_base()
+
+    db, _ = crear(fabrica, logger)
+
+    async def principal():
+        await asyncio.gather(db.conectar(), db.conectar(), db.conectar())
+
+    asyncio.run(principal())
+    assert len(llamadas) == 1
+    assert db.conectada
+
+
+def test_tras_perder_la_conexion_conectar_vuelve_a_abrir(logger):
+    primera, segunda = ConexionFalsa(falla_sonda=True), ConexionFalsa()
+    db, _ = crear(fabrica_con(primera, segunda), logger)
+
+    async def principal():
+        await db.conectar()
+        assert await db.sonda() is False
+        assert not db.conectada
+        await db.conectar()
+
+    asyncio.run(principal())
+    assert db.conectada
+    assert primera.cerrada

@@ -8,8 +8,8 @@ from observatorio.common.config import AjustesProductor
 from observatorio.common.health import EstadoSalud, servidor_salud
 from observatorio.common.kafka import abrir_admin, cerrar_sin_error, ensure_topic, sonda_kafka
 from observatorio.common.logging import registrar
-from observatorio.common.parada import esperar, evento_de_parada, hasta_parada
-from observatorio.common.retry import motivo_de, reintentar
+from observatorio.common.parada import evento_de_parada, hasta_parada
+from observatorio.common.supervisor import supervisar
 
 _log = logging.getLogger("observatorio.producer")
 
@@ -34,39 +34,32 @@ async def _abrir_kafka(ajustes: AjustesProductor) -> AIOKafkaProducer:
     return productor
 
 
+async def _sondear(productor: AIOKafkaProducer) -> None:
+    """Pide metadatos al broker con límite de tiempo; lanza si no responde."""
+    await sonda_kafka(productor.client.fetch_all_metadata)
+
+
 async def ejecutar(ajustes: AjustesProductor) -> None:
     estado = EstadoSalud(["kafka"])
     parada = evento_de_parada()
     registrar(_log, "iniciado", component="producer")
     servidor = await servidor_salud(estado, ajustes.health_port)
-    productor = None
     try:
-        # Los reintentos se abandonan si llega una orden de parada.
-        productor, parado = await hasta_parada(
-            reintentar(lambda: _abrir_kafka(ajustes), dependency="kafka", config=ajustes.backoff, logger=_log),
+        # El supervisor abre la sesión (topic + productor) con backoff, la sondea y, tras
+        # PROBE_FALLOS_REINICIO fallos seguidos, la recrea volviendo a ejecutar `ensure_topic`.
+        # La feature 002 sustituirá este reposo por el ciclo de USGS usando la misma sesión.
+        await hasta_parada(
+            supervisar(
+                lambda: _abrir_kafka(ajustes),
+                _sondear,
+                "kafka",
+                estado,
+                ajustes,
+                cerrar=cerrar_sin_error,
+                logger=_log,
+            ),
             parada,
         )
-        if parado:
-            return
-        estado.marcar("kafka", True)
-        registrar(_log, "listo", component="kafka")
-
-        # Reposo con sonda periódica; la feature 002 sustituirá el reposo por el ciclo de USGS.
-        sano = True
-        while not await esperar(parada, ajustes.health_probe_interval_seconds):
-            try:
-                await sonda_kafka(productor.client.fetch_all_metadata)
-            except Exception as exc:
-                if sano:
-                    registrar(_log, "error", nivel="WARNING", component="kafka", reason=motivo_de(exc))
-                sano = False
-            else:
-                if not sano:
-                    registrar(_log, "listo", component="kafka")
-                sano = True
-            estado.marcar("kafka", sano)
     finally:
         registrar(_log, "detenido", component="producer")
         servidor.close()
-        if productor is not None:
-            await cerrar_sin_error(productor)

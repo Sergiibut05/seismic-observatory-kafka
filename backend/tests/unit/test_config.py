@@ -209,3 +209,8 @@ def test_ajustes_inmutables():
     a = ajustes_consumidor(entorno())
     with pytest.raises(Exception):
         a.topic_live = "otro"
+
+@pytest.mark.parametrize("fabrica", [ajustes_productor, ajustes_consumidor, ajustes_api])
+def test_los_tres_servicios_leen_probe_fallos_reinicio(fabrica):
+    assert fabrica(entorno()).probe_fallos_reinicio == 3
+    assert fabrica(entorno(PROBE_FALLOS_REINICIO="5")).probe_fallos_reinicio == 5

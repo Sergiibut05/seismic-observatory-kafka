@@ -63,6 +63,7 @@ class Database:
         self.timeout_sonda = timeout_sonda
         self._conn = None
         self._lock = asyncio.Lock()
+        self._lock_conexion = asyncio.Lock()
 
     @classmethod
     def desde_ajustes(cls, ajustes: AjustesPostgres, backoff: Backoff, **kwargs) -> "Database":
@@ -104,16 +105,23 @@ class Database:
         self._conn = conn
 
     async def conectar(self) -> None:
-        """Abre la conexión con backoff; vuelve solo cuando está establecida y el esquema es válido."""
-        await reintentar(
-            self._abrir,
-            dependency="postgres",
-            config=self._backoff,
-            sleep=self._sleep,
-            logger=self._logger,
-        )
-        self._marcar(True)
-        registrar(self._logger, "listo", component="postgres")
+        """Abre la conexión con backoff; vuelve solo cuando está establecida y el esquema es válido.
+
+        Es idempotente y segura ante llamadas concurrentes (supervisor y bucle de consumo): quien
+        llega mientras otro conecta espera y, si ya hay conexión, no abre una segunda.
+        """
+        async with self._lock_conexion:
+            if self._conn is not None:
+                return
+            await reintentar(
+                self._abrir,
+                dependency="postgres",
+                config=self._backoff,
+                sleep=self._sleep,
+                logger=self._logger,
+            )
+            self._marcar(True)
+            registrar(self._logger, "listo", component="postgres")
 
     async def _perder(self) -> None:
         conn, self._conn = self._conn, None

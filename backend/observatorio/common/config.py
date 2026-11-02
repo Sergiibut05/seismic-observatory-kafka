@@ -70,6 +70,7 @@ class AjustesComunes:
     retry_factor: float
     retry_max_seconds: float
     health_probe_interval_seconds: int
+    probe_fallos_reinicio: int
     health_port: int
 
     @property
@@ -84,7 +85,6 @@ class AjustesProductor(AjustesComunes):
     topic_partitions: int
     topic_retention_ms: int
     smoke_timeout_seconds: int
-    probe_fallos_reinicio: int
 
     def secretos(self) -> tuple[str, ...]:
         return ()
@@ -96,7 +96,6 @@ class AjustesConsumidor(AjustesComunes):
     topic_live: str
     consumer_group: str
     catalogo_path: str
-    probe_fallos_reinicio: int
     postgres: AjustesPostgres
 
     def secretos(self) -> tuple[str, ...]:
@@ -126,6 +125,7 @@ def _comunes(env: Mapping[str, str]) -> dict:
         "retry_factor": factor,
         "retry_max_seconds": tope,
         "health_probe_interval_seconds": _entero(env, "HEALTH_PROBE_INTERVAL_SECONDS", 5),
+        "probe_fallos_reinicio": _entero(env, "PROBE_FALLOS_REINICIO", 3),
         "health_port": _entero(env, "HEALTH_PORT", 8081, 1, 65535),
     }
 
@@ -149,7 +149,6 @@ def ajustes_productor(env: Mapping[str, str] | None = None) -> AjustesProductor:
         topic_partitions=_entero(env, "TOPIC_PARTITIONS", 3),
         topic_retention_ms=_entero(env, "TOPIC_RETENTION_MS", 604_800_000),
         smoke_timeout_seconds=_entero(env, "SMOKE_TIMEOUT_SECONDS", 30),
-        probe_fallos_reinicio=_entero(env, "PROBE_FALLOS_REINICIO", 3),
     )
 
 
@@ -161,7 +160,6 @@ def ajustes_consumidor(env: Mapping[str, str] | None = None) -> AjustesConsumido
         topic_live=_texto(env, "TOPIC_LIVE", "eventos.live"),
         consumer_group=_texto(env, "CONSUMER_GROUP", "consumidor-live"),
         catalogo_path=_texto(env, "CATALOGO_PATH", "/catalogo/paises.geojson"),
-        probe_fallos_reinicio=_entero(env, "PROBE_FALLOS_REINICIO", 3),
         postgres=_postgres(env),
     )
 

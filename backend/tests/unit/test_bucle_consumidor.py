@@ -230,9 +230,100 @@ def test_el_commit_del_offset_es_posterior_a_la_escritura(escrituras, monkeypatc
     async def principal():
         consumidor = ConsumidorFalso([registro(offset=0), registro(valor=b"{roto", clave=b"k", offset=1)], parada, eventos=eventos)
         ajustes = SimpleNamespace(backoff=BACKOFF)
-        await consumidor_app._consumir(ajustes, consumidor, BdFalsa(), parada)
+        await consumidor_app._consumir(ajustes, SimpleNamespace(consumidor=consumidor), BdFalsa(), parada)
         return consumidor
 
     consumidor = asyncio.run(principal())
     assert eventos == ["guardar_version", "commit", "guardar_cuarentena", "commit"]
     assert [list(c.values())[0] for c in consumidor.commits] == [1, 2]
+
+
+# --- bucle ante sesiones recreadas por el supervisor (US3) ----------------
+
+
+def test_sin_postgres_no_se_lee_ningun_mensaje(escrituras):
+    parada = asyncio.Event()
+
+    async def principal():
+        consumidor = ConsumidorFalso([registro()], parada)
+        db = BdFalsa(conectada=False)
+
+        async def conectar_despues():
+            await asyncio.sleep(0.05)
+            assert consumidor._registros, "se leyó antes de tener PostgreSQL"
+            db.conectada = True
+
+        ajustes = SimpleNamespace(backoff=BACKOFF)
+        await asyncio.gather(
+            consumidor_app._consumir(ajustes, SimpleNamespace(consumidor=consumidor), db, parada),
+            conectar_despues(),
+        )
+        return consumidor
+
+    consumidor = asyncio.run(principal())
+    assert escrituras.llamadas == ["guardar_version"]
+    assert len(consumidor.commits) == 1
+
+
+def test_sin_consumidor_espera_a_que_el_supervisor_lo_abra(escrituras):
+    parada = asyncio.Event()
+
+    async def principal():
+        sesion = SimpleNamespace(consumidor=None)
+        consumidor = ConsumidorFalso([registro()], parada)
+
+        async def abrir_despues():
+            await asyncio.sleep(0.05)
+            sesion.consumidor = consumidor
+
+        ajustes = SimpleNamespace(backoff=BACKOFF)
+        await asyncio.gather(consumidor_app._consumir(ajustes, sesion, BdFalsa(), parada), abrir_despues())
+        return consumidor
+
+    consumidor = asyncio.run(principal())
+    assert len(consumidor.commits) == 1
+
+
+def test_un_error_de_lectura_de_un_consumidor_sustituido_no_se_registra(escrituras, logger, salida, monkeypatch):
+    monkeypatch.setattr(consumidor_app, "_log", logger)
+    parada = asyncio.Event()
+
+    class Cerrado:
+        async def getone(self):
+            sesion.consumidor = nuevo  # el supervisor lo recrea mientras se esperaba
+            raise RuntimeError("consumidor detenido")
+
+    nuevo = ConsumidorFalso([registro()], parada)
+    sesion = SimpleNamespace(consumidor=Cerrado())
+
+    async def principal():
+        ajustes = SimpleNamespace(backoff=BACKOFF)
+        await consumidor_app._consumir(ajustes, sesion, BdFalsa(), parada)
+
+    asyncio.run(principal())
+    assert "action=lectura" not in salida.getvalue()
+    assert len(nuevo.commits) == 1
+
+
+def test_un_error_de_lectura_con_el_mismo_consumidor_se_registra(escrituras, logger, salida, monkeypatch):
+    monkeypatch.setattr(consumidor_app, "_log", logger)
+    parada = asyncio.Event()
+
+    class Falla:
+        def __init__(self):
+            self.veces = 0
+
+        async def getone(self):
+            self.veces += 1
+            parada.set()
+            raise RuntimeError("fallo de lectura")
+
+    sesion = SimpleNamespace(consumidor=Falla())
+
+    async def principal():
+        ajustes = SimpleNamespace(backoff=BACKOFF)
+        await consumidor_app._consumir(ajustes, sesion, BdFalsa(), parada)
+
+    asyncio.run(principal())
+    assert "result=error" in salida.getvalue()
+    assert "action=lectura" in salida.getvalue()

@@ -14,6 +14,7 @@ from observatorio.common.config import AjustesApi
 from observatorio.common.db import Database
 from observatorio.common.health import EstadoSalud
 from observatorio.common.logging import registrar
+from observatorio.common.supervisor import supervisar
 
 _log = logging.getLogger("observatorio.api")
 
@@ -25,8 +26,27 @@ def crear_app(ajustes: AjustesApi, db: Database | None = None, estado: EstadoSal
     @asynccontextmanager
     async def ciclo_de_vida(_: FastAPI):
         registrar(_log, "iniciado", component="api")
-        # La API no aborta si PostgreSQL no está: conecta en segundo plano con backoff.
-        conexion = asyncio.create_task(db.conectar())
+        # La API no aborta si PostgreSQL no está: un supervisor conecta en segundo plano con backoff,
+        # sondea la conexión y la recupera sola (`/health` 503 y `/status` «fallida» mientras tanto).
+        async def abrir() -> Database:
+            await db.conectar()
+            return db
+
+        async def sondear(base: Database) -> bool:
+            return await base.sonda()
+
+        conexion = asyncio.create_task(
+            supervisar(
+                abrir,
+                sondear,
+                "postgres",
+                estado,
+                ajustes,
+                cerrar=Database.cerrar,
+                logger=_log,
+                registrar_listo=False,  # Database.conectar ya escribe su `result=listo`
+            )
+        )
         try:
             yield
         finally:

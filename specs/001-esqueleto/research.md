@@ -671,7 +671,7 @@ agente. Único fichero creado fuera de `specs/001-esqueleto/`: `docs/CONTRATO-AP
 
 | ID | Riesgo / duda | Mitigación o propuesta |
 | --- | --- | --- |
-| RK-01 | Comportamiento de aiokafka 0.15.0 al **reiniciar el broker con el cliente vivo** (reconexión del consumidor/grupo) | Supervisor con recreación de la sesión (R-13) + prueba de quickstart §3 (reiniciar `kafka`) |
+| RK-01 | Comportamiento de aiokafka 0.15.0 al **reiniciar el broker con el cliente vivo** (reconexión del consumidor/grupo) | Supervisor con recreación de la sesión (R-13) + prueba de quickstart §3 (reiniciar `kafka`). **Validado (T047, R-38):** con un reinicio corto aiokafka se reconecta solo; con una caída larga el supervisor recrea la sesión y el flujo se reanuda |
 | RK-02 | `describe_configs` justo tras `alter_configs` puede devolver el valor anterior | No se verifica en el acto; se comprueba con `kafka-configs.sh` |
 | RK-03 | `python:3.12-slim` y dependencias transitivas flotan | Fijar tag de parche/digest y `pip freeze` como restricciones en 007 si hace falta |
 | RK-04 | FR-012: ¿«reenviar el mismo mensaje rechazado» = reentrega o republicación? | **Resuelto**: idempotencia por posición Kafka (reentrega no duplica; republicación con otro offset crea otra entrada). Escrito en spec.md «Casos límite» |
@@ -724,3 +724,15 @@ Hallazgos de la validación de US2 (cifras en el informe de la tanda):
   §2.4 del quickstart lo recoge.
 - Tras volver PostgreSQL, el consumidor persiste el mensaje retenido (una sola vez) pero la API sigue en
   `base_de_datos: fallida` hasta reiniciarla: es el hueco que cubre US3 (T046).
+
+### Tanda 2 · US3 (T042–T047)
+
+| ID | Decisión | Motivo |
+| --- | --- | --- |
+| R-35 | `common/supervisor.py::supervisar(abrir_sesion, sonda, comprobacion, estado, config, *, cerrar, sleep, logger, registrar_listo)`: la apertura se reintenta con `reintentar()`; la sonda corre cada `HEALTH_PROBE_INTERVAL_SECONDS`; la comprobación pasa a rojo **al primer fallo** y la sesión se recrea tras `PROBE_FALLOS_REINICIO` fallos **consecutivos** (`result=info action=sesion_recreada fallos=3`). Un solo `WARNING` por caída (`result=error`) y un `result=listo` al recuperarse. Nunca llama a `sys.exit` | El contenedor no debe reiniciarse por una dependencia caída. `registrar_listo=False` en PostgreSQL porque `Database.conectar` ya escribe `result=listo component=postgres` |
+| R-36 | `PROBE_FALLOS_REINICIO` pasa a `AjustesComunes` (lo leen producer, consumer **y api**) y se añade al `compose.yaml` de la API | La API también supervisa PostgreSQL |
+| R-37 | `Database.conectar()` es idempotente y serializa llamadas concurrentes con un segundo `Lock` (`_lock_conexion`) | Supervisor y bucle de consumo pueden reconectar a la vez; sin el cerrojo se abriría una segunda conexión y se filtraría la primera |
+| R-38 | **RK-01 validado.** Reinicio corto de Kafka (2,2 s): aiokafka se reconecta solo, la sonda falla 1-2 veces (`reason=KafkaError`), sin recrear la sesión, `healthy` en 7 s. Caída larga (parado ≈ 75 s): tras 3 fallos seguidos (`reason=TimeoutError`) el supervisor recrea la sesión (productor: vuelve a ejecutar `ensure_topic`; consumidor: espera el topic y se reincorpora al grupo) y el evento siguiente se procesa. 0 reinicios de contenedor | No hizo falta ajustar T044/T045 |
+| R-39 | Consumidor: `SesionConsumo.consumidor` es la referencia vigente que el supervisor sustituye; `_consumir` lee con `wait_for(getone(), 2 s)` y revisa si la sesión cambió; no lee mientras `db.conectada` sea falso ni si no hay consumidor | `stop()` de un consumidor con un `getone()` pendiente no garantiza que éste termine; el límite evita bloqueos y los offsets no avanzan sin PostgreSQL. Un `commit` sobre un consumidor ya sustituido falla y se registra: el registro se reentrega y se omite como duplicado |
+
+Hallazgos de la validación de US3: con PostgreSQL parado, `unhealthy` aparece en 30,7 s (3 fallos del healthcheck de Docker); con las dos dependencias en rojo el consumidor tarda 19-34 s en volver a `healthy` (el último `wait_s` del backoff es 30 s). `topic_no_existe` solo aparece con volumen de Kafka vacío (en la validación el topic ya existía en el volumen).
