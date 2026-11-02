@@ -85,11 +85,23 @@ services:
   producer:
     <<: *backend
     command: ["python", "-m", "observatorio.producer"]
+    volumes:
+      - ./data/usgs:/data/usgs
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
       TOPIC_PARTITIONS: ${TOPIC_PARTITIONS:-3}
       TOPIC_RETENTION_MS: ${TOPIC_RETENTION_MS:-604800000}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una contraseña}"
+      USGS_FEED_URL: ${USGS_FEED_URL:-https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-60}
+      HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-30}
+      FEED_DIR: /data/usgs
+      FEED_RETENTION_HOURS: ${FEED_RETENTION_HOURS:-48}
       RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
       RETRY_FACTOR: ${RETRY_FACTOR:-2}
       RETRY_MAX_SECONDS: ${RETRY_MAX_SECONDS:-30}

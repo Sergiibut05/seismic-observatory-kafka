@@ -21,14 +21,14 @@ def entorno(**extra):
 # --- variable obligatoria -------------------------------------------------
 
 
-@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api])
+@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api, ajustes_productor])
 def test_falta_contrasena(fabrica):
     with pytest.raises(ConfigError) as exc:
         fabrica({})
     assert "POSTGRES_PASSWORD" in str(exc.value)
 
 
-@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api])
+@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api, ajustes_productor])
 def test_contrasena_vacia_equivale_a_ausente(fabrica):
     with pytest.raises(ConfigError) as exc:
         fabrica({"POSTGRES_PASSWORD": ""})
@@ -67,12 +67,17 @@ def test_defectos_del_consumidor():
 
 
 def test_defectos_del_productor():
-    a = ajustes_productor({})
+    a = ajustes_productor(entorno())
     assert a.kafka_bootstrap_servers == "kafka:19092"
     assert a.topic_live == "eventos.live"
     assert a.topic_partitions == 3
     assert a.topic_retention_ms == 604_800_000
     assert a.smoke_timeout_seconds == 30
+    assert a.poll_interval_seconds == 60
+    assert a.http_timeout_seconds == 30
+    assert a.feed_dir == "/data/usgs"
+    assert a.feed_retention_hours == 48
+    assert a.usgs_feed_url.endswith("/all_day.geojson")
     assert a.probe_fallos_reinicio == 3
     assert a.health_port == 8081
     assert a.log_level == "INFO"
@@ -162,31 +167,27 @@ def test_tope_menor_que_la_espera_inicial():
 )
 def test_valores_invalidos_del_productor(variable, valor):
     with pytest.raises(ConfigError) as exc:
-        ajustes_productor({variable: valor})
+        ajustes_productor(entorno(**{variable: valor}))
     assert variable in str(exc.value)
 
 
 def test_retencion_personalizada():
-    assert ajustes_productor({"TOPIC_RETENTION_MS": "3600000"}).topic_retention_ms == 3_600_000
+    assert ajustes_productor(entorno(TOPIC_RETENTION_MS="3600000")).topic_retention_ms == 3_600_000
 
 
-# --- el productor no lee credenciales de base de datos --------------------
+# --- el productor guarda el estado de lo publicado en PostgreSQL ----------
 
 
-def test_el_productor_no_exige_ni_lee_postgres():
-    a = ajustes_productor({})
-    assert not hasattr(a, "postgres")
-
-
-def test_el_productor_ignora_variables_postgres_invalidas():
-    # No debe validarlas: no las lee.
-    ajustes_productor({"POSTGRES_PORT": "no-numerico", "POSTGRES_PASSWORD": CONTRASENA})
+def test_el_productor_rechaza_un_puerto_de_postgres_invalido():
+    with pytest.raises(ConfigError) as exc:
+        ajustes_productor(entorno(POSTGRES_PORT="no-numerico"))
+    assert "POSTGRES_PORT" in str(exc.value)
 
 
 # --- los secretos no salen en repr/str ------------------------------------
 
 
-@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api])
+@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api, ajustes_productor])
 def test_repr_y_str_no_contienen_la_contrasena(fabrica):
     a = fabrica(entorno())
     assert CONTRASENA not in repr(a)
@@ -195,7 +196,7 @@ def test_repr_y_str_no_contienen_la_contrasena(fabrica):
     assert CONTRASENA not in str(a.postgres)
 
 
-@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api])
+@pytest.mark.parametrize("fabrica", [ajustes_consumidor, ajustes_api, ajustes_productor])
 def test_secretos_conocidos_para_redactar_logs(fabrica):
     assert CONTRASENA in fabrica(entorno()).secretos()
 

@@ -8,9 +8,8 @@ panel Angular + Leaflet publicado en Netlify.
 La pregunta que responde: **¿dónde se está registrando actividad sísmica y cómo
 se compara con un periodo histórico equivalente?**
 
-> Estado: feature `001-esqueleto` implementada (pila de cinco servicios, prueba de humo,
-> recuperación ante caídas y catálogo de países validado). USGS, replay, API analítica y panel
-> llegan en las features 002–006. El enunciado completo está en [docs/ENUNCIADO.md](docs/ENUNCIADO.md).
+> Estado: feature `002-ingesta-live`. El productor consulta USGS cada 60 s.
+> El histórico, la API analítica y el panel llegan en las features 004–006.
 
 ## Arquitectura
 
@@ -105,6 +104,27 @@ docker compose exec producer python -m observatorio.producer.smoke --unico      
 Invoke-RestMethod http://127.0.0.1:8000/status                                  # eventos_sinteticos
 ```
 
+### Ingesta USGS
+
+Con la pila en marcha el productor descarga solo el feed de las últimas 24 h
+(`USGS_FEED_URL`, cada `POLL_INTERVAL_SECONDS`). Publica los terremotos nuevos
+o revisados; si la misma versión ya tuvo acuse, el log dice `result=omitido`.
+
+```powershell
+docker compose logs producer --since 2m
+Invoke-RestMethod http://127.0.0.1:8000/status    # eventos_reales sube tras el primer ciclo
+```
+
+El GeoJSON original queda en `data/usgs/` (no se sube a Git). Una respuesta
+idéntica a la anterior no genera otra copia. Lo más viejo de
+`FEED_RETENTION_HOURS` (48 h) se borra. Cada consulta queda en
+`ingesta.consultas` y lo que no es `earthquake`, en `ingesta.exclusiones`.
+
+Que un evento deje de salir en el feed no lo borra: puede haber cumplido 24 h.
+Tampoco se reconcilian aquí los que USGS elimine o fusione fuera de la ventana.
+Si el productor estuvo parado más de 24 h, ese hueco se recupera con el
+catálogo FDSN (feature 004), no releyendo `all_day`.
+
 Eliminar solo los datos sintéticos (los reales no se tocan):
 
 ```powershell
@@ -155,7 +175,7 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | Feature | Alcance |
 | --- | --- |
 | 001-esqueleto | **Hecha.** Compose con los 5 servicios, healthchecks, esquema SQL, prueba de humo y recuperación ante caídas |
-| 002-ingesta-live | Productor USGS, estado de versiones publicadas, reintentos |
+| 002-ingesta-live | **Hecha.** Productor USGS, estado de versiones publicadas, reintentos |
 | 003-consumidor | Calidad, cuarentena, point-in-polygon, upsert por versión |
 | 004-historico-replay | Descarga 2025 y reproducción acelerada aislada |
 | 005-api | FastAPI, contrato, CORS |

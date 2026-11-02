@@ -7,11 +7,11 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 
 | Variable | Servicios | Defecto | Oblig. | Origen | Descripción |
 | --- | --- | --- | --- | --- | --- |
-| `POSTGRES_PASSWORD` | postgres, consumer, api | — | **sí** | `.env` | Contraseña de la base. `${POSTGRES_PASSWORD:?…}`: sin ella (o vacía) Compose falla nombrándola. **Sin valor por defecto** |
-| `POSTGRES_USER` | postgres, consumer, api | `observatorio` | no | `.env` | Usuario de la base |
-| `POSTGRES_DB` | postgres, consumer, api | `observatorio` | no | `.env` | Nombre de la base |
-| `POSTGRES_HOST` | consumer, api | `postgres` | no | compose | Nombre del servicio (FR-006) |
-| `POSTGRES_PORT` | consumer, api | `5432` | no | compose | Puerto interno (no se publica) |
+| `POSTGRES_PASSWORD` | postgres, producer, consumer, api | — | **sí** | `.env` | Contraseña de la base. `${POSTGRES_PASSWORD:?…}`: sin ella (o vacía) Compose falla nombrándola. **Sin valor por defecto** |
+| `POSTGRES_USER` | postgres, producer, consumer, api | `observatorio` | no | `.env` | Usuario de la base |
+| `POSTGRES_DB` | postgres, producer, consumer, api | `observatorio` | no | `.env` | Nombre de la base |
+| `POSTGRES_HOST` | producer, consumer, api | `postgres` | no | compose | Nombre del servicio (FR-006) |
+| `POSTGRES_PORT` | producer, consumer, api | `5432` | no | compose | Puerto interno (no se publica) |
 | `KAFKA_BOOTSTRAP_SERVERS` | producer, consumer | `kafka:19092` | no | compose | Listener **interno** (FR-006, FR-025) |
 | `TOPIC_LIVE` | producer, consumer | `eventos.live` | no | `.env` | Nombre del topic live |
 | `TOPIC_PARTITIONS` | producer | `3` | no | `.env` | Particiones al crear el topic |
@@ -25,12 +25,16 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 | `PROBE_FALLOS_REINICIO` | producer, consumer, api | `3` | no | `.env` | Fallos consecutivos de la sonda (Kafka en productor y consumidor; PostgreSQL en consumidor y API) tras los que se recrea la sesión |
 | `HEALTH_PORT` | producer, consumer, api (solo su healthcheck) | `8081` | no | compose | Puerto del `/health` que consulta `common/healthcheck.py` (siempre `http://127.0.0.1:<HEALTH_PORT>/health`, dentro del propio contenedor). En productor y consumidor es además el puerto del servidor de salud interno (no se publica); en la API `compose.yaml` lo fija a `8000` solo para el healthcheck, porque la API sirve su `/health` en 8000. **No existe `HEALTH_URL`**: la URL es una constante derivada, no configurable |
 | `SMOKE_TIMEOUT_SECONDS` | producer (humo) | `30` | no | `.env` | Tiempo máximo para obtener el acuse de Kafka en la prueba de humo |
+| `USGS_FEED_URL` | producer | feed `all_day.geojson` | no | `.env` | Feed USGS de las últimas 24 h (feature 002) |
+| `POLL_INTERVAL_SECONDS` | producer | `60` | no | `.env` | Segundos entre consultas al feed |
+| `HTTP_TIMEOUT_SECONDS` | producer | `30` | no | `.env` | Timeout de cada GET |
+| `FEED_DIR` | producer | `/data/usgs` | no | compose | Carpeta del GeoJSON original (montada desde `data/usgs`) |
+| `FEED_RETENTION_HOURS` | producer | `48` | no | `.env` | Horas que se conservan las copias del original |
 | `LOG_LEVEL` | producer, consumer, api | `INFO` | no | `.env` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
 
 Reglas:
 
 - Enteros y números se validan al arrancar (`RETRY_*` > 0, `RETRY_MAX_SECONDS ≥ RETRY_INITIAL_SECONDS`, `TOPIC_RETENTION_MS > 0`, `TOPIC_PARTITIONS ≥ 1`); un valor inválido falla nombrando la variable.
-- El **productor no recibe** ninguna variable `POSTGRES_*`; Kafka no recibe variables de la aplicación; PostgreSQL solo `POSTGRES_USER/DB/PASSWORD`.
+- El productor lee `POSTGRES_*` desde la 002 para recordar las versiones ya publicadas. La contraseña se redacta en los logs.
 - `CLUSTER_ID` de Kafka es una constante de `compose.yaml` (no es secreto; debe ser fijo, R-03).
-- Variables que se añadirán en features posteriores (frecuencia USGS, ngrok, CORS) no se declaran aquí.
 - `.env.example` enumera **todas** las variables anteriores con su valor por defecto, `POSTGRES_PASSWORD=` vacío y comentarios en español; las de origen `compose` van comentadas.

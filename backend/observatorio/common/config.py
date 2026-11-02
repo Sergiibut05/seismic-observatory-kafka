@@ -85,9 +85,15 @@ class AjustesProductor(AjustesComunes):
     topic_partitions: int
     topic_retention_ms: int
     smoke_timeout_seconds: int
+    postgres: AjustesPostgres
+    usgs_feed_url: str
+    poll_interval_seconds: int
+    http_timeout_seconds: int
+    feed_dir: str
+    feed_retention_hours: float
 
     def secretos(self) -> tuple[str, ...]:
-        return ()
+        return (self.postgres.password,)
 
 
 @dataclass(frozen=True)
@@ -149,6 +155,16 @@ def ajustes_productor(env: Mapping[str, str] | None = None) -> AjustesProductor:
         topic_partitions=_entero(env, "TOPIC_PARTITIONS", 3),
         topic_retention_ms=_entero(env, "TOPIC_RETENTION_MS", 604_800_000),
         smoke_timeout_seconds=_entero(env, "SMOKE_TIMEOUT_SECONDS", 30),
+        postgres=_postgres(env),
+        usgs_feed_url=_texto(
+            env,
+            "USGS_FEED_URL",
+            "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+        ),
+        poll_interval_seconds=_entero(env, "POLL_INTERVAL_SECONDS", 60),
+        http_timeout_seconds=_entero(env, "HTTP_TIMEOUT_SECONDS", 30),
+        feed_dir=_texto(env, "FEED_DIR", "/data/usgs"),
+        feed_retention_hours=_numero_positivo(env, "FEED_RETENTION_HOURS", 48),
     )
 
 
