@@ -4,7 +4,7 @@ import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Iterable
 
-from aiokafka.admin import NewTopic
+from aiokafka.admin import AIOKafkaAdminClient, NewTopic
 
 from observatorio.common.logging import registrar
 from observatorio.common.retry import Backoff, FalloDependencia, reintentar
@@ -88,6 +88,24 @@ async def wait_for_topic(
             raise FalloDependencia("topic_no_existe")
 
     await reintentar(comprobar, dependency="topic", config=config, sleep=sleep, logger=logger)
+
+
+async def abrir_admin(bootstrap_servers: str):
+    """Cliente administrativo ya iniciado; si no conecta se cierra y se relanza el error."""
+    admin = AIOKafkaAdminClient(bootstrap_servers=bootstrap_servers)
+    try:
+        await admin.start()
+    except BaseException:
+        await cerrar_sin_error(admin)
+        raise
+    return admin
+
+
+async def cerrar_sin_error(recurso) -> None:
+    try:
+        await asyncio.wait_for(recurso.close(), 5)
+    except Exception:
+        pass
 
 
 async def sonda_kafka(metadatos: Callable[[], Awaitable], timeout: float = 3.0):

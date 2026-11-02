@@ -4,10 +4,12 @@ Cada servicio declara qué variables lee. Los mensajes de error nombran la varia
 nunca incluyen valores; la contraseña no aparece en `repr()` ni `str()`.
 """
 
+import logging
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
+from observatorio.common.logging import configurar_logging, registrar
 from observatorio.common.retry import Backoff
 
 _NIVELES_LOG = ("DEBUG", "INFO", "WARNING", "ERROR")
@@ -167,3 +169,13 @@ def ajustes_consumidor(env: Mapping[str, str] | None = None) -> AjustesConsumido
 def ajustes_api(env: Mapping[str, str] | None = None) -> AjustesApi:
     env = os.environ if env is None else env
     return AjustesApi(**_comunes(env), postgres=_postgres(env))
+
+
+def cargar_o_salir(servicio: str, fabrica: Callable[[], object]):
+    """Carga los ajustes; si son inválidos registra el motivo (sin valores) y sale con código 2."""
+    try:
+        return fabrica()
+    except ConfigError as exc:
+        configurar_logging(servicio, "INFO")
+        registrar(logging.getLogger("observatorio.config"), "error", nivel="ERROR", component="config", reason=str(exc))
+        raise SystemExit(2) from None

@@ -680,3 +680,30 @@ agente. Único fichero creado fuera de `specs/001-esqueleto/`: `docs/CONTRATO-AP
 | RK-07 | El esquema evoluciona por SQL idempotente sin checksum | Disciplina + guarda de versión; revisar en la 003 |
 | RK-08 | `${POSTGRES_PASSWORD:?}` hace que **toda** orden de Compose exija `.env` | Documentado en README y quickstart |
 | RK-09 | Un mensaje con error no clasificado (excepción inesperada) se reintenta indefinidamente | Registro `result=error` con traza; es preferible a descartar en silencio (Constitución IV); revisar en 003 |
+
+---
+
+## Decisiones nuevas de implementación (001, tanda 1: Setup, Foundational y US1)
+
+Registradas por `developer` al implementar T001–T029; no cambian ninguna decisión R-01…R-23.
+
+| ID | Decisión | Motivo |
+| --- | --- | --- |
+| R-24 | `backend/Dockerfile` copia también `pytest.ini`, y este fija `cache_dir = /tmp/.pytest_cache` | Sin `pytest.ini` en `/app`, `pytest` no aplica `pythonpath = .` ni `testpaths` y no importa `observatorio`. `/app` es de root y el proceso corre como `appuser`: sin `cache_dir` en `/tmp`, pytest avisa `PytestCacheWarning` en cada ejecución |
+| R-25 | `common/parada.py`: manejadores de `SIGTERM`/`SIGINT` en productor y consumidor (`evento_de_parada`, `hasta_parada`, `esperar`) | Python como PID 1 del contenedor ignora `SIGTERM` sin manejador; con él, `docker compose stop` de los tres servicios Python tarda ≈ 1,4 s en lugar de 10 s y registra `result=detenido`. También permite abandonar los reintentos de conexión al parar. uvicorn ya gestiona las señales en la API |
+| R-26 | `config.cargar_o_salir()`: un `ConfigError` se registra como `result=error component=config reason=…` en formato `clave=valor` y el proceso sale con código 2 | El mensaje de `ConfigError` nombra la variable y nunca el valor; así el fallo de configuración también cumple SC-009 |
+| R-27 | `api/estado.py::iso_utc` escribe siempre milisegundos (`2026-01-01T00:00:00.000Z`) | Es la convención de `docs/CONTRATO-API.md` («`2026-11-02T12:00:00.123Z`»); los ejemplos del contrato que muestran `updated` sin milisegundos (`…T00:00:00Z`) son equivalentes como `date-time`, pero el servicio no los reproduce literalmente. T054 debe alinear los ejemplos |
+| R-28 | `armar_estado` con la base respondiendo y `conteos=None` devuelve `None` (no 0) | Regla del proyecto «los nulos no se rellenan con 0»; con tabla vacía `count()` devuelve 0 real y llega como tupla |
+| R-29 | Sondas de PostgreSQL y Kafka en el consumidor (US1) solo **marcan** la salud; la reconexión y la recreación de la sesión llegan en US3 (T043–T046) | Respeta el orden de `tasks.md`; hasta entonces una caída en marcha deja el servicio `unhealthy` sin recuperación automática |
+| R-30 | `reintentar()` usa `dependency=topic` (no `kafka`) para la espera del topic | Distingue en el log «el broker no responde» de «el topic aún no existe» (`reason=topic_no_existe`) |
+
+Hallazgos de la validación de US1 que afectan a `quickstart.md` (corregir en la 001 por el arquitecto/verifier):
+
+- §1.3: `\dt live.* ingesta.*` solo admite **un** patrón en `psql` (ignora el segundo y el tercero). Usar
+  `SELECT schemaname, tablename FROM pg_tables WHERE schemaname IN ('live','replay','ingesta') ORDER BY 1,2;`.
+- §1.1: `docker ps` muestra `5432/tcp` para `postgres` (puerto **expuesto** por la imagen, no publicado en el anfitrión).
+  El criterio SC-007 es «sin `127.0.0.1:…->`/`0.0.0.0:…->` salvo 8000 y 9092».
+- §0: `Set-Content` en Windows PowerShell 5.1 escribe en la codificación ANSI; `.env.example` contiene tildes en los
+  comentarios. Compose lo leyó bien, pero es más seguro escribir `.env` con `UTF8Encoding($false)`.
+- `docker compose` (incluido `run` y `config`) exige `.env` con `POSTGRES_PASSWORD` por el `:?` (RK-08); los tests
+  en la imagen con `docker compose run` también.

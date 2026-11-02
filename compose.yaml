@@ -1,15 +1,35 @@
-# Observatorio de actividad sísmica.
-# Fase 0: solo el broker. Los servicios postgres, producer, consumer y api
-# se añaden en la feature 001-esqueleto (ver docs/ENUNCIADO.md, apartado 2).
+# Observatorio de actividad sísmica: los cinco servicios del enunciado (apartado 2).
+# Arranque: copiar .env.example a .env, definir POSTGRES_PASSWORD y ejecutar
+# `docker compose up --build -d`. Detalle en el README y en specs/001-esqueleto/.
+#
+# No hay `depends_on` de salud a propósito: el orden de arranque no está garantizado
+# y cada servicio reintenta con backoff por sí mismo (research.md R-13).
 
 name: seismic-observatory
+
+# Imagen Python única para producer, consumer y api: cada servicio solo cambia `command`.
+x-backend: &backend
+  build: ./backend
+  image: observatorio-backend:local
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-m", "observatorio.common.healthcheck"]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
 
 services:
   kafka:
     image: apache/kafka:4.1.2
     hostname: kafka
+    restart: unless-stopped
+    # Kafka tarda en cerrar con orden; los 10 s por defecto cortarían la parada.
+    stop_grace_period: 30s
     ports:
       - "127.0.0.1:9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -19,6 +39,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      # El CLUSTER_ID debe ser fijo: el volumen queda formateado con él.
       CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -27,8 +48,10 @@ services:
       KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
       KAFKA_NUM_PARTITIONS: 3
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      # El productor es el único que crea el topic, con su retención (R-04).
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      # Ruta declarada como volumen por la imagen y propiedad de appuser (R-03).
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     healthcheck:
       test:
         [
@@ -39,3 +62,85 @@ services:
       timeout: 10s
       retries: 24
       start_period: 25s
+
+  postgres:
+    image: postgres:17.11-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una contraseña}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    # Sin `ports`: PostgreSQL solo es accesible desde la red de Compose.
+    healthcheck:
+      # `-h 127.0.0.1` evita dar por sano el servidor temporal de initdb (solo socket Unix).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  producer:
+    <<: *backend
+    command: ["python", "-m", "observatorio.producer"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
+      TOPIC_PARTITIONS: ${TOPIC_PARTITIONS:-3}
+      TOPIC_RETENTION_MS: ${TOPIC_RETENTION_MS:-604800000}
+      RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
+      RETRY_FACTOR: ${RETRY_FACTOR:-2}
+      RETRY_MAX_SECONDS: ${RETRY_MAX_SECONDS:-30}
+      HEALTH_PROBE_INTERVAL_SECONDS: ${HEALTH_PROBE_INTERVAL_SECONDS:-5}
+      PROBE_FALLOS_REINICIO: ${PROBE_FALLOS_REINICIO:-3}
+      SMOKE_TIMEOUT_SECONDS: ${SMOKE_TIMEOUT_SECONDS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HEALTH_PORT: "8081"
+
+  consumer:
+    <<: *backend
+    command: ["python", "-m", "observatorio.consumer"]
+    volumes:
+      - ./catalogo:/catalogo:ro
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
+      CONSUMER_GROUP: ${CONSUMER_GROUP:-consumidor-live}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una contraseña}"
+      CATALOGO_PATH: /catalogo/paises.geojson
+      RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
+      RETRY_FACTOR: ${RETRY_FACTOR:-2}
+      RETRY_MAX_SECONDS: ${RETRY_MAX_SECONDS:-30}
+      HEALTH_PROBE_INTERVAL_SECONDS: ${HEALTH_PROBE_INTERVAL_SECONDS:-5}
+      PROBE_FALLOS_REINICIO: ${PROBE_FALLOS_REINICIO:-3}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HEALTH_PORT: "8081"
+
+  api:
+    <<: *backend
+    command: ["python", "-m", "observatorio.api"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una contraseña}"
+      RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
+      RETRY_FACTOR: ${RETRY_FACTOR:-2}
+      RETRY_MAX_SECONDS: ${RETRY_MAX_SECONDS:-30}
+      HEALTH_PROBE_INTERVAL_SECONDS: ${HEALTH_PROBE_INTERVAL_SECONDS:-5}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # La API sirve su /health en el 8000; el healthcheck solo lee HEALTH_PORT.
+      HEALTH_PORT: "8000"
+
+volumes:
+  kafka_data:
+  postgres_data:
