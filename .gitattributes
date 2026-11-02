@@ -1,0 +1,5 @@
+# El catálogo se compara por SHA-256: Git no debe tocar sus bytes.
+catalogo/*.geojson -text
+
+# Los scripts de shell deben conservar LF aunque se clonen en Windows.
+*.sh text eol=lf

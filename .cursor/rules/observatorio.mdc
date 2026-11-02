@@ -1,0 +1,38 @@
+---
+description: Contexto y restricciones del Observatorio de actividad sísmica (USGS, Kafka, PostgreSQL, FastAPI, Angular)
+alwaysApply: true
+---
+
+# Observatorio de actividad sísmica
+
+- Requisitos: `docs/ENUNCIADO.md` manda. Principios: `.specify/memory/constitution.md`.
+  Si una petición contradice alguno de los dos, avisa antes de implementarla.
+- Stack fijo: producer, consumer y api en Python 3.12 (aiokafka, FastAPI);
+  Kafka 4.1 KRaft; PostgreSQL; panel Angular + Leaflet en Netlify; ngrok solo
+  para la API. Nada de Spark, Flink, Kubernetes ni ML.
+- Cinco servicios en `compose.yaml`, una imagen Python compartida en `backend/`.
+  Dentro de Compose usa nombres de servicio (`kafka:19092`, `postgres:5432`), nunca `localhost`.
+- Trabajo por features de Spec Kit en `specs/NNN-nombre/`, una rama por feature.
+  No escribas código de una feature sin `spec.md`, `plan.md` y `tasks.md`.
+- Subagentes en `.cursor/agents/`: analyst (spec), architect (plan), developer
+  (implementación), verifier (pruebas y evidencias).
+
+## Reglas de dominio que se olvidan fácilmente
+
+- Clave Kafka = `id` USGS. Mensaje con `schema_version`, `source`, `ingested_at`, `mode`, evento original.
+- Publicado solo tras el acuse de Kafka; offset confirmado solo tras el commit en PostgreSQL.
+- Estado actual solo con `updated` más reciente; historial `(event_id, updated)` sin sobrescribir.
+- Agregaciones desde el estado actual, nunca contando mensajes.
+- País por punto en polígono (EPSG:4326, `ADM0_A3`), nunca parseando `place`. Sin coincidencia: «Sin país asignado».
+- Nulos no se rellenan con 0. Lo que no se puede tratar va a cuarentena con motivo.
+- Replay: topic y esquema propios, etiqueta «REPRODUCCIÓN», tiempo original + tiempo de reproducción.
+- Tiempos USGS en ms epoch: guardar en UTC (`timestamptz`), separando ocurrencia, `updated` e ingesta.
+
+## Convenciones
+
+- Español en documentación, commits, logs y comentarios.
+- Logs con formato `clave=valor` (`result=published event_id=us7000abcd updated=...`).
+- Sin secretos en Git ni en Angular: solo `.env.example` sin credenciales.
+- Shell del alumno: Windows + PowerShell. Los scripts de Spec Kit son `.specify/scripts/powershell/*.ps1`.
+- La plantilla original de Binance (patrones de backoff, health y creación de topic con aiokafka)
+  sigue consultable con `git show 317a4af:producer/src/main.py`.

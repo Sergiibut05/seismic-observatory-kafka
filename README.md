@@ -44,8 +44,10 @@ docker compose up --build -d
 
 ## Datos de partida
 
-- Catálogo geográfico: `python scripts/descargar_paises.py`, que descarga
-  Natural Earth Admin 0 (1:50m) y valida `ADM0_A3`. Véase
+- Catálogo geográfico: `catalogo/paises.geojson` (Natural Earth Admin 0
+  1:50m, 242 países, versionado en Git). Se regenera con
+  `python scripts/descargar_paises.py`, que valida `ADM0_A3`, geometrías y CRS
+  y escribe su huella en `catalogo/paises.manifest.json`. Véase
   [docs/FUENTES-Y-LICENCIAS.md](docs/FUENTES-Y-LICENCIAS.md).
 - Histórico 2025: se añade en la feature 004.
 
