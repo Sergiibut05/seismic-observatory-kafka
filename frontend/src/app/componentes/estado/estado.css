@@ -1,0 +1,34 @@
+.estado {
+  display: grid;
+  gap: var(--e-2);
+}
+.estado__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-1) var(--e-6);
+  margin: 0;
+}
+.estado__datos > div {
+  min-width: 0;
+}
+.estado__datos dt {
+  font-size: var(--t-xs);
+  color: var(--sobre-oscuro-suave);
+}
+.estado__datos dd {
+  margin: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.estado__avisos:empty {
+  display: none;
+}
+.estado__avisos {
+  display: grid;
+  gap: var(--e-1);
+}
+.estado .aviso {
+  max-width: none;
+  padding: var(--e-1) var(--e-3);
+}

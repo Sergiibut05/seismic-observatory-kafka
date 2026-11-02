@@ -1,0 +1,100 @@
+/* Rejilla del panel (cerrada en T4: los componentes NO editan este fichero). */
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+/* Cabecera fija: marca + barra de estado (FR-008, siempre visible). */
+.cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 2000; /* por encima de los paneles de Leaflet (≤ 1000) */
+  background: var(--oscuro);
+  color: var(--sobre-oscuro);
+}
+.cabecera__interior {
+  display: grid;
+  gap: var(--e-2) var(--e-6);
+  align-items: center;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: var(--e-2) var(--e-4);
+}
+.cabecera__marca h1 {
+  font-size: var(--t-md);
+  letter-spacing: 0.01em;
+}
+.cabecera__marca p {
+  font-size: var(--t-xs);
+  color: var(--sobre-oscuro-suave);
+}
+
+.rejilla {
+  display: grid;
+  gap: var(--e-4);
+  grid-template-columns: minmax(0, 1fr);
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: var(--e-4);
+}
+.rejilla:focus {
+  outline: none; /* destino del enlace de salto, no un control */
+}
+
+/* Hueco reservado de cada componente. Los componentes rellenan su host; no fijan su posición. */
+.area-filtros {
+  grid-area: filtros;
+}
+.area-mapa {
+  grid-area: mapa;
+  height: var(--alto-mapa); /* el mapa ocupa el 100 % de su host */
+  isolation: isolate; /* los z-index internos de Leaflet no salen del mapa */
+}
+.area-tabla {
+  grid-area: tabla;
+}
+.area-comparacion {
+  grid-area: comparacion;
+}
+.area-recuentos {
+  grid-area: recuentos;
+}
+.area-distribuciones {
+  grid-area: distribuciones;
+}
+
+@media (min-width: 72rem) {
+  .cabecera__interior {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .rejilla {
+    grid-template-columns: 19rem minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'filtros mapa mapa'
+      'filtros tabla tabla'
+      'filtros comparacion recuentos'
+      'filtros distribuciones recuentos';
+    align-items: start;
+  }
+}
+
+.pie {
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: 0 var(--e-4) var(--e-8);
+}
+
+/* Pantalla de error de configuración: no se hace ninguna petición. */
+.error-configuracion {
+  display: grid;
+  gap: var(--e-4);
+  max-width: 44rem;
+  margin: var(--e-8) auto;
+  padding: var(--e-4);
+}
+.error-configuracion code {
+  font-family: var(--fuente-mono);
+  background: var(--superficie-2);
+  padding: 0 var(--e-1);
+}

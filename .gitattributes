@@ -1,5 +1,8 @@
-# El cat√°logo se compara por SHA-256: Git no debe tocar sus bytes.
+# El cat·logo se compara por SHA-256: Git no debe tocar sus bytes.
 catalogo/*.geojson -text
+
+# La copia del cat·logo para el panel tampoco se toca (se compara por SHA-256).
+frontend/public/datos/*.geojson -text
 
 # Los scripts de shell deben conservar LF aunque se clonen en Windows.
 *.sh text eol=lf

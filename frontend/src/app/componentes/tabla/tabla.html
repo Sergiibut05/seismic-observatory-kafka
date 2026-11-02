@@ -1,0 +1,86 @@
+<section class="bloque" aria-labelledby="titulo-tabla" [attr.aria-busy]="bloque().estado === 'cargando'">
+  <div class="bloque__cab">
+    <h2 id="titulo-tabla" class="bloque__titulo">Eventos</h2>
+    <span class="bloque__nota">Usa todos los filtros. Orden: el de la API (más recientes primero).</span>
+  </div>
+
+  @if (bloque().error; as error) {
+    <p class="aviso aviso--atencion tabla__aviso" role="status">
+      No se pudo actualizar la tabla ({{ error.motivo }}).
+      @if (antiguos()) {
+        Se muestran {{ etiquetaAntiguos() }}.
+      }
+    </p>
+  }
+
+  @if (respuesta(); as r) {
+    @if (r.eventos.length === 0) {
+      <p class="bloque__vacio">Ningún evento cumple los filtros.</p>
+    } @else {
+      <div class="tabla-scroll" tabindex="0" role="region" aria-labelledby="titulo-tabla">
+        <table class="tabla-datos">
+          <caption>
+            @if (resumen(); as s) {
+              {{ formatearEntero(s.total) }} eventos con los filtros aplicados; mostrando del
+              {{ formatearEntero(s.primero) }} al {{ formatearEntero(s.ultimo) }}. Tiempos en UTC.
+            }
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Ocurrencia (UTC)</th>
+              <th scope="col" class="num">Magnitud</th>
+              <th scope="col" class="num">Profundidad</th>
+              <th scope="col">País</th>
+              <th scope="col">Subregión</th>
+              <th scope="col">Actualizado (UTC)</th>
+              <th scope="col">Identificador</th>
+              <th scope="col">Mapa</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of eventos(); track e.event_id) {
+              <tr [class.seleccionada]="seleccionado(e)">
+                <th scope="row">{{ formatearInstanteUtc(e.ocurrencia) }}</th>
+                <td class="num" [class.nd]="e.magnitud === null">{{ formatearMagnitud(e.magnitud) }}</td>
+                <td class="num" [class.nd]="e.profundidad === null">
+                  {{ formatearProfundidad(e.profundidad) }}
+                </td>
+                <td>{{ e.pais_nombre }}</td>
+                <td>{{ e.subregion ?? 'Sin país asignado' }}</td>
+                <td>{{ formatearInstanteUtc(e.updated) }}</td>
+                <td class="tabla__id">{{ e.event_id }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="boton boton--secundario tabla__ver"
+                    [attr.aria-pressed]="seleccionado(e)"
+                    [attr.aria-label]="'Ver en el mapa el evento ' + e.event_id"
+                    (click)="seleccionar(e)"
+                  >
+                    {{ seleccionado(e) ? 'Seleccionado' : 'Ver en el mapa' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (resumen(); as s) {
+      <nav class="tabla__paginacion" aria-label="Paginación de la tabla de eventos">
+        <button type="button" class="boton boton--secundario" [disabled]="!s.hayAnterior" (click)="anterior()">
+          Anterior
+        </button>
+        <span>Página {{ s.pagina }} de {{ s.paginas }}</span>
+        <button type="button" class="boton boton--secundario" [disabled]="!s.haySiguiente" (click)="siguiente()">
+          Siguiente
+        </button>
+      </nav>
+    }
+  } @else if (bloque().estado === 'cargando') {
+    <p class="bloque__vacio cargando">Cargando eventos…</p>
+  } @else {
+    <p class="aviso aviso--atencion tabla__aviso">No hay datos de la tabla todavía.</p>
+  }
+</section>

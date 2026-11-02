@@ -1,0 +1,155 @@
+/* Sin encapsulación (la ficha y los controles los crea Leaflet): todo cuelga de .mapa-bloque. */
+.mapa-bloque {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mapa-bloque .mapa-avisos {
+  display: grid;
+  gap: var(--e-2);
+}
+.mapa-bloque .mapa-avisos:not(:empty) {
+  padding: var(--e-2) var(--e-4) 0;
+}
+
+.mapa-bloque .mapa-marco {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 14rem;
+  margin: var(--e-2);
+}
+
+.mapa-bloque .mapa-lienzo {
+  position: absolute;
+  inset: 0;
+  background: #cfdbe4; /* mar mientras llegan las teselas */
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+.mapa-bloque .mapa-estado {
+  position: absolute;
+  top: var(--e-2);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 800;
+  margin: 0;
+  padding: var(--e-1) var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+/* ── Leyenda ──────────────────────────────────────────────────────── */
+.mapa-bloque .mapa-leyenda {
+  position: absolute;
+  left: var(--e-2);
+  bottom: calc(var(--e-2) + 1.5rem); /* sobre la atribución de Leaflet */
+  z-index: 800;
+  max-width: calc(100% - 4rem);
+  max-height: calc(100% - 5rem);
+  overflow: auto;
+  padding: var(--e-2) var(--e-3);
+  background: rgb(255 255 255 / 0.95);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  font-size: var(--t-xs);
+  color: var(--tinta);
+}
+.mapa-bloque .mapa-leyenda summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.mapa-bloque .mapa-leyenda__grupo {
+  margin-top: var(--e-2);
+}
+.mapa-bloque .mapa-leyenda__titulo {
+  margin: 0 0 var(--e-1);
+  font-weight: 600;
+}
+.mapa-bloque .mapa-leyenda ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-1) var(--e-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mapa-bloque .mapa-leyenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--e-1);
+}
+.mapa-bloque .mapa-leyenda__circulo {
+  display: inline-block;
+  border: 1px solid var(--borde-circulo);
+  border-radius: 50%;
+  background: var(--superficie-2);
+}
+.mapa-bloque .mapa-leyenda__circulo--nd {
+  border-style: dashed;
+  background: var(--prof-nd);
+}
+.mapa-bloque .mapa-leyenda__muestra {
+  display: inline-block;
+  width: 1.1rem;
+  height: 0.8rem;
+  border: 1px solid var(--borde-circulo);
+}
+.mapa-bloque .mapa-leyenda__muestra--nd {
+  border-style: dashed;
+}
+
+/* ── Controles de Leaflet: foco visible y tamaño táctil ───────────── */
+.mapa-bloque .leaflet-container {
+  font-family: var(--fuente);
+  font-size: var(--t-xs);
+}
+.mapa-bloque .leaflet-container:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+.mapa-bloque .leaflet-control-zoom a {
+  width: 2.25rem;
+  height: 2.25rem;
+  line-height: 2.25rem;
+  color: var(--tinta);
+}
+.mapa-bloque .leaflet-control-attribution {
+  color: var(--tinta);
+}
+.mapa-bloque .leaflet-control-attribution a {
+  color: var(--acento);
+}
+.mapa-bloque .leaflet-popup-close-button {
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+}
+
+/* ── Ficha del terremoto (popup) ──────────────────────────────────── */
+.mapa-bloque .ficha-popup .leaflet-popup-content {
+  margin: var(--e-3) var(--e-4);
+  color: var(--tinta);
+}
+.mapa-bloque .ficha__titulo {
+  margin: 0 var(--e-4) var(--e-2) 0;
+  font-size: var(--t-md);
+}
+.mapa-bloque .ficha__datos {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--e-1) var(--e-3);
+  margin: 0;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+.mapa-bloque .ficha__datos dt {
+  color: var(--tinta-suave);
+}
+.mapa-bloque .ficha__datos dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

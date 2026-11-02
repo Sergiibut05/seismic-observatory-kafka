@@ -1,0 +1,97 @@
+<section class="bloque mapa-bloque" aria-labelledby="titulo-mapa" [attr.aria-busy]="bloque().estado === 'cargando'">
+  <div class="bloque__cab">
+    <h2 id="titulo-mapa" class="bloque__titulo">Mapa de eventos</h2>
+    <span class="bloque__nota">
+      Usa todos los filtros.
+      @if (respuesta()) {
+        {{ devueltos() }} eventos dibujados.
+      }
+    </span>
+  </div>
+
+  <div class="mapa-avisos">
+    @if (truncado()) {
+      <p class="aviso aviso--atencion" role="status">
+        Aviso: el mapa muestra {{ devueltos() }} de {{ total() }} eventos (límite de la API). La tabla
+        y los recuentos incluyen todos; acota los filtros para ver el resto.
+      </p>
+    }
+    @if (bloque().error; as error) {
+      <p class="aviso aviso--atencion" role="status">
+        @if (antiguos()) {
+          No se pudo actualizar el mapa ({{ error.motivo }}). Se muestran {{ etiquetaAntiguos() }}.
+        } @else {
+          No se pudo cargar el mapa ({{ error.motivo }}).
+        }
+      </p>
+    }
+    @if (seleccionFuera()) {
+      <p class="aviso" role="status">
+        El evento seleccionado no está entre los dibujados en el mapa; consúltalo en la tabla.
+      </p>
+    }
+    @if (errorFronteras()) {
+      <p class="aviso aviso--atencion" role="status">
+        No se pudieron cargar las fronteras de los países; el mapa sigue con los eventos.
+      </p>
+    }
+  </div>
+
+  <div class="mapa-marco">
+    @if (mapaDisponible()) {
+      <div
+        #lienzo
+        class="mapa-lienzo"
+        role="region"
+        aria-label="Mapa de eventos sísmicos"
+        aria-describedby="mapa-descripcion"
+      ></div>
+      <p id="mapa-descripcion" class="solo-lectores">
+        Mapa interactivo: cada evento es un círculo; su tamaño indica la magnitud y su color la
+        profundidad. Con el mapa enfocado, las flechas lo desplazan y + y − cambian el zoom. La
+        tabla de eventos es la alternativa por teclado: el botón «Ver en el mapa» abre la ficha del
+        evento.
+      </p>
+      @if (bloque().estado === 'cargando' && !respuesta()) {
+        <p class="mapa-estado cargando" role="status">Cargando eventos…</p>
+      }
+      <details class="mapa-leyenda" open>
+        <summary>Leyenda</summary>
+        <div class="mapa-leyenda__grupo">
+          <p class="mapa-leyenda__titulo">Tamaño: magnitud</p>
+          <ul class="mapa-leyenda__radios">
+            @for (r of leyendaRadio; track r.etiqueta) {
+              <li>
+                <span
+                  class="mapa-leyenda__circulo"
+                  [class.mapa-leyenda__circulo--nd]="r.etiqueta === 'ND'"
+                  [style.width.px]="r.radio * 2"
+                  [style.height.px]="r.radio * 2"
+                ></span>
+                <span>{{ r.etiqueta }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="mapa-leyenda__grupo">
+          <p class="mapa-leyenda__titulo">Color: profundidad (km)</p>
+          <ul class="mapa-leyenda__colores">
+            @for (i of intervalos; track i.etiqueta) {
+              <li>
+                <span class="mapa-leyenda__muestra" [style.background]="i.color"></span>
+                <span>{{ i.etiqueta }}</span>
+              </li>
+            }
+            <li>
+              <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
+              <span>ND (borde discontinuo)</span>
+            </li>
+          </ul>
+        </div>
+      </details>
+      <p class="solo-lectores" role="status">{{ anuncio() }}</p>
+    } @else {
+      <p class="bloque__vacio">Mapa no disponible en este entorno. Los eventos están en la tabla.</p>
+    }
+  </div>
+</section>

@@ -1,0 +1,110 @@
+<section class="bloque" aria-labelledby="titulo-filtros">
+  <div class="bloque__cab">
+    <h2 id="titulo-filtros" class="bloque__titulo">Filtros</h2>
+  </div>
+
+  <form class="filtros" (submit)="aplicar($event)" novalidate>
+    <p class="bloque__nota">
+      Mapa, tabla, recuentos y distribuciones usan todos los filtros. La comparación histórica
+      solo usa magnitud y país o subregión. Solo se muestran eventos reales.
+    </p>
+
+    @for (c of campos; track c.clave) {
+      <div class="campo">
+        <label [for]="'campo-' + c.clave">{{ c.etiqueta }}</label>
+        <input
+          [id]="'campo-' + c.clave"
+          [name]="c.clave"
+          [type]="c.tipo"
+          [attr.inputmode]="c.tipo === 'text' ? 'decimal' : null"
+          [attr.autocomplete]="'off'"
+          [value]="editados()[c.clave]"
+          [attr.aria-invalid]="errores()[c.clave] ? 'true' : null"
+          [attr.aria-describedby]="descripcion(c.clave)"
+          (input)="editar(c.clave, $event)"
+        />
+        <span class="campo__ayuda" [id]="'ayuda-' + c.clave">{{ c.ayuda }}</span>
+        @if (errores()[c.clave]; as mensaje) {
+          <span class="campo__error" [id]="'error-' + c.clave">Error: {{ mensaje }}</span>
+        }
+      </div>
+    }
+
+    <div class="campo">
+      <label for="campo-pais">País</label>
+      <select
+        id="campo-pais"
+        name="pais"
+        [attr.aria-invalid]="errores().pais ? 'true' : null"
+        [attr.aria-describedby]="descripcion('pais')"
+        (change)="editar('pais', $event)"
+      >
+        <option value="" [selected]="editados().pais === ''">Todos los países</option>
+        @for (o of opcionesPais(); track o.valor) {
+          <option [value]="o.valor" [selected]="editados().pais === o.valor">{{ o.texto }}</option>
+        }
+      </select>
+      <span class="campo__ayuda" id="ayuda-pais">
+        @if (opcionesCargando()) {
+          Cargando países…
+        } @else {
+          País según el polígono de sus coordenadas.
+        }
+      </span>
+      @if (errores().pais; as mensaje) {
+        <span class="campo__error" id="error-pais">Error: {{ mensaje }}</span>
+      }
+    </div>
+
+    <div class="campo">
+      <label for="campo-subregion">Subregión</label>
+      <select
+        id="campo-subregion"
+        name="subregion"
+        [attr.aria-invalid]="errores().subregion ? 'true' : null"
+        [attr.aria-describedby]="descripcion('subregion')"
+        (change)="editar('subregion', $event)"
+      >
+        <option value="" [selected]="editados().subregion === ''">Todas las subregiones</option>
+        @for (o of opcionesSubregion(); track o.valor) {
+          <option [value]="o.valor" [selected]="editados().subregion === o.valor">
+            {{ o.texto }}
+          </option>
+        }
+      </select>
+      <span class="campo__ayuda" id="ayuda-subregion">Se combina con el país (Y).</span>
+      @if (errores().subregion; as mensaje) {
+        <span class="campo__error" id="error-subregion">Error: {{ mensaje }}</span>
+      }
+    </div>
+
+    @if (opcionesError(); as e) {
+      <p class="aviso aviso--atencion">
+        No se pudieron cargar las opciones de país o subregión ({{ e.motivo }}).
+      </p>
+    }
+
+    @if (horaAcotada(); as ventana) {
+      <p class="aviso">
+        El recuento por hora admite como máximo 31 días: se muestra {{ ventana }}.
+      </p>
+    }
+
+    <div class="filtros__acciones">
+      <button type="submit" class="boton">Aplicar</button>
+      <button type="button" class="boton boton--secundario" (click)="restablecer()">
+        Restablecer
+      </button>
+    </div>
+
+    <p class="campo__ayuda" role="status">
+      @if (store.hayErrores()) {
+        Corrige los errores para aplicar los filtros; mientras tanto se mantienen los anteriores.
+      } @else if (store.pendiente()) {
+        Cambios pendientes: se aplican solos tras una breve pausa o con «Aplicar».
+      } @else {
+        Filtros aplicados.
+      }
+    </p>
+  </form>
+</section>

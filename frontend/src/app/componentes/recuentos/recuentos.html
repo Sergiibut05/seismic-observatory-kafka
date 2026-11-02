@@ -1,0 +1,79 @@
+<section class="bloque" aria-labelledby="titulo-recuentos">
+  <div class="bloque__cab">
+    <h2 id="titulo-recuentos" class="bloque__titulo">Recuentos</h2>
+    <span class="bloque__nota">Estado actual de cada evento, con todos los filtros activos</span>
+  </div>
+
+  <div class="bloque__cuerpo recuentos">
+    <section class="recuentos__parte" aria-labelledby="titulo-recuentos-grupo">
+      <div class="recuentos__cab">
+        <h3 id="titulo-recuentos-grupo">{{ rotuloGrupo() }}</h3>
+        <div class="campo recuentos__selector">
+          <label for="agrupacion-recuentos">Agrupar por</label>
+          <select
+            id="agrupacion-recuentos"
+            [value]="agrupacion()"
+            (change)="cambiarAgrupacion($any($event.target).value)"
+          >
+            <option value="pais">País</option>
+            <option value="subregion">Subregión</option>
+          </select>
+        </div>
+      </div>
+
+      <app-aviso-bloque [bloque]="bloqueGrupo()" />
+      @if (bloqueGrupo().datos; as d) {
+        @if (categorias().length === 0) {
+          <p class="bloque__vacio">No hay eventos que cumplan los filtros actuales.</p>
+        } @else {
+          <p class="recuentos__total">
+            Total: <strong>{{ formatearEntero(d.total) }}</strong> eventos
+          </p>
+          <app-grafico-barras
+            [titulo]="rotuloGrupo()"
+            [datos]="barrasGrupo()"
+            [filasTabla]="hayResto() ? categorias() : null"
+            orientacion="horizontal"
+            unidad="eventos"
+            ejeTitulo="Eventos (recuento)"
+          />
+          @if (hayResto()) {
+            <p class="bloque__nota">
+              El gráfico muestra las {{ maxBarras }} mayores categorías y agrupa el resto; la tabla incluye todas.
+            </p>
+          }
+        }
+      }
+    </section>
+
+    <section class="recuentos__parte" aria-labelledby="titulo-recuentos-hora">
+      <div class="recuentos__cab">
+        <h3 id="titulo-recuentos-hora">Eventos por hora (UTC)</h3>
+      </div>
+
+      <app-aviso-bloque [bloque]="bloqueHora()" />
+      @if (horaAcotada(); as a) {
+        <p class="aviso aviso--atencion">
+          El rango pedido supera 31 días: se muestran los 31 días hasta {{ formatearInstanteUtc(a.hasta) }}.
+        </p>
+      }
+      @if (bloqueHora().datos; as d) {
+        @if (ventanas().length === 0) {
+          <p class="bloque__vacio">No hay ventanas horarias para el periodo consultado.</p>
+        } @else {
+          <p class="recuentos__total">
+            {{ ventanas().length }} ventanas de 1 h, {{ ceros() }} sin eventos. Total:
+            <strong>{{ formatearEntero(d.total) }}</strong> eventos
+          </p>
+          <app-grafico-barras
+            titulo="Eventos por hora (UTC)"
+            [datos]="ventanas()"
+            orientacion="vertical"
+            unidad="eventos"
+            ejeTitulo="Hora UTC (inicio de cada ventana de 1 h, no hora local)"
+          />
+        }
+      }
+    </section>
+  </div>
+</section>

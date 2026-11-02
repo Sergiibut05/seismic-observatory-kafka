@@ -1,0 +1,127 @@
+@let g = geometria();
+@let horiz = orientacion() === 'horizontal';
+
+<figure class="grafico">
+  <svg
+    class="grafico__svg"
+    role="img"
+    [attr.aria-label]="textoAlt()"
+    [attr.viewBox]="'0 0 ' + g.W + ' ' + g.H"
+    preserveAspectRatio="xMidYMin meet"
+  >
+    <defs>
+      <pattern [attr.id]="idPatron" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="6" class="grafico__fondo-rayas" />
+        <line x1="0" y1="0" x2="0" y2="6" class="grafico__rayas" />
+      </pattern>
+    </defs>
+
+    <!-- Líneas guía y marcas del eje de valores -->
+    @for (m of g.marcas; track m.pos) {
+      @if (horiz) {
+        <line class="grafico__guia" [attr.x1]="m.pos" [attr.x2]="m.pos" [attr.y1]="g.mS" [attr.y2]="g.ejeBase" />
+        <text class="grafico__marca" text-anchor="middle" [attr.x]="m.pos" [attr.y]="g.ejeBase + 16">{{ m.texto }}</text>
+      } @else {
+        <line class="grafico__guia" [attr.x1]="g.mI" [attr.x2]="g.mI + g.plotAncho" [attr.y1]="m.pos" [attr.y2]="m.pos" />
+        <text class="grafico__marca" text-anchor="end" [attr.x]="g.mI - 6" [attr.y]="m.pos + 4">{{ m.texto }}</text>
+      }
+    }
+
+    <!-- Eje base -->
+    @if (horiz) {
+      <line class="grafico__eje" [attr.x1]="g.mI" [attr.x2]="g.mI" [attr.y1]="g.mS" [attr.y2]="g.ejeBase" />
+    } @else {
+      <line class="grafico__eje" [attr.x1]="g.mI" [attr.x2]="g.mI + g.plotAncho" [attr.y1]="g.ejeBase" [attr.y2]="g.ejeBase" />
+    }
+
+    @if (g.separador !== null) {
+      <line class="grafico__separador" [attr.x1]="g.separador" [attr.x2]="g.separador" [attr.y1]="g.mS" [attr.y2]="g.ejeBase + 6" />
+    }
+
+    <!-- Barras -->
+    @for (e of g.elementos; track e.clave) {
+      <g class="grafico__barra" [attr.data-tipo]="e.tipo">
+        <title>{{ e.tooltip }}</title>
+        @switch (e.tipo) {
+          @case ('normal') {
+            <rect class="grafico__rect" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
+          }
+          @case ('cero') {
+            <rect class="grafico__rect grafico__rect--cero" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
+          }
+          @case ('sin-valor') {
+            <rect class="grafico__rect grafico__rect--sin-valor" [attr.fill]="'url(#' + idPatron + ')'" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
+          }
+        }
+        <text
+          class="grafico__valor"
+          [class.grafico__valor--nd]="e.tipo === 'nd'"
+          [attr.x]="e.vx"
+          [attr.y]="e.vy"
+          [attr.text-anchor]="e.vAncla"
+          [attr.dominant-baseline]="horiz ? 'central' : 'auto'"
+          [attr.font-size]="g.fuente"
+        >{{ e.valorTexto }}</text>
+        @if (e.etiquetaEje !== null) {
+          <text
+            class="grafico__etiqueta"
+            [attr.x]="e.ex"
+            [attr.y]="e.ey"
+            [attr.text-anchor]="e.eAncla"
+            [attr.dominant-baseline]="horiz ? 'central' : 'auto'"
+            [attr.font-size]="g.fuente"
+          >{{ e.etiquetaEje }}</text>
+        }
+      </g>
+    }
+
+    @if (ejeTitulo()) {
+      <text
+        class="grafico__eje-titulo"
+        text-anchor="middle"
+        [attr.x]="g.mI + g.plotAncho / 2"
+        [attr.y]="g.H - 6"
+      >{{ ejeTitulo() }}</text>
+    }
+  </svg>
+
+  @if (tiposPresentes().has('cero') || tiposPresentes().has('sin-valor') || tiposPresentes().has('nd')) {
+    <ul class="grafico__leyenda" aria-label="Cómo leer las barras">
+      <li><span class="muestra muestra--normal"></span> Barra: recuento</li>
+      @if (tiposPresentes().has('cero')) {
+        <li><span class="muestra muestra--cero"></span> Línea con borde: 0, sin eventos</li>
+      }
+      @if (tiposPresentes().has('sin-valor')) {
+        <li><span class="muestra muestra--sin-valor"></span> Rayada: eventos sin valor (no son 0)</li>
+      }
+      @if (tiposPresentes().has('nd')) {
+        <li><em class="nd">ND</em>: valor desconocido</li>
+      }
+    </ul>
+  }
+
+  <details class="grafico__tabla">
+    <summary>Ver «{{ titulo() }}» como tabla</summary>
+    <div class="tabla-scroll">
+      <table class="tabla-datos">
+        <caption>{{ titulo() }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Categoría</th>
+            <th scope="col" class="num">{{ unidad() }}</th>
+            <th scope="col">Observación</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of filas(); track f.clave) {
+            <tr>
+              <th scope="row">{{ f.etiqueta }}</th>
+              <td class="num">{{ f.valorTexto }}</td>
+              <td>{{ observacion(f.tipo) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </details>
+</figure>

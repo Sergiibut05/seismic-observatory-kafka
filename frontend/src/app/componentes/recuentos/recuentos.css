@@ -1,0 +1,29 @@
+.recuentos {
+  display: grid;
+  gap: var(--e-6);
+}
+.recuentos__parte {
+  display: grid;
+  gap: var(--e-3);
+  min-width: 0;
+}
+.recuentos__parte h3 {
+  font-size: var(--t-base);
+}
+.recuentos__cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--e-2) var(--e-4);
+}
+.recuentos__selector {
+  min-width: 11rem;
+}
+.recuentos__total {
+  font-size: var(--t-sm);
+  color: var(--tinta-suave);
+}
+.recuentos__total strong {
+  color: var(--tinta);
+}

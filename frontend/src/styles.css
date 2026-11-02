@@ -1,0 +1,382 @@
+/*
+ * Diseño base del panel (cerrado en T4: los componentes NO editan este fichero).
+ *
+ * Justificación del diseño:
+ * 1. Instrumento de observación, no tarjetas: fondo gris azulado frío, paneles blancos con filete
+ *    de 1 px y esquinas casi rectas, sin sombras ni degradados; el color queda para los datos.
+ * 2. Un solo acento (azul petróleo) para acciones y foco; la barra de estado es lo único oscuro
+ *    y fijo: lo primero que hay que saber de un panel de datos es si los datos son frescos.
+ * 3. Tipografía del sistema (sin CDN ni peso), cifras tabulares, escala de 6 pasos y línea de
+ *    texto ≤ 70 caracteres; contraste ≥ 4,5:1 y avisos con icono de texto, no solo color.
+ *
+ * Contacto con los componentes: usar las variables `--*` y las clases globales de abajo
+ * (`.bloque`, `.aviso`, `.campo`, `.boton`, `.tabla-datos`, `.cifra`, `.nd`, `.solo-lectores`).
+ * Si falta algo, pídelo antes de tocar este fichero.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Superficies y tinta (contrastes sobre blanco: tinta 17:1, tinta-suave 7,9:1) */
+  --fondo: #e9edf1;
+  --superficie: #ffffff;
+  --superficie-2: #f3f6f8;
+  --tinta: #0f1a24;
+  --tinta-suave: #44525f;
+  --linea: #c5cdd6;
+  --linea-fuerte: #77858f; /* bordes de controles: ≥ 3:1 */
+
+  /* Acento único */
+  --acento: #00596b; /* 8,0:1 sobre blanco */
+  --acento-hover: #00404e;
+  --acento-suave: #d6ebf0;
+  --sobre-acento: #ffffff;
+
+  /* Barra de estado (oscura) */
+  --oscuro: #0e1b26;
+  --oscuro-2: #1a2b3a;
+  --sobre-oscuro: #e8eef3; /* 14:1 sobre --oscuro */
+  --sobre-oscuro-suave: #a9b8c5; /* 8,6:1 sobre --oscuro */
+
+  /* Estados (texto/fondo ≥ 7:1) */
+  --alerta-fondo: #fde8e6;
+  --alerta-texto: #7a1410;
+  --alerta-borde: #b3261e;
+  --atencion-fondo: #fff1cc;
+  --atencion-texto: #5c3b00;
+  --atencion-borde: #a86a00;
+  --info-fondo: #e3eef9;
+  --info-texto: #0f3a63;
+  --info-borde: #2a6aa8;
+  --ok-texto: #0b5a2a;
+
+  /* Foco visible: doble anillo para fondos claros y oscuros */
+  --foco: #0b5fc4;
+  --foco-sobre-oscuro: #ffd166;
+
+  /* Profundidad: espejo de INTERVALOS_PROFUNDIDAD en puro/escalas.ts (fuente única). */
+  --prof-neg: #c2185b; /* < 0 */
+  --prof-1: #ffffb2; /* 0–10 */
+  --prof-2: #d9f0a3; /* 10–30 */
+  --prof-3: #addd8e; /* 30–70 */
+  --prof-4: #41b6c4; /* 70–150 */
+  --prof-5: #1d91c0; /* 150–300 */
+  --prof-6: #225ea8; /* 300–500 */
+  --prof-7: #253494; /* 500–700 */
+  --prof-8: #081d58; /* ≥ 700 */
+  --prof-nd: #8d9399; /* ND (borde discontinuo además del gris) */
+  --borde-circulo: #0f1a24; /* contorno de los círculos del mapa */
+
+  /* Series de los gráficos de barras (barra normal, barra «sin valor», barra a cero) */
+  --barra: #00596b;
+  --barra-sin-valor: #8d9399;
+  --barra-cero: #c5cdd6;
+
+  /* Tipografía */
+  --fuente: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --fuente-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  --t-xs: 0.8125rem;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-md: 1.125rem;
+  --t-lg: 1.375rem;
+  --t-cifra: 1.75rem;
+  --interlineado: 1.5;
+
+  /* Espacios y formas */
+  --e-1: 0.25rem;
+  --e-2: 0.5rem;
+  --e-3: 0.75rem;
+  --e-4: 1rem;
+  --e-6: 1.5rem;
+  --e-8: 2rem;
+  --radio: 4px;
+  --ancho-max: 92rem;
+  --alto-mapa: clamp(24rem, 62vh, 42rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: var(--fuente);
+  font-size: var(--t-base);
+  line-height: var(--interlineado);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+p {
+  margin: 0;
+  max-width: 70ch;
+}
+
+a {
+  color: var(--acento);
+  text-underline-offset: 0.15em;
+}
+a:hover {
+  color: var(--acento-hover);
+}
+
+/* Los componentes son bloques de la rejilla (la posición la fija app.css). */
+app-estado,
+app-filtros,
+app-mapa,
+app-tabla,
+app-recuentos,
+app-distribuciones,
+app-comparacion,
+app-grafico-barras,
+app-nota-aviso {
+  display: block;
+  min-width: 0;
+}
+
+/* Foco visible en todo el panel */
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+.sobre-oscuro :focus-visible,
+.sobre-oscuro:focus-visible {
+  outline-color: var(--foco-sobre-oscuro);
+}
+
+/* Enlace de salto */
+.saltar {
+  position: absolute;
+  left: var(--e-2);
+  top: -4rem;
+  z-index: 3000;
+  padding: var(--e-2) var(--e-4);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  border-radius: var(--radio);
+  font-weight: 600;
+}
+.saltar:focus {
+  top: var(--e-2);
+}
+
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Panel de contenido ───────────────────────────────────────────── */
+.bloque {
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  min-width: 0;
+}
+.bloque__cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e-1) var(--e-4);
+  padding: var(--e-3) var(--e-4);
+  border-bottom: 1px solid var(--linea);
+}
+.bloque__titulo {
+  font-size: var(--t-md);
+}
+/* Qué filtros usa el bloque, estado de carga, etc. */
+.bloque__nota {
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.bloque__cuerpo {
+  padding: var(--e-4);
+}
+.bloque__vacio {
+  padding: var(--e-4);
+  color: var(--tinta-suave);
+  font-size: var(--t-sm);
+}
+
+/* ── Avisos (nunca solo color: llevan texto o icono propio) ───────── */
+.aviso {
+  padding: var(--e-3) var(--e-4);
+  border: 1px solid var(--info-borde);
+  border-left-width: 6px;
+  border-radius: var(--radio);
+  background: var(--info-fondo);
+  color: var(--info-texto);
+  font-size: var(--t-sm);
+}
+.aviso--atencion {
+  border-color: var(--atencion-borde);
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+}
+.aviso--alerta {
+  border-color: var(--alerta-borde);
+  background: var(--alerta-fondo);
+  color: var(--alerta-texto);
+  font-weight: 600;
+}
+
+/* ── Formularios ──────────────────────────────────────────────────── */
+.campo {
+  display: grid;
+  gap: var(--e-1);
+}
+.campo > label,
+.campo__rotulo {
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.campo input,
+.campo select {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: var(--e-1) var(--e-3);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+}
+.campo input[aria-invalid='true'] {
+  border-color: var(--alerta-borde);
+  border-width: 2px;
+}
+.campo__ayuda {
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.campo__error {
+  font-size: var(--t-sm);
+  color: var(--alerta-texto);
+  font-weight: 600;
+}
+
+.boton {
+  min-height: 2.5rem;
+  padding: var(--e-1) var(--e-4);
+  border: 1px solid var(--acento);
+  border-radius: var(--radio);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.boton:hover:not(:disabled) {
+  background: var(--acento-hover);
+}
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.boton--secundario {
+  background: var(--superficie);
+  color: var(--acento);
+}
+.boton--secundario:hover:not(:disabled) {
+  background: var(--acento-suave);
+  color: var(--acento-hover);
+}
+
+/* ── Datos ────────────────────────────────────────────────────────── */
+.tabla-scroll {
+  overflow-x: auto;
+}
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+.tabla-datos caption {
+  text-align: left;
+  padding: var(--e-2) var(--e-4);
+  color: var(--tinta-suave);
+}
+.tabla-datos th,
+.tabla-datos td {
+  padding: var(--e-2) var(--e-3);
+  border-bottom: 1px solid var(--linea);
+  text-align: left;
+  vertical-align: top;
+}
+.tabla-datos thead th {
+  position: sticky;
+  top: 0;
+  background: var(--superficie-2);
+  border-bottom: 2px solid var(--linea-fuerte);
+  white-space: nowrap;
+}
+.tabla-datos .num {
+  text-align: right;
+}
+.tabla-datos tbody tr:hover {
+  background: var(--superficie-2);
+}
+
+/* Cifra grande con su rótulo */
+.cifra {
+  display: grid;
+  gap: 0;
+}
+.cifra__valor {
+  font-size: var(--t-cifra);
+  font-weight: 650;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.cifra__rotulo {
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+
+/* Dato desconocido: «ND», nunca 0 */
+.nd {
+  color: var(--tinta-suave);
+  font-style: italic;
+}
+
+.cargando {
+  color: var(--tinta-suave);
+  font-size: var(--t-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,31 @@
+.comparacion {
+  display: grid;
+  gap: var(--e-4);
+}
+.comparacion__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--e-4);
+  margin: 0;
+}
+.comparacion__cifras dd {
+  margin: 0;
+}
+.comparacion__cifras dt {
+  font-weight: 600;
+}
+/* «no disponible»: más pequeño que una cifra, para que no parezca un dato */
+.comparacion__cifras .cifra__valor.nd {
+  font-size: var(--t-md);
+  font-weight: 400;
+}
+.comparacion__filtros {
+  font-size: var(--t-sm);
+  color: var(--tinta-suave);
+}
+.comparacion__filtros strong {
+  color: var(--tinta);
+}
+.comparacion__aviso {
+  max-width: none;
+}

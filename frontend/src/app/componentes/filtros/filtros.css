@@ -1,0 +1,15 @@
+.filtros {
+  display: grid;
+  gap: var(--e-3);
+  padding: var(--e-4);
+}
+
+.filtros__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.filtros__acciones .boton {
+  flex: 1 1 6rem;
+}

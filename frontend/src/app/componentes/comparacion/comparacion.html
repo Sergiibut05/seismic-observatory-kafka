@@ -1,0 +1,45 @@
+<section class="bloque" aria-labelledby="titulo-comparacion">
+  <div class="bloque__cab">
+    <h2 id="titulo-comparacion" class="bloque__titulo">Comparación histórica</h2>
+    <span class="bloque__nota">Solo usa magnitud y país/subregión; ignora las fechas</span>
+  </div>
+
+  <div class="bloque__cuerpo comparacion">
+    <app-aviso-bloque [bloque]="bloque()" />
+
+    @if (datos(); as d) {
+      @if (cifras(); as c) {
+        <dl class="comparacion__cifras">
+          <div class="cifra">
+            <dt class="cifra__rotulo">Últimas 24 h</dt>
+            <dd class="cifra__valor">{{ c.ultimas24h }}</dd>
+            <dd class="cifra__rotulo">eventos · {{ formatearInstanteUtc(d.ventana_actual.desde) }} a {{ formatearInstanteUtc(d.ventana_actual.hasta) }}</dd>
+          </div>
+          <div class="cifra">
+            <dt class="cifra__rotulo">Media diaria de 2025</dt>
+            <dd class="cifra__valor" [class.nd]="c.historicoNoDisponible">{{ c.mediaDiaria2025 }}</dd>
+            <dd class="cifra__rotulo">
+              @if (c.historicoNoDisponible) {
+                el histórico de 2025 no está cargado
+              } @else {
+                {{ c.eventos2025 }} eventos en {{ d.historico_2025.dias }} días
+              }
+            </dd>
+          </div>
+          <div class="cifra">
+            <dt class="cifra__rotulo">Cociente (24 h ÷ media 2025)</dt>
+            <dd class="cifra__valor" [class.nd]="c.historicoNoDisponible">{{ c.cociente }}</dd>
+            <dd class="cifra__rotulo">1 = igual que la media diaria</dd>
+          </div>
+        </dl>
+        <p class="comparacion__filtros">
+          <strong>Filtro efectivo:</strong> {{ filtros() }}
+        </p>
+      }
+    } @else if (bloque().estado !== 'cargando' || bloque().error !== null) {
+      <p class="bloque__vacio">Comparación no disponible por ahora.</p>
+    }
+
+    <p class="aviso aviso--atencion comparacion__aviso"><span aria-hidden="true">⚠ </span>{{ aviso() }}</p>
+  </div>
+</section>

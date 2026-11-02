@@ -205,6 +205,6 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 002-ingesta-live | **Hecha.** Productor USGS, estado de versiones publicadas, reintentos |
 | 003-consumidor | **Hecha.** Calidad, cuarentena, point-in-polygon, estado actual por versión |
 | 004-historico-replay | **Hecha.** Descarga 2025 y reproducción acelerada aislada |
-| 005-api | FastAPI, contrato, CORS |
-| 006-panel | Angular + Leaflet, filtros, gráficos, Netlify + ngrok |
+| 005-api | **Hecha.** Consulta analítica, comparación con 2025 y CORS |
+| 006-panel | **Hecha en local.** Angular + Leaflet; guía en `specs/006-panel/quickstart.md` |
 | 007-memoria | Calidad, rendimiento, costes y conclusiones |

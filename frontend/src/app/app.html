@@ -1,0 +1,37 @@
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+@if (config.valida()) {
+  <header class="cabecera sobre-oscuro">
+    <div class="cabecera__interior">
+      <div class="cabecera__marca">
+        <h1>Observatorio de actividad sísmica</h1>
+        <p>Eventos reales de USGS, tiempos en UTC</p>
+      </div>
+      <app-estado />
+    </div>
+  </header>
+
+  <!-- El orden del DOM es el orden de tabulación: filtros → mapa → tabla → gráficos. -->
+  <main id="contenido" class="rejilla" tabindex="-1">
+    <app-filtros class="area-filtros" />
+    <app-mapa class="area-mapa" />
+    <app-tabla class="area-tabla" />
+    <app-comparacion class="area-comparacion" />
+    <app-recuentos class="area-recuentos" />
+    <app-distribuciones class="area-distribuciones" />
+  </main>
+
+  <footer class="pie">
+    <app-nota-aviso />
+  </footer>
+} @else {
+  <main id="contenido" class="error-configuracion" tabindex="-1">
+    <h1>Configuración no válida</h1>
+    <p class="aviso aviso--alerta" role="alert">{{ config.error() }}</p>
+    <p>
+      Edita <code>public/config.json</code> (una sola clave, <code>apiBaseUrl</code>) y vuelve a
+      compilar. Usa <code>config.ejemplo.json</code> como modelo: HTTPS de ngrok, o
+      <code>http://127.0.0.1:8000</code> solo en desarrollo.
+    </p>
+  </main>
+}

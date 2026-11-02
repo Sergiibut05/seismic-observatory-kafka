@@ -1,0 +1,41 @@
+.tabla__aviso {
+  margin: var(--e-3) var(--e-4) 0;
+}
+
+.tabla-scroll {
+  max-height: 32rem;
+  overflow: auto;
+}
+
+.tabla-datos tbody th {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tabla-datos tr.seleccionada {
+  background: var(--acento-suave);
+  box-shadow: inset 4px 0 0 var(--acento);
+}
+
+.tabla__id {
+  font-family: var(--fuente-mono);
+  font-size: var(--t-xs);
+}
+
+.tabla__ver {
+  min-height: 2rem;
+  padding-block: 0;
+  white-space: nowrap;
+  font-size: var(--t-xs);
+}
+
+.tabla__paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  padding: var(--e-3) var(--e-4);
+  border-top: 1px solid var(--linea);
+  font-variant-numeric: tabular-nums;
+}

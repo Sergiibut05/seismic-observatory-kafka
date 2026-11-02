@@ -1,0 +1,116 @@
+/* Colores: solo variables globales. Contraste de texto ≥ 4,5:1; formas ≥ 3:1 sobre blanco. */
+.grafico {
+  margin: 0;
+  display: grid;
+  gap: var(--e-2);
+}
+.grafico__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 34rem;
+  overflow: visible;
+}
+.grafico__guia {
+  stroke: var(--linea);
+  stroke-width: 1;
+}
+.grafico__eje {
+  stroke: var(--tinta-suave);
+  stroke-width: 1.5;
+}
+.grafico__separador {
+  stroke: var(--linea-fuerte);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.grafico__marca,
+.grafico__eje-titulo {
+  fill: var(--tinta-suave);
+  font-size: 11px;
+}
+.grafico__etiqueta,
+.grafico__valor {
+  fill: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+.grafico__valor {
+  font-weight: 600;
+}
+.grafico__valor--nd {
+  fill: var(--tinta-suave);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.grafico__rect {
+  fill: var(--barra);
+}
+/* Cero: línea corta con borde (visible, distinta de «sin valor» y de «ND») */
+.grafico__rect--cero {
+  fill: var(--barra-cero);
+  stroke: var(--linea-fuerte);
+  stroke-width: 1.5;
+}
+.grafico__rect--sin-valor {
+  stroke: var(--tinta-suave);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+}
+.grafico__fondo-rayas {
+  fill: var(--superficie);
+}
+.grafico__rayas {
+  stroke: var(--barra-sin-valor);
+  stroke-width: 3;
+}
+
+.grafico__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-1) var(--e-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.grafico__leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-1);
+}
+.muestra {
+  display: inline-block;
+  width: 1.25rem;
+  height: 0.75rem;
+  border: 1px solid transparent;
+}
+.muestra--normal {
+  background: var(--barra);
+}
+.muestra--cero {
+  height: 0.25rem;
+  background: var(--barra-cero);
+  border-color: var(--linea-fuerte);
+}
+.muestra--sin-valor {
+  border: 1px dashed var(--tinta-suave);
+  background: repeating-linear-gradient(135deg, var(--superficie) 0 3px, var(--barra-sin-valor) 3px 5px);
+}
+
+.grafico__tabla summary {
+  cursor: pointer;
+  font-size: var(--t-sm);
+  color: var(--acento);
+  font-weight: 600;
+  padding: var(--e-1) 0;
+}
+.grafico__tabla[open] summary {
+  margin-bottom: var(--e-2);
+}
+.grafico__tabla .tabla-scroll {
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--linea);
+}
