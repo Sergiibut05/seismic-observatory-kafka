@@ -46,6 +46,19 @@ def registro(valor=None, clave=b"synthetic-smoke-0001", offset=5):
     )
 
 
+class _ConnFalsa:
+    async def execute(self, *args, **kwargs):
+        return None
+
+
+class _TransaccionFalsa:
+    async def __aenter__(self):
+        return _ConnFalsa()
+
+    async def __aexit__(self, *args):
+        return False
+
+
 class BdFalsa:
     def __init__(self, conectada=True):
         self.conectada = conectada
@@ -54,6 +67,9 @@ class BdFalsa:
     async def conectar(self):
         self.reconexiones += 1
         self.conectada = True
+
+    def transaccion(self):
+        return _TransaccionFalsa()
 
 
 @pytest.fixture

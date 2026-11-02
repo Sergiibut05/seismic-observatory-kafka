@@ -123,7 +123,25 @@ idéntica a la anterior no genera otra copia. Lo más viejo de
 Que un evento deje de salir en el feed no lo borra: puede haber cumplido 24 h.
 Tampoco se reconcilian aquí los que USGS elimine o fusione fuera de la ventana.
 Si el productor estuvo parado más de 24 h, ese hueco se recupera con el
-catálogo FDSN (feature 004), no releyendo `all_day`.
+catálogo FDSN descargado en `data/historico/` (feature 004), no releyendo `all_day`.
+
+### Histórico y reproducción
+
+La descarga se hace una vez, en el anfitrión (no entra en Git):
+
+```powershell
+$env:PYTHONPATH = "$PWD\backend"
+$env:HISTORICO_DIR = "$PWD\data\historico"
+python -m observatorio.historico
+```
+
+Genera `data/historico/2025/eventos.geojson` y `manifest.json`. Si un mes supera 20.000 eventos, el script parte el intervalo solo.
+
+La reproducción, dentro del productor ya levantado, manda 40 eventos por Kafka con la etiqueta `REPRODUCCIÓN`. No cambia `eventos_reales`. Las filas quedan en `replay.versiones_evento`. Republica el primero (duplicado, no crea fila) y una revisión con `updated` un minuto posterior (sí crea otra versión).
+
+```powershell
+docker compose exec producer python -m observatorio.replay
+```
 
 Eliminar solo los datos sintéticos (los reales no se tocan):
 
@@ -177,7 +195,7 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 001-esqueleto | **Hecha.** Compose con los 5 servicios, healthchecks, esquema SQL, prueba de humo y recuperación ante caídas |
 | 002-ingesta-live | **Hecha.** Productor USGS, estado de versiones publicadas, reintentos |
 | 003-consumidor | Calidad, cuarentena, point-in-polygon, upsert por versión |
-| 004-historico-replay | Descarga 2025 y reproducción acelerada aislada |
+| 004-historico-replay | **Hecha.** Descarga 2025 y reproducción acelerada aislada |
 | 005-api | FastAPI, contrato, CORS |
 | 006-panel | Angular + Leaflet, filtros, gráficos, Netlify + ngrok |
 | 007-memoria | Calidad, rendimiento, costes y conclusiones |

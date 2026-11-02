@@ -30,6 +30,7 @@ async def _abrir_kafka(ajustes: AjustesProductor, sesion: SesionKafka) -> AIOKaf
     admin = await abrir_admin(ajustes.kafka_bootstrap_servers)
     try:
         await ensure_topic(admin, ajustes.topic_live, ajustes.topic_partitions, ajustes.topic_retention_ms, _log)
+        await ensure_topic(admin, ajustes.topic_replay, ajustes.topic_partitions, ajustes.topic_retention_ms, _log)
     finally:
         await cerrar_sin_error(admin)
     productor = AIOKafkaProducer(

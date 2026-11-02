@@ -24,8 +24,8 @@ from observatorio.consumer.persistencia import guardar_cuarentena, guardar_versi
 
 _log = logging.getLogger("observatorio.consumer")
 
-# El consumidor de esta feature solo lee el topic live.
-MODO_TOPIC = "live"
+# El consumidor lee el topic live y el de reproducción. El modo sale del topic.
+MODO_POR_DEFECTO = "live"
 
 
 async def _esperar_topic(ajustes: AjustesConsumidor) -> None:
@@ -37,6 +37,7 @@ async def _esperar_topic(ajustes: AjustesConsumidor) -> None:
     )
     try:
         await wait_for_topic(admin, ajustes.topic_live, ajustes.backoff, logger=_log)
+        await wait_for_topic(admin, ajustes.topic_replay, ajustes.backoff, logger=_log)
     finally:
         await cerrar_sin_error(admin)
 
@@ -44,6 +45,7 @@ async def _esperar_topic(ajustes: AjustesConsumidor) -> None:
 async def _abrir_consumidor(ajustes: AjustesConsumidor) -> AIOKafkaConsumer:
     consumidor = AIOKafkaConsumer(
         ajustes.topic_live,
+        ajustes.topic_replay,
         bootstrap_servers=ajustes.kafka_bootstrap_servers,
         group_id=ajustes.consumer_group,
         enable_auto_commit=False,
@@ -57,13 +59,13 @@ async def _abrir_consumidor(ajustes: AjustesConsumidor) -> AIOKafkaConsumer:
     return consumidor
 
 
-async def procesar_registro(db: Database, registro, logger: logging.Logger = _log) -> str:
+async def procesar_registro(db: Database, registro, logger: logging.Logger = _log, modo: str = MODO_POR_DEFECTO) -> str:
     """Decide, escribe en una transacción y registra el resultado. Devuelve el `result`.
 
     Lanza ante fallos de conexión o errores no clasificados: quien llama reintenta el mismo registro.
     """
     posicion = {"topic": registro.topic, "partition": registro.partition, "offset": registro.offset}
-    decision = decidir(registro, MODO_TOPIC)
+    decision = decidir(registro, modo)
 
     if isinstance(decision, Aceptar):
         version = decision.version
@@ -88,6 +90,8 @@ async def procesar_registro(db: Database, registro, logger: logging.Logger = _lo
             return "rechazado"
         resultado = resultado_escritura(filas)
         extra = {"reason": "duplicado"} if resultado == "omitido" else {}
+        if modo == "replay":
+            extra["etiqueta"] = "REPRODUCCIÓN"
         registrar(logger, resultado, event_id=version.event_id, updated=version.updated_ms, **extra, **posicion)
         return resultado
 
@@ -114,13 +118,14 @@ async def procesar_con_reintentos(
     config: Backoff,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     logger: logging.Logger = _log,
+    modo: str = MODO_POR_DEFECTO,
 ) -> str:
     """Reintenta el MISMO registro hasta lograrlo: nunca avanza, descarta ni confirma en silencio."""
     secuencia = esperas(config.inicial, config.factor, config.tope)
     intento = 0
     while True:
         try:
-            return await procesar_registro(db, registro, logger)
+            return await procesar_registro(db, registro, logger, modo)
         except Exception as exc:
             intento += 1
             espera = next(secuencia)
@@ -201,13 +206,52 @@ async def _cerrar_sesion_kafka(consumidor, sesion: SesionConsumo) -> None:
     await cerrar_sin_error(consumidor)
 
 
+async def _asegurar_replay(db: Database) -> None:
+    """Crea la tabla de replay en volúmenes que ya existían antes de esta feature."""
+    async with db.transaccion() as conn:
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS replay.versiones_evento (
+                event_id        text         NOT NULL CHECK (event_id <> ''),
+                updated         timestamptz  NOT NULL,
+                schema_version  smallint     NOT NULL,
+                source          text         NOT NULL,
+                mode            text         NOT NULL DEFAULT 'replay' CHECK (mode = 'replay'),
+                sintetico       boolean      NOT NULL,
+                ingested_at     timestamptz  NOT NULL,
+                processed_at    timestamptz  NOT NULL DEFAULT clock_timestamp(),
+                topic           text         NOT NULL,
+                particion       integer      NOT NULL,
+                offset_kafka    bigint       NOT NULL,
+                original        jsonb        NOT NULL,
+                CONSTRAINT versiones_replay_pk PRIMARY KEY (event_id, updated),
+                CONSTRAINT versiones_replay_sintetico_coherente CHECK (
+                    sintetico = (source LIKE 'synthetic-%')
+                    AND sintetico = (event_id LIKE 'synthetic-%'))
+            )
+            """
+        )
+        await conn.execute(
+            "INSERT INTO ingesta.version_esquema (version, nombre) VALUES (3, 'replay') ON CONFLICT (version) DO NOTHING"
+        )
+
+
 async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Database, parada: asyncio.Event) -> None:
+    tabla_lista = False
     while not parada.is_set():
         consumidor = sesion.consumidor
         # Sin consumidor o sin PostgreSQL no se lee: así no se avanza ni se acumula nada en memoria.
         if consumidor is None or not db.conectada:
             await esperar(parada, 0.5)
             continue
+        if not tabla_lista:
+            try:
+                await _asegurar_replay(db)
+            except Exception as exc:
+                registrar(_log, "error", nivel="ERROR", component="replay", reason=motivo_de(exc))
+                await esperar(parada, 1)
+                continue
+            tabla_lista = True
         try:
             registro = await asyncio.wait_for(consumidor.getone(), ESPERA_LECTURA)
         except asyncio.TimeoutError:
@@ -218,7 +262,12 @@ async def _consumir(ajustes: AjustesConsumidor, sesion: SesionConsumo, db: Datab
             registrar(_log, "error", nivel="ERROR", component="kafka", action="lectura", reason=motivo_de(exc))
             await esperar(parada, 1)
             continue
-        await procesar_con_reintentos(db, registro, ajustes.backoff)
+        await procesar_con_reintentos(
+            db,
+            registro,
+            ajustes.backoff,
+            modo="replay" if registro.topic == getattr(ajustes, "topic_replay", None) else MODO_POR_DEFECTO,
+        )
         await confirmar_offset(consumidor, registro)
 
 

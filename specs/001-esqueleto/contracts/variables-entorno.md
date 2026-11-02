@@ -14,6 +14,7 @@ Columna **Origen**: `.env` = el alumno puede cambiarla; `compose` = valor fijo e
 | `POSTGRES_PORT` | producer, consumer, api | `5432` | no | compose | Puerto interno (no se publica) |
 | `KAFKA_BOOTSTRAP_SERVERS` | producer, consumer | `kafka:19092` | no | compose | Listener **interno** (FR-006, FR-025) |
 | `TOPIC_LIVE` | producer, consumer | `eventos.live` | no | `.env` | Nombre del topic live |
+| `TOPIC_REPLAY` | producer, consumer | `eventos.replay` | no | `.env` | Topic de la reproducción histórica (feature 004). Mismo grupo que el live |
 | `TOPIC_PARTITIONS` | producer | `3` | no | `.env` | Particiones al crear el topic |
 | `TOPIC_RETENTION_MS` | producer | `604800000` (7 días) | no | `.env` | `retention.ms` del topic; entero > 0 (finito). `segment.ms` = `min(TOPIC_RETENTION_MS, 86400000)` |
 | `CONSUMER_GROUP` | consumer | `consumidor-live` | no | `.env` | `group_id` de Kafka |

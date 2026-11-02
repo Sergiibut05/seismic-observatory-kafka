@@ -91,6 +91,7 @@ class AjustesProductor(AjustesComunes):
     http_timeout_seconds: int
     feed_dir: str
     feed_retention_hours: float
+    topic_replay: str
 
     def secretos(self) -> tuple[str, ...]:
         return (self.postgres.password,)
@@ -103,6 +104,7 @@ class AjustesConsumidor(AjustesComunes):
     consumer_group: str
     catalogo_path: str
     postgres: AjustesPostgres
+    topic_replay: str
 
     def secretos(self) -> tuple[str, ...]:
         return (self.postgres.password,)
@@ -165,6 +167,7 @@ def ajustes_productor(env: Mapping[str, str] | None = None) -> AjustesProductor:
         http_timeout_seconds=_entero(env, "HTTP_TIMEOUT_SECONDS", 30),
         feed_dir=_texto(env, "FEED_DIR", "/data/usgs"),
         feed_retention_hours=_numero_positivo(env, "FEED_RETENTION_HOURS", 48),
+        topic_replay=_texto(env, "TOPIC_REPLAY", "eventos.replay"),
     )
 
 
@@ -177,6 +180,7 @@ def ajustes_consumidor(env: Mapping[str, str] | None = None) -> AjustesConsumido
         consumer_group=_texto(env, "CONSUMER_GROUP", "consumidor-live"),
         catalogo_path=_texto(env, "CATALOGO_PATH", "/catalogo/paises.geojson"),
         postgres=_postgres(env),
+        topic_replay=_texto(env, "TOPIC_REPLAY", "eventos.replay"),
     )
 
 
