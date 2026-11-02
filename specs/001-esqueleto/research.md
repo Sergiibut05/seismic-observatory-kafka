@@ -774,3 +774,11 @@ Hallazgos de la validación de US6 (arranque en frío en un proyecto temporal `-
 - SC-009: 68 líneas de `producer`/`consumer`/`api`, **`invalidas=0`**; cinco líneas de evento (publicado, persistido, omitido, rechazado) con `event_id` y `updated`; ninguna con la contraseña. Son líneas `result=error` de aiokafka al arrancar en frío (broker aún sin escuchar o coordinador no disponible) y quedan en formato `clave=valor`.
 - `.env` no versionado; `Get-FileHash` del ejemplo del contrato = el de la copia de pruebas (`True`).
 - SC-011 (cronometrar a una persona externa siguiendo solo el README ≤ 15 min) **no se puede hacer aquí**: queda pendiente para una persona que no haya escrito la pila (T055 sin marcar).
+
+### Tanda 2 · Polish (T056–T060)
+
+Verificaciones (sin decisiones nuevas; no hubo contradicción con research ni plan salvo la nota de `plan.md` sobre los dos supervisores concurrentes):
+
+- T056: `docker compose build` + `docker compose run --rm --no-deps consumer pytest -q` en la imagen final → **361 passed**, sin Kafka ni PostgreSQL necesarios (con el catálogo montado no se omite ninguna prueba).
+- T058 (seguridad ligera): el valor de la contraseña no aparece en ningún fichero versionado ni en logs (0 coincidencias en las 5 000+ líneas de logs ni en `postgresql://`/`password=`); `git grep -i "password|secret"` fuera de `specs`/`docs` solo encuentra nombres de variable y la redacción de secretos de `common/logging.py`; `producer`, `consumer` y `api` corren como `appuser` (uid 10001); solo `127.0.0.1:8000` y `127.0.0.1:9092` publicados (`5432/tcp` es puerto expuesto); `.env`, `data/` y `__pycache__` fuera de Git. Limitaciones aceptadas (R-08): `docker compose config` imprime la contraseña interpolada en la terminal (no en el repositorio) y `docker inspect` la muestra en las variables del contenedor, ambas solo en local.
+- T057 y T060 (tres arranques completos desde cero y carpeta `evidencias/`) son del `verifier` y quedan sin marcar. Evidencia parcial ya disponible: arranques en frío en proyectos temporales (`-p`) en la tanda 1 y en US6 (5 servicios `healthy` a los 13,5 s en la última).

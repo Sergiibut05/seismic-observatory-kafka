@@ -189,6 +189,11 @@ propósito (R-13).
    `auto_offset_reset=earliest`) → `kafka` y `postgres` en verde.
 4. Bucle: `getone` → `decidir()` → transacción (insert versión **o** cuarentena) → log → `commit(offset+1)`.
 
+> Nota de implementación (US3, research.md R-35 y R-39): los pasos 2 y 3 los ejecutan **dos supervisores
+> concurrentes** (PostgreSQL y Kafka) en lugar de uno tras otro; el bucle del paso 4 no lee mientras no
+> haya consumidor ni conexión con PostgreSQL. El resultado observable es el mismo y cada dependencia se
+> recupera sola tras una caída. La API usa el mismo supervisor para PostgreSQL.
+
 ### Procesamiento de un mensaje (garantía de la Constitución III)
 
 `recibir → validar → BEGIN → INSERT … ON CONFLICT DO NOTHING → COMMIT → log → commit(offset+1)`.
