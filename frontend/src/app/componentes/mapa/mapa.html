@@ -59,15 +59,14 @@
         <p class="mapa-estado cargando" role="status">Cargando eventos…</p>
       }
       <details class="mapa-leyenda" open>
-        <summary>Leyenda</summary>
+        <summary>Cómo leer el mapa</summary>
         <div class="mapa-leyenda__grupo">
-          <p class="mapa-leyenda__titulo">Tamaño: magnitud</p>
+          <p class="mapa-leyenda__titulo">Círculo más grande, magnitud mayor</p>
           <ul class="mapa-leyenda__radios">
-            @for (r of leyendaRadio; track r.etiqueta) {
+            @for (r of radiosLeyenda; track r.etiqueta) {
               <li>
                 <span
                   class="mapa-leyenda__circulo"
-                  [class.mapa-leyenda__circulo--nd]="r.etiqueta === 'ND'"
                   [style.width.px]="r.radio * 2"
                   [style.height.px]="r.radio * 2"
                 ></span>
@@ -77,26 +76,30 @@
           </ul>
         </div>
         <div class="mapa-leyenda__grupo">
-          <p class="mapa-leyenda__titulo">Color: profundidad (km)</p>
-          <ul class="mapa-leyenda__colores">
+          <p class="mapa-leyenda__titulo">Color: profundidad en km</p>
+          <ul class="mapa-leyenda__escala" aria-label="Escala de profundidad">
             @for (i of intervalos; track i.etiqueta) {
-              <li>
-                <span class="mapa-leyenda__muestra" [style.background]="i.color"></span>
-                <span>{{ i.etiqueta }}</span>
-              </li>
-            }
-            <li>
-              <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
-              <span>ND (borde discontinuo)</span>
-            </li>
-            @if (sinteticos()) {
-              <li class="mapa-leyenda__sintetico">
-                <span class="mapa-leyenda__muestra mapa-leyenda__muestra--sintetico"></span>
-                <span>SINTÉTICO (contorno grueso discontinuo)</span>
+              <li [attr.aria-label]="i.etiqueta + ' km'">
+                <span class="mapa-leyenda__tramo" [style.background]="i.color"></span>
+                <span class="mapa-leyenda__marca">{{ i.desde ?? '' }}</span>
               </li>
             }
           </ul>
+          <p class="mapa-leyenda__extremos"><span>superficie</span><span>más profundo</span></p>
         </div>
+        <ul class="mapa-leyenda__notas">
+          <li>
+            <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
+            <span>Gris con borde discontinuo: sin dato (ND)</span>
+          </li>
+          @if (sinteticos()) {
+            <li class="mapa-leyenda__sintetico">
+              <span class="mapa-leyenda__muestra mapa-leyenda__muestra--sintetico"></span>
+              <span>SINTÉTICO: contorno grueso discontinuo</span>
+            </li>
+          }
+        </ul>
+        <p class="mapa-leyenda__pista">Pasa el ratón por un círculo para ver la magnitud; púlsalo para ver la ficha.</p>
       </details>
       <p class="solo-lectores" role="status">{{ anuncio() }}</p>
     } @else {

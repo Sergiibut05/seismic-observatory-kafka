@@ -25,7 +25,7 @@ import {
 } from '../../puro/escalas';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
 import { formatearEntero } from '../../puro/formato';
-import { crearFicha } from './mapa-ficha';
+import { crearFicha, crearResumen } from './mapa-ficha';
 
 const URL_TESELAS = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATRIBUCION =
@@ -85,7 +85,7 @@ export class Mapa {
   protected readonly seleccionFuera = signal(false);
   protected readonly anuncio = signal('');
 
-  protected readonly leyendaRadio = leyendaRadio();
+  protected readonly radiosLeyenda = leyendaRadio().filter((r) => ['2', '4', '6', '8'].includes(r.etiqueta));
   protected readonly intervalos = INTERVALOS_PROFUNDIDAD;
   protected readonly colorNd = COLOR_ND;
 
@@ -141,7 +141,12 @@ export class Mapa {
       // Fronteras bajo los círculos: panel propio con su lienzo, sin depender del orden de carga.
       mapa.createPane('fronteras').style.zIndex = '350';
       this.capa = L.featureGroup().addTo(mapa);
-      this.popup = L.popup({ maxWidth: 320, className: 'ficha-popup', autoPanPadding: [24, 24] });
+      this.popup = L.popup({
+        minWidth: 240,
+        maxWidth: 300,
+        className: 'ficha-popup',
+        autoPanPadding: [24, 24],
+      });
 
       mapa.on('popupopen', (e: L.PopupEvent) => {
         const cerrar = e.popup.getElement()?.querySelector('.leaflet-popup-close-button');
@@ -225,6 +230,11 @@ export class Mapa {
       if (previo?.version === version) continue;
       if (previo) capa.removeLayer(previo.marcador);
       const marcador = L.circleMarker([lat, lon], this.estiloDe(f, id === seleccion));
+      marcador.bindTooltip(crearResumen(f.properties), {
+        direction: 'top',
+        offset: [0, -4],
+        className: 'mapa-resumen',
+      });
       marcador.on('click', () => this.store.eventoSeleccionado.set(id));
       capa.addLayer(marcador);
       this.dibujados.set(id, { marcador, version, evento: f });

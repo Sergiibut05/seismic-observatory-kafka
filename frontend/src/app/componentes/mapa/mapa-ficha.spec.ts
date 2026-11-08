@@ -1,5 +1,5 @@
 import { PropiedadesEventoMapa } from '../../modelos/api';
-import { crearFicha } from './mapa-ficha';
+import { crearFicha, crearResumen } from './mapa-ficha';
 
 const base: PropiedadesEventoMapa = {
   event_id: 'us7000abcd',
@@ -26,9 +26,24 @@ describe('crearFicha', () => {
   it('magnitud y profundidad nulas se muestran «ND», nunca 0', () => {
     const ficha = crearFicha({ ...base, magnitud: null, profundidad: null });
     const valores = Array.from(ficha.querySelectorAll('dd')).map((d) => d.textContent);
-    expect(valores).toContain('ND');
-    expect(valores.filter((v) => v === 'ND').length).toBe(2);
+    expect(valores.filter((v) => v === 'ND').length).toBe(1);
+    expect(ficha.querySelector('.ficha__titulo')?.textContent).toBe('Magnitud ND');
     expect(ficha.textContent).not.toMatch(/0,0|0 km/);
+  });
+
+  it('el lugar va bajo el título y «Sin país asignado» explica por qué', () => {
+    expect(crearFicha(base).querySelector('.ficha__lugar')?.textContent).toBe('México');
+    const mar = crearFicha({ ...base, pais_nombre: 'Sin país asignado' });
+    expect(mar.querySelector('.ficha__lugar')?.textContent).toContain('mar o fuera de fronteras');
+  });
+
+  it('el resumen al pasar el ratón es una línea de texto con magnitud y lugar', () => {
+    expect(crearResumen(base).textContent).toBe('M 4,5, México');
+    expect(crearResumen({ ...base, pais_nombre: 'Sin país asignado', magnitud: null }).textContent).toBe(
+      'M ND, sin país asignado',
+    );
+    const xss = crearResumen({ ...base, pais_nombre: '<b>x</b>' });
+    expect(xss.querySelector('b')).toBeNull();
   });
 
   it('no interpreta como HTML el texto que viene de la API', () => {

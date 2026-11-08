@@ -44,3 +44,8 @@ T1 ─┬─ T2 ─┐
 - **A (T5 + T6)**: solo `componentes/{filtros,tabla,mapa}/`. **B (T7 + T8)**: solo `componentes/{grafico-barras,recuentos,distribuciones,comparacion,estado}/`. Los cascarones, el store y `app.*`/`styles.css` los deja cerrados T4, de modo que ni A ni B editan ficheros comunes. Si A o B necesita un helper nuevo, lo crea en un `puro/` nuevo con su spec (no edita los de T3) y si necesita un token de estilo lo pide al otro antes de tocar `styles.css`.
 - Secuencial por dependencia: T1 → T4 → T9 → T10 → T11 → T12. T12 puede escribirse ya durante A/B, pero se cierra tras T11.
 - Totales: 12 tareas (T1, T4, T9, T10, T11, T12 secuenciales; T2/T3 y A/B en paralelo).
+
+## Ajuste posterior (petición del usuario, 2026-11-08)
+
+- [x] T13 Mapa más legible: ficha del terremoto con ancho mínimo (240–300 px), magnitud y lugar como cabecera, fechas sin partir, color de la profundidad y explicación de «Sin país asignado»; leyenda compacta («Cómo leer el mapa», barra continua de profundidad, por debajo de la ficha); resumen de una línea al pasar el ratón (solo texto, nunca HTML). Ficheros: `componentes/mapa/{mapa.ts,mapa.html,mapa.css,mapa-ficha.ts,mapa-ficha.spec.ts}`
+  - Evidencia: Vitest 272 tests pasados; captura [11-mapa-ficha-leyenda.png](evidencias/11-mapa-ficha-leyenda.png)
