@@ -1,0 +1,11 @@
+﻿# Evento real nc75463972 (regenerado 2026-11-08 por el orquestador desde los logs de Compose y la API)
+## producer
+ts=2026-11-08T14:11:30.598Z level=INFO service=producer result=publicado event_id=nc75463972 updated=1794147029733 source=usgs
+ts=2026-11-08T14:28:33.185Z level=INFO service=producer result=publicado event_id=nc75463972 updated=1794148042058 source=usgs
+ts=2026-11-08T14:43:35.733Z level=INFO service=producer result=publicado event_id=nc75463972 updated=1794148944158 source=usgs
+## consumer
+ts=2026-11-08T14:11:30.602Z level=INFO service=consumer result=persistido event_id=nc75463972 updated=1794147029733 topic=eventos.live partition=2 offset=228 pais="Estados Unidos"
+ts=2026-11-08T14:28:33.188Z level=INFO service=consumer result=persistido event_id=nc75463972 updated=1794148042058 topic=eventos.live partition=2 offset=231 pais="Estados Unidos"
+ts=2026-11-08T14:43:35.745Z level=INFO service=consumer result=persistido event_id=nc75463972 updated=1794148944158 topic=eventos.live partition=2 offset=250 pais="Estados Unidos"
+## API /eventos
+{"event_id":"nc75463972","ocurrencia":"2026-11-08T14:08:50.900Z","updated":"2026-11-08T14:42:24.158Z","magnitud":1.65,"profundidad":2.21000003814697,"longitud":-122.841499328613,"latitud":38.8201675415039,"pais_codigo":"USA","pais_nombre":"Estados Unidos","subregion":"Northern America","sintetico":false,"reproducido_en":null}

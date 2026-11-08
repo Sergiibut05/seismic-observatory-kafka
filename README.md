@@ -8,8 +8,10 @@ panel Angular + Leaflet publicado en Netlify.
 La pregunta que responde: **¿dónde se está registrando actividad sísmica y cómo
 se compara con un periodo histórico equivalente?**
 
-> Estado: feature `002-ingesta-live`. El productor consulta USGS cada 60 s.
-> El histórico, la API analítica y el panel llegan en las features 004–006.
+> Estado: features 001–006 hechas y 007 (memoria) en curso en la rama `007-memoria`. La pila completa (productor,
+> Kafka, consumidor, PostgreSQL y API) funciona en local y el panel Angular se ha verificado en un navegador real contra
+> ella. Falta la publicación en Netlify y el túnel real de ngrok (los hace el alumno).
+> La memoria técnica, con el análisis y las pruebas de aceptación, está en [docs/MEMORIA.md](docs/MEMORIA.md).
 
 ## Arquitectura
 
@@ -190,7 +192,8 @@ Get-Process -Id <OwningProcess>
   `python scripts/descargar_paises.py`, que valida `ADM0_A3`, geometrías y CRS
   y escribe su huella en `catalogo/paises.manifest.json`. Véase
   [docs/FUENTES-Y-LICENCIAS.md](docs/FUENTES-Y-LICENCIAS.md).
-- Histórico 2025: se añade en la feature 004.
+- Histórico 2025: se descarga en la feature 004 a `data/historico/` (fuera de Git); procedencia en la
+  [memoria](docs/MEMORIA.md#s3).
 
 ## Cómo se desarrolla
 
@@ -206,5 +209,8 @@ Cursor (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 003-consumidor | **Hecha.** Calidad, cuarentena, point-in-polygon, estado actual por versión |
 | 004-historico-replay | **Hecha.** Descarga 2025 y reproducción acelerada aislada |
 | 005-api | **Hecha.** Consulta analítica, comparación con 2025 y CORS |
-| 006-panel | **Hecha en local.** Angular + Leaflet; guía en `specs/006-panel/quickstart.md` |
-| 007-memoria | Calidad, rendimiento, costes y conclusiones |
+| 006-panel | **Hecha en local.** Angular + Leaflet; guía en `specs/006-panel/quickstart.md`. Verificado en navegador real (T11). Con la 007 añade el selector «REPRODUCCIÓN» (franja de estado, columna de reproducción y comparación solo en directo) y el interruptor de sintéticos (apagado por defecto, con la marca «SINTÉTICO») |
+| 007-memoria | **Casi hecha.** [Memoria](docs/MEMORIA.md): diccionario, calidad, complejidad y mediciones, costes, tres conclusiones de análisis, once pruebas de aceptación superadas, procedimiento de defensa y transparencia. Casos controlados sintéticos (`observatorio.producer.casos`) y limpieza con `scripts/borrar_sinteticos.sql`. Pendiente: el cierre (T24) y lo del alumno (Netlify, ngrok, explicación individual) |
+
+La memoria técnica y la guía de defensa (sección «Procedimiento de defensa», con ngrok, Netlify, CORS y plan B local) están
+en [docs/MEMORIA.md](docs/MEMORIA.md#s14).

@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { RecuentosHora, RecuentosPais, RecuentosSubregion } from '../../modelos/api';
+import { FiltrosStore } from '../../nucleo/filtros.store';
 import { Bloque, PanelDatosService } from '../../nucleo/panel-datos.service';
 import { Recuentos } from './recuentos';
 
@@ -37,6 +38,7 @@ async function montar(
   pais: Bloque<RecuentosPais> = bloque(PAIS),
   hora: Bloque<RecuentosHora> = bloque(HORA),
   acotada: { desde: string; hasta: string } | null = null,
+  antes: (store: FiltrosStore) => void = () => undefined,
 ) {
   TestBed.configureTestingModule({
     providers: [
@@ -51,6 +53,7 @@ async function montar(
       },
     ],
   });
+  antes(TestBed.inject(FiltrosStore));
   const fixture = TestBed.createComponent(Recuentos);
   await fixture.whenStable();
   return { fixture, el: fixture.nativeElement as HTMLElement };
@@ -123,6 +126,23 @@ describe('Recuentos', () => {
       hasta: '2026-11-02T00:00:00.000Z',
     });
     expect(el.textContent).toContain('supera 31 días');
+  });
+
+  it('sin fechas avisa de que el gráfico horario usa las últimas 24 h y los demás todo el periodo', async () => {
+    const { el } = await montar();
+    const hora = el.querySelector('section[aria-labelledby="titulo-recuentos-hora"]')!;
+    expect(hora.textContent).toContain('últimas 24 h');
+    expect(hora.textContent).toContain('todo el periodo disponible');
+  });
+
+  it('con fechas aplicadas no muestra el aviso de las 24 h', async () => {
+    const { el } = await montar(bloque(PAIS), bloque(HORA), null, (store) => {
+      store.editarCampo('desde', '2026-11-01T16:00');
+      expect(store.aplicarYa()).toBe(true);
+    });
+    expect(el.querySelector('section[aria-labelledby="titulo-recuentos-hora"]')!.textContent).not.toContain(
+      'últimas 24 h',
+    );
   });
 
   it('más de 15 países: el gráfico agrupa el resto y la tabla los lista todos', async () => {

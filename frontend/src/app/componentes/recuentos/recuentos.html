@@ -61,6 +61,13 @@
         @if (ventanas().length === 0) {
           <p class="bloque__vacio">No hay ventanas horarias para el periodo consultado.</p>
         } @else {
+          @if (horaSinFechas()) {
+            <p class="bloque__nota">
+              Sin fechas en los filtros, este gráfico muestra las últimas 24 h{{
+                enReproduccion() ? ' hasta el último evento reproducido' : ''
+              }}; los demás bloques usan todo el periodo disponible.
+            </p>
+          }
           <p class="recuentos__total">
             {{ ventanas().length }} ventanas de 1 h, {{ ceros() }} sin eventos. Total:
             <strong>{{ formatearEntero(d.total) }}</strong> eventos

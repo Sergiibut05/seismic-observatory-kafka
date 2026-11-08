@@ -1,0 +1,32 @@
+﻿-- Generado 2026-11-08 por el orquestador (consulta re-ejecutada; los datos de T18 siguen en la base)
+        generado_utc        
+----------------------------
+ 2026-11-08 14:55:11.105447
+(1 row)
+
+-- Estado actual de los casos sintéticos
+              event_id               |        updated         | magnitud | profundidad | pais_codigo |       pais        
+-------------------------------------+------------------------+----------+-------------+-------------+-------------------
+ synthetic-caso-magnitud-nula        | 2026-11-08 14:00:00+00 |          |          10 | ESP         | España
+ synthetic-caso-mar                  | 2026-11-08 14:00:00+00 |        3 |          10 |             | Sin país asignado
+ synthetic-caso-nuevo                | 2026-11-08 14:00:00+00 |      3.4 |          10 | ESP         | España
+ synthetic-caso-profundidad-negativa | 2026-11-08 14:00:00+00 |        3 |          -2 | ESP         | España
+ synthetic-caso-revision             | 2026-11-08 14:01:00+00 |      4.5 |           8 | FRA         | Francia
+(5 rows)
+
+-- Versiones por evento sintético (historial sin sobrescribir)
+              event_id               | versiones |        primera         |         ultima         
+-------------------------------------+-----------+------------------------+------------------------
+ synthetic-caso-magnitud-nula        |         2 | 2026-11-08 13:00:00+00 | 2026-11-08 14:00:00+00
+ synthetic-caso-mar                  |         2 | 2026-11-08 13:00:00+00 | 2026-11-08 14:00:00+00
+ synthetic-caso-nuevo                |         2 | 2026-11-08 13:00:00+00 | 2026-11-08 14:00:00+00
+ synthetic-caso-profundidad-negativa |         2 | 2026-11-08 13:00:00+00 | 2026-11-08 14:00:00+00
+ synthetic-caso-revision             |         6 | 2026-11-08 12:59:00+00 | 2026-11-08 14:01:00+00
+(5 rows)
+
+-- Cuarentena de casos sintéticos
+           motivo           | count 
+----------------------------+-------
+ coordenadas_fuera_de_rango |     4
+(1 row)
+

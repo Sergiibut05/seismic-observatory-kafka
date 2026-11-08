@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
+import { RefrescoService } from '../../nucleo/refresco.service';
 import { CampoFiltro, SIN_PAIS, notaOrigenDatos } from '../../puro/filtros';
 import { formatearInstanteUtc } from '../../puro/formato';
 
@@ -32,6 +33,7 @@ const CAMPOS: readonly CampoTexto[] = [
 export class Filtros {
   protected readonly store = inject(FiltrosStore);
   private readonly datos = inject(PanelDatosService);
+  private readonly refresco = inject(RefrescoService);
 
   protected readonly campos = CAMPOS;
   protected readonly editados = this.store.editados;
@@ -79,9 +81,11 @@ export class Filtros {
     return this.errores()[clave] ? `ayuda-${clave} error-${clave}` : `ayuda-${clave}`;
   }
 
+  /** Con los mismos filtros no hay cambio que dispare la ronda: se pide a mano (p. ej., al volver la API). */
   protected aplicar(evento: Event): void {
     evento.preventDefault();
-    this.store.aplicarYa();
+    const antes = this.store.aplicados();
+    if (this.store.aplicarYa() && this.store.aplicados() === antes) this.refresco.refrescarAhora();
   }
 
   protected restablecer(): void {

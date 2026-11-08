@@ -3,6 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
+import { RefrescoService } from '../../nucleo/refresco.service';
 import { aQuery } from '../../puro/filtros';
 import { Filtros } from './filtros';
 
@@ -70,6 +71,23 @@ describe('Filtros', () => {
     fixture.detectChanges();
     expect(store.aplicados().pais).toBe('Sin país asignado');
     expect(aQuery(store.aplicados(), 'completo')).toBe('pais=Sin+pa%C3%ADs+asignado');
+  });
+
+  it('Aplicar sin cambios pide una ronda ya (p. ej., al volver la API)', () => {
+    const { el } = montar();
+    const refresco = TestBed.inject(RefrescoService);
+    const pedir = vi.spyOn(refresco, 'refrescarAhora').mockImplementation(() => undefined);
+    el.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+    expect(pedir).toHaveBeenCalledTimes(1);
+  });
+
+  it('Aplicar con filtros nuevos no pide una ronda extra (la lanza el cambio de filtros)', () => {
+    const { fixture, el } = montar();
+    const refresco = TestBed.inject(RefrescoService);
+    const pedir = vi.spyOn(refresco, 'refrescarAhora').mockImplementation(() => undefined);
+    escribir(fixture, el, 'campo-magnitudMin', '4');
+    el.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+    expect(pedir).not.toHaveBeenCalled();
   });
 
   it('ofrece los países del catálogo y «Sin país asignado» siempre', () => {

@@ -1,0 +1,11 @@
+# Distribución de profundidad, últimas 24 h, en directo, sin sintéticos
+# Consulta del orquestador a las 2026-11-08T14:34:15Z (misma ventana que analisis-3.png y analisis-3b.png)
+
+## curl.exe -s "http://127.0.0.1:8000/distribuciones/profundidad?desde=2026-11-07T14:34:15Z"
+{"modo":"live","unidad":"km","total":204,"sin_valor":0,"intervalos":[{"desde":null,"hasta":0,"etiqueta":"< 0","recuento":3},{"desde":0,"hasta":10,"etiqueta":"0–10","recuento":111},{"desde":10,"hasta":30,"etiqueta":"10–30","recuento":42},{"desde":30,"hasta":70,"etiqueta":"30–70","recuento":18},{"desde":70,"hasta":150,"etiqueta":"70–150","recuento":27},{"desde":150,"hasta":300,"etiqueta":"150–300","recuento":1},{"desde":300,"hasta":500,"etiqueta":"300–500","recuento":0},{"desde":500,"hasta":700,"etiqueta":"500–700","recuento":2},{"desde":700,"hasta":null,"etiqueta":"≥ 700","recuento":0}]}
+
+## curl.exe -s "http://127.0.0.1:8000/distribuciones/profundidad?desde=2026-11-07T14:34:15Z&magnitud_min=4"
+{"modo":"live","unidad":"km","total":21,"sin_valor":0,"intervalos":[{"desde":null,"hasta":0,"etiqueta":"< 0","recuento":0},{"desde":0,"hasta":10,"etiqueta":"0–10","recuento":1},{"desde":10,"hasta":30,"etiqueta":"10–30","recuento":11},{"desde":30,"hasta":70,"etiqueta":"30–70","recuento":4},{"desde":70,"hasta":150,"etiqueta":"70–150","recuento":2},{"desde":150,"hasta":300,"etiqueta":"150–300","recuento":1},{"desde":300,"hasta":500,"etiqueta":"300–500","recuento":0},{"desde":500,"hasta":700,"etiqueta":"500–700","recuento":2},{"desde":700,"hasta":null,"etiqueta":"≥ 700","recuento":0}]}
+
+## Misma ventana: magnitud (sin filtro de magnitud)
+{"modo":"live","unidad":"magnitud","total":204,"sin_valor":0,"intervalos":[{"etiqueta":"< 0","recuento":0},{"etiqueta":"0–1","recuento":47},{"etiqueta":"1–2","recuento":92},{"etiqueta":"2–3","recuento":33},{"etiqueta":"3–4","recuento":11},{"etiqueta":"4–5","recuento":18},{"etiqueta":"5–6","recuento":3},{"etiqueta":"6–7","recuento":0},{"etiqueta":"≥ 7","recuento":0}]}

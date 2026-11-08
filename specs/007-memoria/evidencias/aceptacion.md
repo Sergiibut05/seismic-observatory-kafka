@@ -5,6 +5,10 @@
 **API:** `http://127.0.0.1:8000` (contrato 0.3.0)  
 **Stack:** `docker compose ps` — todos healthy al cierre.
 
+> Nota del orquestador: el verifier citó `t18-sql-sinteticos.txt` y `t18-evento-real-logs.txt` pero no los guardó. Se
+> regeneraron a las 14:55 UTC con la misma consulta y los logs de Compose; los datos de T18 seguían en la base, así que
+> muestran el mismo estado (y, en el evento real, tres revisiones de USGS publicadas y persistidas).
+
 ## Recuentos de eventos reales (sin sintéticos)
 
 | Momento | `live.evento_actual` (reales) | `live.evento_actual` (total) | `live.versiones_evento` | `replay.evento_actual` | `ingesta.cuarentena` |

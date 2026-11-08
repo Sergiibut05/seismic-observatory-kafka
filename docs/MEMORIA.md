@@ -4,10 +4,10 @@ Esta es la memoria técnica del proyecto: cómo viaja un terremoto desde USGS ha
 qué calidad, cuánto cuesta y qué no se ha podido comprobar. El enunciado está en [ENUNCIADO.md](ENUNCIADO.md) y el
 contrato de la API en [CONTRATO-API.md](CONTRATO-API.md).
 
-**Estado de esta versión.** Están escritas las partes técnicas con cifras reales del **2026-11-08**. Faltan, y
-están marcadas donde corresponden: el resultado de las pruebas de aceptación (**pendiente de E**), el análisis con
-sus tres conclusiones y las capturas del panel (**las añade F**), la URL del panel en Netlify (**PENDIENTE
-(alumno)**) y la explicación individual (**la escribe el alumno**).
+**Estado de esta versión.** Están escritas las partes técnicas, las once pruebas de aceptación (§13) y las tres
+conclusiones del análisis (§12), con cifras reales del **2026-11-08**. Faltan, y están marcadas donde corresponden: la URL
+del panel en Netlify (**PENDIENTE (alumno)**), el túnel real de ngrok (pendiente del alumno) y la explicación individual
+(**la escribe el alumno**).
 
 ## Cómo leer las cifras
 
@@ -44,8 +44,8 @@ Ninguna cifra está escrita a mano: cada una lleva la consulta o el comando que 
 9. [¿Qué pasaría con 100 millones de registros?](#s9)
 10. [Costes](#s10)
 11. [Escalado, limitaciones y mejoras](#s11)
-12. [Análisis y conclusiones](#s12) (**las añade F**)
-13. [Pruebas de aceptación](#s13) (**pendiente de E**)
+12. [Análisis y conclusiones](#s12)
+13. [Pruebas de aceptación](#s13)
 14. [Procedimiento de defensa](#s14)
 15. [Explicación individual](#s15) (**la escribe el alumno**)
 16. [Transparencia del proceso](#s16)
@@ -1177,45 +1177,162 @@ de 20 €/h, las 5,23 h del 2 de noviembre serían ≈ 104,7 €, una cota infer
 <a id="s12"></a>
 ## 12. Análisis y conclusiones
 
-**Esta sección la añade F** (tres conclusiones con cifras, filtros, periodo y la captura del panel con los filtros
-usados). No hay conclusiones escritas todavía y no se adelanta ninguna. Reglas que se aplicarán:
+Tres conclusiones leídas en el panel, con sus filtros, su periodo, su cifra, su captura y lo que **no** permiten
+afirmar. Las cifras salen de las capturas y de [documental.md](../specs/007-memoria/evidencias/documental.md); la media de
+2025 sale de la API y de la tabla `historico.evento_2025` (Q11).
 
-- Comparar muestras equivalentes: la misma magnitud mínima (≥ 4) en directo y en el histórico, el mismo filtro geográfico y
-  de tipo, y los días con cero incluidos.
-- Usar solo ventanas con el sistema encendido y declarar o excluir el hueco del 2 al 8 de noviembre en cada cifra.
-- Hacer las capturas con el interruptor de sintéticos apagado.
-- Declarar que no es predicción ni evaluación de riesgo, que la cobertura y el tipo de magnitud varían, y que el último
-  periodo puede estar incompleto.
-- Dato de partida: con magnitud ≥ 4 solo hay 55 terremotos reales en directo (Q25b2); cualquier comparación con 2025 es
-  un orden de magnitud.
+**Condiciones comunes a las tres.**
 
-Capturas: `specs/007-memoria/evidencias/analisis-1.png`, `analisis-2.png` y `analisis-3.png` (**las añade F**).
+- **Periodo.** Últimas 24 h hasta la hora UTC de cada captura, el **8 de noviembre de 2026** (entre las 14:34 y las
+  14:41 UTC; la hora de cada una está en su ficha).
+- **Filtros fijos.** Interruptor de sintéticos **apagado**, modo **En directo** (ni «REPRODUCCIÓN» ni histórico), sin filtro
+  de país ni de subregión. Solo cambia la magnitud mínima: ninguna o 4.
+- **Hueco del 2 al 8 de noviembre (§3.5).** No toca estas cifras: la primera consulta tras el reinicio fue a las 13:40 UTC del
+  8 de noviembre y el feed `all_day` mira 24 h atrás, así que cubre desde las 13:40 UTC del 7 de noviembre. Todas las
+  ventanas empiezan después.
+- **Tipo.** Solo `earthquake`: en el periodo no hubo exclusiones (Q07, §6, punto 3).
+- **Resultados que dependen de la hora.** Los datos de `live` cambian cada minuto («Cómo leer las cifras», al inicio); estas cifras son las de la captura, no
+  las que saldrían al repetirla.
+- **Referencias a §6.** «§6, punto N» remite al elemento N de la lista de limitaciones.
+
+### 12.1 Conclusión 1: el sesgo de la red
+
+**Qué se ve.** Sin filtro de magnitud, **143 de 204 eventos (el 70 %) están en Estados Unidos**. Con magnitud mínima 4,
+Estados Unidos **desaparece** del gráfico y domina «Sin país asignado»: **14 de 21 eventos**, en el mar.
+
+| | Sin filtro de magnitud | Magnitud ≥ 4 |
+| --- | --- | --- |
+| Filtros | `desde=2026-11-07T14:34`, `hasta=2026-11-08T14:36`, sin magnitud, sintéticos apagados, en directo | misma ventana de 24 h, magnitud mínima 4, sintéticos apagados, en directo |
+| Hora UTC de la captura | ~14:34 | ~14:41 |
+| Cifras | total **204**; Estados Unidos **143** | total **21**; «Sin país asignado» **14**; Estados Unidos ausente |
+| Captura | [analisis-1.png](../specs/007-memoria/evidencias/analisis-1.png) | [analisis-1b.png](../specs/007-memoria/evidencias/analisis-1b.png) |
+
+**Cómo leerlo.** Lo que cambia entre las dos columnas es el umbral de magnitud, no el lugar donde tiembla la tierra. La
+mayoría de los eventos pequeños que llegan en el feed son de Estados Unidos porque la red ANSS que alimenta a USGS tiene
+allí muchas estaciones y un umbral de detección bajo: se ve lo que la red es capaz de detectar (es una explicación, no
+una medida: este proyecto no cuenta estaciones). Al exigir magnitud ≥ 4, el
+sesgo de detección deja de actuar y el reparto se parece al del mundo, que es mayoritariamente mar. Esos 14 eventos no están
+en un país porque el catálogo geográfico solo tiene polígonos terrestres (§6, punto 1), y no se asignan al país más cercano. La
+misma proporción aparece en periodos mayores: 42 de 55 eventos reales con magnitud ≥ 4 en el conjunto de `live` (76,36 %,
+Q25b2), frente a 78,34 % en el histórico de 2025.
+
+**Lo que no se puede concluir.** Que en Estados Unidos haya más sismicidad que en otros países. El recuento mide eventos
+**detectados y publicados**, y la cobertura de la red varía por región. Tampoco que el 66,7 % (14/21) sea una proporción
+estable: son 21 eventos de un día. Las dos columnas se capturaron con siete minutos de diferencia (14:34 y 14:41 UTC), de
+modo que no son estrictamente la misma muestra.
+
+### 12.2 Conclusión 2: comparación con 2025
+
+**Qué se ve.** En las últimas 24 h hay **21 eventos con magnitud ≥ 4**, frente a una **media diaria de 50,14 en 2025**
+(18.302 eventos en 365 días). El **cociente es 0,42**: en estas 24 h hubo menos de la mitad de los eventos de un día
+medio de 2025.
+
+| Campo | Valor |
+| --- | --- |
+| Filtros | Ventana de 24 h (~`2026-11-07T14:40` a `2026-11-08T14:41`); la comparación fija la magnitud efectiva en ≥ 4 (`filtros_efectivos`); sin país ni subregión; sintéticos apagados (la API los ignora en la comparación); en directo |
+| Hora UTC de la captura | ~14:41 |
+| Cifras | 21 eventos; media diaria 2025 **50,14** (el panel la muestra como 50,1); base 18.302 eventos / 365 días; cociente **0,42** |
+| Captura | [analisis-2.png](../specs/007-memoria/evidencias/analisis-2.png) (y [04-comparacion.png](../specs/006-panel/evidencias/04-comparacion.png), el panel con la misma comparación en T11) |
+
+**Cómo se calcula la media.** La API divide los eventos de 2025 entre **365, también los días con cero eventos**
+(`calculos.comparar`, [calculos.py](../backend/observatorio/api/calculos.py): `media = eventos_2025 / 365`, devuelta con
+cuatro decimales, 50,1425; `cociente = eventos_24h / media`, redondeado a dos, 0,42; sin histórico cargado o con media 0
+devuelve `null`, nunca un 0 inventado). El SQL de la memoria llega al mismo número por otro camino: el `CHECK` de
+`historico.evento_2025` limita `ocurrencia` a 2025, así que el denominador son siempre 365 días (§4.3), y `count(*)` da
+18.302 filas (Q11). Las cifras del contrato están en [CONTRATO-API.md](CONTRATO-API.md).
+
+**Por qué son muestras equivalentes.** Las dos usan el mismo corte, magnitud ≥ 4: el histórico se descargó solo con
+`minmagnitude=4` y la comparación fija ese mínimo en directo (`filtros_efectivos`). Ambos lados son solo `earthquake`, sin
+filtro geográfico y con los días con cero incluidos. Por eso no se compara aquí el total sin filtro de magnitud (204) con
+el histórico: el histórico no contiene los eventos menores de 4.
+
+**Lo que no se puede concluir.** Que la actividad de hoy sea baja o alta en sentido físico. Un solo día no es
+representativo y no se ha medido cuánto varía de un día a otro. Además, **el último periodo está incompleto**: USGS tarda
+en publicar y en revisar eventos, y el histórico de 2025 es una instantánea ya consolidada (última versión disponible el 2
+de noviembre, §6, punto 6) mientras que las últimas horas del feed no. Y la magnitud mezcla tipos (`ml`, `md`, `mb`,
+`mww`…) en directo (§6, punto 2): el corte «≥ 4» es el mismo número, no necesariamente la misma medida. **No es una
+tendencia ni una predicción.**
+
+### 12.3 Conclusión 3: profundidad según la magnitud
+
+**Qué se ve.** Con todas las magnitudes, el intervalo de profundidad dominante es **0–10 km**. Con magnitud ≥ 4, el dominante
+es **10–30 km**, con **11 de los 21 eventos**; la banda de magnitud dominante en esa selección es 4–5.
+
+| | Todas las magnitudes | Magnitud ≥ 4 |
+| --- | --- | --- |
+| Filtros | ventana de 24 h, sin magnitud mínima, sintéticos apagados, en directo | ventana de 24 h, magnitud mínima 4, sintéticos apagados, en directo |
+| Hora UTC de la captura | ~14:41 | ~14:41 |
+| Cifras | **204** eventos; 0–10 km: **111** (54 %); 10–30 km: 42; 70–150 km: 27 | **21** eventos; 0–10 km: **1**; 10–30 km: **11** (52 %); 30–70 km: 4 |
+| Fuente de las cifras | API a las 14:34:15 UTC, [t20-profundidad-api.txt](../specs/007-memoria/evidencias/t20-profundidad-api.txt) | la misma |
+| Captura | [analisis-3.png](../specs/007-memoria/evidencias/analisis-3.png) | [analisis-3b.png](../specs/007-memoria/evidencias/analisis-3b.png) |
+
+**Cómo leerlo** (explicación, no medida). Los eventos pequeños que se detectan son sobre todo someros y locales, de redes densas (la misma razón que en
+la conclusión 1); por eso con todas las magnitudes pesa el intervalo más superficial. Los de magnitud ≥ 4 son globales y se
+reparten en más profundidad, con el máximo en 10–30 km. Las profundidades que faltan se cuentan aparte (`sin_valor`) y no se
+rellenan con 0.
+
+**Lo que no se puede concluir.** Que los terremotos grandes sean «más profundos» en general, ni nada sobre dónde se genera la
+energía de una falla. Las cifras por intervalo son de la consulta a la API de las 14:34 UTC y las capturas, de las 14:41;
+en esos 7 minutos pueden haber entrado o revisado unos pocos eventos, pero la barra dominante es la misma. Además, el 68 % de
+los 204 eventos (139) tiene magnitud menor que 2 en la misma ventana, lo que refuerza que la selección sin filtro la dominan
+microsismos locales. Son 21 eventos M ≥ 4 de un solo día.
+
+### 12.4 Declaración
+
+Nada de esto es una **predicción** ni una **evaluación de riesgo**: describe qué registró la red de USGS en 24 h, no qué
+ocurrirá ni qué zonas son más peligrosas. La **cobertura es variable** (más estaciones y menor umbral en unas regiones que en
+otras) y el **tipo de magnitud es mixto** (`ml`, `md`, `mb`, `mww`…), así que ninguna cifra se debe leer como una medida
+homogénea de energía. El último periodo puede estar incompleto por el retraso de publicación de USGS.
+
+**Capturas.** [analisis-1](../specs/007-memoria/evidencias/analisis-1.png), [analisis-1b](../specs/007-memoria/evidencias/analisis-1b.png),
+[analisis-2](../specs/007-memoria/evidencias/analisis-2.png), [analisis-3](../specs/007-memoria/evidencias/analisis-3.png) y
+[analisis-3b](../specs/007-memoria/evidencias/analisis-3b.png). Procedencia y hora de cada una: [documental.md](../specs/007-memoria/evidencias/documental.md).
 
 ---
 
 <a id="s13"></a>
 ## 13. Pruebas de aceptación
 
-Las once pruebas de §11 del enunciado. Los comandos de los casos controlados son los del plan de 007 (módulo
-`observatorio.producer.casos`; E confirma los nombres). Todos los casos usan ids `synthetic-…`, no se mezclan con los datos
-reales y se retiran con [borrar_sinteticos.sql](../scripts/borrar_sinteticos.sql).
+Las once pruebas de §11 del enunciado, ejecutadas **en vivo el 2026-11-08** con la pila en Compose (T18). Resultado: **las
+once superadas**. Los casos controlados salen de `observatorio.producer.casos` (publica el lote completo; `--solo NOMBRE`
+publica uno, `--listar` los enumera). Todos usan ids `synthetic-…`, no se mezclan con los datos reales (480 reales antes y
+después) y se retiran con [borrar_sinteticos.sql](../scripts/borrar_sinteticos.sql). El informe completo, con los comandos y
+las salidas, es [aceptacion.md](../specs/007-memoria/evidencias/aceptacion.md); los ficheros `t18-*` están en
+`specs/007-memoria/evidencias/` y las capturas del panel en `specs/006-panel/evidencias/`.
 
-| # | Prueba | Cómo se provoca | Resultado esperado | Dónde se ve | Resultado |
+| # | Prueba | Cómo se provoca | Resultado observado | Dónde se ve | Resultado |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Recibir un evento nuevo | `docker compose exec producer python -m observatorio.producer.casos --solo nuevo` | Una fila actual y una versión | `live.evento_actual`, `/eventos` con `incluir_sinteticos=true`, mapa | pendiente de E |
-| 2 | Reenviar la misma versión | `… casos --solo reenvio` | Recuento igual | log `result=omitido reason=duplicado`; `count(*)` antes y después | pendiente de E |
-| 3 | Recibir una versión posterior | `… casos --solo revision` | Cambian el estado actual y los recuentos afectados | SQL y `/recuentos/pais` | pendiente de E |
-| 4 | Recibir después una versión antigua | `… casos --solo antigua` | No sustituye a la más reciente; el historial crece | `live.versiones_evento` | pendiente de E |
-| 5 | Magnitud nula | `… casos --solo magnitud_nula` | `NULL` conservado; «ND» en el panel | SQL, tabla y ficha del panel | pendiente de E |
-| 6 | Coordenadas inválidas | `… casos --solo coordenadas_invalidas` | Cuarentena con motivo; ningún punto en el mapa | `ingesta.cuarentena` (Q20) | pendiente de E |
-| 7 | Evento marítimo | `… casos --solo mar` (también ocurre con datos reales) | «Sin país asignado», y sigue en el análisis | `/recuentos/pais`; Q25c | pendiente de E |
-| 8 | Reiniciar el consumidor | `docker compose restart consumer` con un lote publicado | Sin duplicados; el lag vuelve a 0 | recuentos de versiones y de estado antes y después | pendiente de E |
-| 9 | Cerrar el túnel | `docker compose stop api` (el túnel real lo prueba el alumno) | El panel muestra el fallo y marca la última lectura | captura `07-api-apagada` (**las añade F**) | pendiente de E |
-| 10 | Volver a abrir el túnel | `docker compose start api` | Se recupera sin recargar | captura `08-recuperada` (**las añade F**) | pendiente de E |
-| 11 | Reproducción histórica | `docker compose exec producer python -m observatorio.replay` | Solo filas en `replay.*`, con etiqueta; `eventos_reales` no cambia | log `etiqueta=REPRODUCCIÓN`; Q14 | pendiente de E |
+| 1 | Recibir un evento nuevo | Evento real del feed (`nc75463972`) y caso `nuevo` (`docker compose exec producer python -m observatorio.producer.casos`) | Mismo `event_id` publicado por el productor y persistido por el consumidor; `/status` muestra la ingesta reciente | [aceptacion.md §1](../specs/007-memoria/evidencias/aceptacion.md), [t18-status-final.json](../specs/007-memoria/evidencias/t18-status-final.json), [t18-casos-reenvio.txt](../specs/007-memoria/evidencias/t18-casos-reenvio.txt) | **superada** |
+| 2 | Reenviar la misma versión | Caso `reenvio` | Recuento de estado igual (485 → 485; reales 480 → 480); el consumidor lo marca `result=omitido reason=duplicado` | [t18-casos-reenvio.txt](../specs/007-memoria/evidencias/t18-casos-reenvio.txt), [aceptacion.md §4](../specs/007-memoria/evidencias/aceptacion.md) | **superada** |
+| 3 | Recibir una versión posterior | Caso `revision` (v1 y v2) | El estado actual pasa a magnitud 4,5 y país Francia; el historial conserva las versiones | [aceptacion.md §2](../specs/007-memoria/evidencias/aceptacion.md) | **superada** |
+| 4 | Recibir después una versión antigua | Caso `antigua` (`updated` 60 s anterior, magnitud 9,0) | El estado actual **no** cambia a 9,0: sigue en la v2 (Francia, 4,5) | [aceptacion.md §3](../specs/007-memoria/evidencias/aceptacion.md) | **superada** |
+| 5 | Magnitud nula | Caso `magnitud_nula` | `NULL` en SQL y `null` en la API; «ND» en el panel | [aceptacion.md §5](../specs/007-memoria/evidencias/aceptacion.md), captura [05-nulo-nd.png](../specs/006-panel/evidencias/05-nulo-nd.png) | **superada** |
+| 6 | Coordenadas inválidas | Caso `coordenadas_invalidas` | Cuarentena con motivo `coordenadas_fuera_de_rango`; no aparece en `/eventos` ni en el mapa | [t18-cuarentena-log.txt](../specs/007-memoria/evidencias/t18-cuarentena-log.txt), [aceptacion.md §6](../specs/007-memoria/evidencias/aceptacion.md) | **superada** |
+| 7 | Evento marítimo | Caso `mar` (también ocurre con datos reales) | `pais_nombre = Sin país asignado`, código vacío; sigue en los recuentos | [t18-recuentos-pais-sinteticos.json](../specs/007-memoria/evidencias/t18-recuentos-pais-sinteticos.json), captura [06-sin-pais.png](../specs/006-panel/evidencias/06-sin-pais.png) | **superada** |
+| 8 | Reiniciar el consumidor | Lote publicado y `docker compose restart consumer` | Sin duplicados (reales 480 antes y después) y lag 0 en todas las particiones | [t18-restart-counts-before.txt](../specs/007-memoria/evidencias/t18-restart-counts-before.txt), [t18-recuentos-despues.txt](../specs/007-memoria/evidencias/t18-recuentos-despues.txt), [t18-consumer-lag.txt](../specs/007-memoria/evidencias/t18-consumer-lag.txt) | **superada** |
+| 9 | Cerrar el túnel | `docker compose stop api` (equivalente local; el túnel real de ngrok **no** se ha probado, queda pendiente del alumno) | Sin conexión (`HTTP_CODE:000`) y el panel muestra «La API no responde» con la hora del último acceso correcto, sin tocar nada en 65 s | [t18-api-stop.txt](../specs/007-memoria/evidencias/t18-api-stop.txt), [t18-api-cerrado.txt](../specs/007-memoria/evidencias/t18-api-cerrado.txt); capturas [07-api-apagada.png](../specs/006-panel/evidencias/07-api-apagada.png) y [07b-api-apagada-automatico.png](../specs/006-panel/evidencias/07b-api-apagada-automatico.png) | **superada** (local) |
+| 10 | Volver a abrir el túnel | `docker compose start api` | `/health` responde `ok` y el panel se recupera solo, sin recargar, en 65 s | [t18-api-start.txt](../specs/007-memoria/evidencias/t18-api-start.txt), [t18-health-abierto.json](../specs/007-memoria/evidencias/t18-health-abierto.json), [t18-status-abierto.json](../specs/007-memoria/evidencias/t18-status-abierto.json); capturas [08-recuperada.png](../specs/006-panel/evidencias/08-recuperada.png) y [08b-recuperada-automatico.png](../specs/006-panel/evidencias/08b-recuperada-automatico.png) | **superada** (local) |
+| 11 | Reproducción histórica | `docker compose exec -T producer python -m observatorio.replay` | Solo filas en `replay.*` (40 eventos, API = SQL); `eventos_reales` no cambia (480); log con `etiqueta=REPRODUCCIÓN`; lag 0 | [t18-replay-run.txt](../specs/007-memoria/evidencias/t18-replay-run.txt), [t18-replay-log.txt](../specs/007-memoria/evidencias/t18-replay-log.txt), [t18-eventos-replay.json](../specs/007-memoria/evidencias/t18-eventos-replay.json), [t18-recuentos-pais-replay.json](../specs/007-memoria/evidencias/t18-recuentos-pais-replay.json); captura [09-reproduccion.png](../specs/007-memoria/evidencias/09-reproduccion.png) | **superada** |
 
-Datos que ya existen y respaldan la 7 y la 11, y que no sustituyen a E: hay 97 terremotos reales sin país (Q16, Q25c) y la
-reproducción del 2 de noviembre dejó 40 eventos y 41 versiones en `replay.*` (Q14): la versión de más es la revisión que `replay` publica a propósito y el duplicado no crea fila.
+**Matices que no se ocultan.**
+
+- **El túnel real queda pendiente del alumno.** Las pruebas 9 y 10 apagan y encienden la **API local**, que es lo que el
+  túnel de ngrok expone; no se ha abierto ngrok ni se ha publicado en Netlify (§16). La captura 07b/08b muestra el
+  comportamiento del panel con la pestaña visible.
+- **Primera lectura, corregida.** El verifier de T11 anotó tres «fallos» del panel; al repetirlos con la pestaña visible dos no
+  eran fallos (el refresco se pausa con la pestaña oculta, y los totales distintos eran periodos distintos documentados) y el
+  tercero se mejoró: «Aplicar» con los mismos filtros pide ahora una ronda inmediata. Detalle en «Revisión de los fallos» de
+  [verificacion.md](../specs/006-panel/evidencias/verificacion.md).
+- **La limpieza (AC-15) no se ejecutó en T18**: los sintéticos se conservaron para las capturas y se borran en el cierre (T24).
+  Hasta entonces hay 5 eventos sintéticos en `live.evento_actual`, fuera de todas las cifras de esta memoria.
+- **Republicar el lote** sube `live.versiones_evento` (537 → 544) y las filas de cuarentena (8 → 11), porque son mensajes
+  nuevos en Kafka; el estado actual y los reales no cambian.
+- **Prueba extra (AC-19):** `/comparacion-historica?modo=replay` responde 400 `parametro_invalido`
+  ([t18-comparacion-replay-400.txt](../specs/007-memoria/evidencias/t18-comparacion-replay-400.txt)).
+
+Datos que respaldan la 7 y la 11: hay 97 terremotos reales sin país (Q16, Q25c) y la reproducción del 2 de noviembre dejó
+40 eventos y 41 versiones en `replay.*` (Q14): la versión de más es la revisión que `replay` publica a propósito y el
+duplicado no crea fila.
 
 ---
 
@@ -1333,14 +1450,33 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
   El orden real de los commits fue 002, 004 y después 003 (`343151b`, `f8e8bd5`, `fc230b1`), no el de sus números.
 - **En 006**, los dos `developer` que trabajaban en paralelo se quedaron cortados por el límite de uso y **el orquestador
   terminó el trabajo**.
-- **Lo que no se verificó en vivo.** De 005: la aceptación AC-1 y AC-2 (inserción y reenvío con datos reales de USGS), AC-3
-  (un evento con magnitud nula real, que no había) y el CORS del origen de Netlify (`CORS_ORIGEN_NETLIFY` estaba vacío); se
-  cubren con pruebas unitarias, no con el sistema real ([verificacion.md](../specs/005-api/evidencias/verificacion.md)). De
-  006: la tarea T11, la verificación del panel en un navegador real con capturas, **sigue abierta** hasta que E la cierre.
+- **Lo no verificado en vivo.**
+  - **Netlify y ngrok reales.** Nunca se publicó el panel en Netlify ni se abrió un túnel de ngrok: no hay URL pública
+    (§14, «PENDIENTE (alumno)»). Las pruebas 9 y 10 de §13 apagan y encienden la API **local**, que es lo que el túnel
+    expone, y el panel se probó en `http://localhost:4200`.
+  - **CORS con el origen de Netlify.** `CORS_ORIGEN_NETLIFY` está vacío en el entorno de pruebas; solo se comprobó el
+    preflight de `localhost` en vivo, y el de Netlify con pruebas unitarias (005, AC-9).
+  - **Lo que cita 005 como no verificable en vivo** ([verificacion.md](../specs/005-api/evidencias/verificacion.md)): AC-1 y
+    AC-2 (inserción y reenvío con datos reales de USGS), AC-3 (un evento con magnitud nula real, que no había) y AC-10 con el
+    umbral real de 300 s en el puerto 8000 (la lógica de 60 s sí se demostró en el 8001). Se cubren con pruebas unitarias.
+    La feature 007 ejerció después, en vivo, casos equivalentes (§13: un evento real publicado y persistido, el reenvío
+    como duplicado y la magnitud nula con un evento sintético), pero **no repitió la verificación de 005**, y la magnitud
+    nula sigue sin haberse visto en un evento real.
+  - **Pestaña oculta = 0 rondas.** Es lo que pedía T11 y no se instrumentó con un contador
+    ([red.md](../specs/006-panel/evidencias/red.md)). Hay evidencia indirecta: con la pestaña oculta el refresco no
+    arrancó en la sesión del verifier, y con la pestaña visible sí (2 peticiones a `/status` en 80 s).
+  - **Accesibilidad (AC-10 de 006).** Revisión parcial: no se repitió en el navegador real en T11
+    ([verificacion.md](../specs/006-panel/evidencias/verificacion.md)).
+- **Estado de T11 (006).** **Hecha**: el panel se verificó en un navegador real (`cursor-ide-browser`) contra la pila en
+  Compose, con las capturas `01` a `08` y `07b`/`08b`, [red.md](../specs/006-panel/evidencias/red.md) y
+  [verificacion.md](../specs/006-panel/evidencias/verificacion.md). Su primera pasada anotó tres «fallos»: al revisarlos, **dos
+  no eran fallos** (el refresco se pausa con la pestaña oculta, y los totales distintos eran periodos distintos) y **el
+  tercero se mejoró** («Aplicar» con los mismos filtros pide una ronda inmediata). Quedan declaradas como excepciones la
+  pestaña oculta y la accesibilidad (arriba).
 - **Pruebas automáticas.** `pytest` da 779 pruebas verdes dentro de la imagen (C9), 28 de ellas de las mediciones.
-- **Lo que esta memoria no comprueba.** El resultado de las once pruebas de aceptación (pendiente de E), las capturas y el
-  análisis (las añade F), el tráfico real por ngrok, el comportamiento de Netlify, el consumo eléctrico, el coste de escritura
-  de los índices y el filtro de tipo de evento sobre datos reales.
+- **Lo que esta memoria no comprueba.** El tráfico real por ngrok, el comportamiento de Netlify, el consumo eléctrico, el
+  coste de escritura de los índices y el filtro de tipo de evento sobre datos reales. El análisis (§12) describe un solo día
+  y no es una predicción.
 - **Condiciones de las mediciones.** Se hicieron con la pila encendida y otros procesos de desarrollo activos; los tiempos
   llevan ese ruido. Las cifras de `live` cambian cada minuto y se citan con su hora.
 - **Tiempo.** El tiempo de desarrollo es solo el que muestran los commits (§10.4); 007 todavía no está en un commit.
@@ -1355,7 +1491,7 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
 | Extracción | Histórico, feed y catálogo; tipos, unidades, límites y automatización | §2.1 (campos, tipos, unidades, opcionales, frecuencia, errores y latencia), §3.1 a §3.4 (consultas, manifiesto, huella, 20.000 y deduplicado de extremos, retención y regeneración), §3.5 (hueco y recuperación), [comandos.md](memoria/comandos.md) |
 | Calidad | Seis dimensiones, antes/después, acciones y limitaciones | §5 (todas con consulta `Qnn`), §6 (limitaciones con cifras), [consultas.sql](memoria/consultas.sql) y su [resultado](memoria/consultas.resultado.txt) |
 | Modelado | Integración geográfica, grano y claves, revisiones, idempotencia y optimización | §4 (modelos conceptual, lógico y físico, SQL literal, índices con su `EXPLAIN`, sin tabla de fechas), §2.2 |
-| Análisis | Ventanas, distribuciones, comparación equivalente y conclusiones | §12 (**las añade F**, con capturas); la API y el panel ya ofrecen ventanas, distribuciones y comparación ([CONTRATO-API.md](CONTRATO-API.md)) |
+| Análisis | Ventanas, distribuciones, comparación equivalente y conclusiones | §12 (tres conclusiones con capturas), §13 (pruebas de aceptación); la API y el panel ya ofrecen ventanas, distribuciones y comparación ([CONTRATO-API.md](CONTRATO-API.md)) |
 | Reflexión | Complejidad, memoria, escalado, costes, limitaciones y mejoras | §7 a §11, [mediciones.md](memoria/mediciones.md), §16 |
 
 ---
@@ -1370,5 +1506,7 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
   [specs/007-memoria/evidencias/mediciones.md](../specs/007-memoria/evidencias/mediciones.md).
 - Código de las mediciones: [mediciones.py](../backend/observatorio/mediciones.py) y sus pruebas
   [test_mediciones.py](../backend/tests/unit/test_mediciones.py).
-- Capturas del panel y del análisis: `specs/006-panel/evidencias/` y `specs/007-memoria/evidencias/` (**las añade F**).
-- Resultado de las pruebas de aceptación: `specs/007-memoria/evidencias/aceptacion.md` (**pendiente de E**).
+- Capturas del panel y del análisis: [specs/006-panel/evidencias/](../specs/006-panel/evidencias/) y
+  [specs/007-memoria/evidencias/](../specs/007-memoria/evidencias/); procedencia y hora de las del análisis en
+  [documental.md](../specs/007-memoria/evidencias/documental.md).
+- Resultado de las pruebas de aceptación: [aceptacion.md](../specs/007-memoria/evidencias/aceptacion.md) (once superadas, §13).

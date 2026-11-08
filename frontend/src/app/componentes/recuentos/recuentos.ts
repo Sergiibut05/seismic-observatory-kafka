@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { DatoBarra, etiquetaHoraUtc, etiquetaVentanaUtc, principalesConResto } from '../../puro/barras';
 import { formatearEntero, formatearInstanteUtc } from '../../puro/formato';
@@ -19,12 +20,19 @@ const SIN_PAIS = 'Sin país asignado';
 })
 export class Recuentos {
   private readonly datos = inject(PanelDatosService);
+  private readonly store = inject(FiltrosStore);
 
   protected readonly agrupacion = signal<Agrupacion>('pais');
   protected readonly bloquePais = this.datos.porPais;
   protected readonly bloqueSubregion = this.datos.porSubregion;
   protected readonly bloqueHora = this.datos.porHora;
   protected readonly horaAcotada = this.datos.horaAcotada;
+  /** Sin fechas, `/recuentos/hora` usa su ventana de 24 h; el resto de bloques, todo el periodo. */
+  protected readonly horaSinFechas = computed(() => {
+    const f = this.store.aplicados();
+    return !f.desde && !f.hasta;
+  });
+  protected readonly enReproduccion = computed(() => this.store.vista().modo === 'replay');
 
   protected readonly bloqueGrupo = computed(() =>
     this.agrupacion() === 'pais' ? this.bloquePais() : this.bloqueSubregion(),
