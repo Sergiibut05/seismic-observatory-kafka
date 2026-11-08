@@ -126,6 +126,7 @@
 
 /* Escala de profundidad: una barra continua con el límite inferior de cada tramo debajo. */
 .mapa-bloque .mapa-leyenda ul.mapa-leyenda__escala {
+  align-items: flex-start;
   gap: 0;
 }
 .mapa-bloque .mapa-leyenda__escala li {
@@ -149,6 +150,7 @@
   border-radius: 0 3px 3px 0;
 }
 .mapa-bloque .mapa-leyenda__marca {
+  min-height: 1lh; /* el tramo «< 0» no lleva número y debe medir lo mismo que los demás */
   font-size: 0.65rem;
   font-variant-numeric: tabular-nums;
   color: var(--tinta-suave);
