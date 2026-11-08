@@ -25,6 +25,7 @@ import {
 } from '../../puro/escalas';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
 import { formatearEntero } from '../../puro/formato';
+import { Globo } from '../globo/globo';
 import { crearFicha, crearResumen } from './mapa-ficha';
 
 const URL_TESELAS = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -56,6 +57,7 @@ interface Dibujado {
  */
 @Component({
   selector: 'app-mapa',
+  imports: [Globo],
   templateUrl: './mapa.html',
   styleUrl: './mapa.css',
   encapsulation: ViewEncapsulation.None, // la ficha y la leyenda de Leaflet viven fuera de la plantilla
@@ -84,6 +86,8 @@ export class Mapa {
   protected readonly errorFronteras = signal(false);
   protected readonly seleccionFuera = signal(false);
   protected readonly anuncio = signal('');
+  /** Vista 3D opcional (feature 008); el plano es la vista por defecto y Leaflet sigue vivo debajo. */
+  protected readonly enGlobo = signal(false);
 
   protected readonly radiosLeyenda = leyendaRadio().filter((r) => ['2', '4', '6', '8'].includes(r.etiqueta));
   protected readonly intervalos = INTERVALOS_PROFUNDIDAD;

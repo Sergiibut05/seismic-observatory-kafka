@@ -1,0 +1,81 @@
+/* Sin encapsulación: la etiqueta flotante la inserta globe.gl. Todo cuelga de .globo o .globo-etiqueta. */
+.globo {
+  position: absolute;
+  inset: 0;
+  z-index: 1001; /* por encima de Leaflet y de sus controles (1000), que siguen vivos debajo */
+  overflow: hidden;
+  background: #0d1b2a;
+  border-radius: var(--radio);
+}
+.globo__lienzo {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+.globo__lienzo:active {
+  cursor: grabbing;
+}
+
+.globo__estado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 22rem;
+  margin: 0;
+  padding: var(--e-2) var(--e-3);
+  border-radius: var(--radio);
+  background: rgb(255 255 255 / 0.92);
+  color: var(--tinta);
+  text-align: center;
+}
+.globo__estado--aviso {
+  border: 1px solid var(--atencion-borde);
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+}
+
+.globo__leyenda {
+  position: absolute;
+  left: var(--e-2);
+  bottom: var(--e-2);
+  max-width: 17rem;
+  padding: var(--e-2) var(--e-3);
+  border: 1px solid rgb(143 188 212 / 0.35);
+  border-radius: var(--radio);
+  background: rgb(13 27 42 / 0.78);
+  color: #e6eef3;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  pointer-events: none;
+}
+.globo__leyenda p {
+  margin: 0;
+}
+.globo__pista {
+  margin-top: var(--e-1) !important;
+  color: #a9bccb;
+}
+
+/* Etiqueta al pasar el ratón (HTML de etiquetaGlobo, ya escapado). */
+.globo-etiqueta {
+  display: grid;
+  gap: 2px;
+  padding: var(--e-1) var(--e-2);
+  border-radius: var(--radio);
+  background: rgb(255 255 255 / 0.96);
+  color: var(--tinta);
+  font-family: var(--fuente);
+  font-size: var(--t-xs);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.globo-etiqueta strong {
+  font-size: var(--t-sm);
+}
+.globo-etiqueta__marca {
+  padding: 0 var(--e-1);
+  border: 1px dashed var(--atencion-borde);
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+  font-size: 0.7rem;
+}

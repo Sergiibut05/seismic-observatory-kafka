@@ -1,6 +1,14 @@
 <section class="bloque mapa-bloque" aria-labelledby="titulo-mapa" [attr.aria-busy]="bloque().estado === 'cargando'">
   <div class="bloque__cab">
     <h2 id="titulo-mapa" class="bloque__titulo">Mapa de eventos</h2>
+    <div class="mapa-vistas" role="group" aria-label="Tipo de mapa">
+      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="!enGlobo()" (click)="enGlobo.set(false)">
+        Plano
+      </button>
+      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="enGlobo()" (click)="enGlobo.set(true)">
+        Globo 3D
+      </button>
+    </div>
     <span class="bloque__nota">
       Usa todos los filtros.
       @if (esReplay()) {
@@ -58,7 +66,10 @@
       @if (bloque().estado === 'cargando' && !respuesta()) {
         <p class="mapa-estado cargando" role="status">Cargando eventos…</p>
       }
-      <details class="mapa-leyenda" open>
+      @if (enGlobo()) {
+        <app-globo />
+      }
+      <details class="mapa-leyenda" open [hidden]="enGlobo()">
         <summary>Cómo leer el mapa</summary>
         <div class="mapa-leyenda__grupo">
           <p class="mapa-leyenda__titulo">Círculo más grande, magnitud mayor</p>

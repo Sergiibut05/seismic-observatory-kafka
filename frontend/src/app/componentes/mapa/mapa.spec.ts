@@ -49,6 +49,18 @@ describe('Mapa (avisos y estado; el dibujo se comprueba en navegador real)', () 
     expect(el.textContent).toContain('desactualizados');
   });
 
+  it('el selector «Plano / Globo 3D» empieza en plano y cambia con un clic (008)', () => {
+    const { fixture, el } = montar(respuesta(false));
+    const [plano, globo] = Array.from(el.querySelectorAll<HTMLButtonElement>('.mapa-vistas__boton'));
+    expect(plano.textContent?.trim()).toBe('Plano');
+    expect(plano.getAttribute('aria-pressed')).toBe('true');
+    expect(globo.getAttribute('aria-pressed')).toBe('false');
+    globo.click();
+    fixture.detectChanges();
+    expect(globo.getAttribute('aria-pressed')).toBe('true');
+    expect(plano.getAttribute('aria-pressed')).toBe('false');
+  });
+
   describe('REPRODUCCIÓN y sintéticos (007)', () => {
     it('en directo y sin sintéticos: ni nota de reproducción ni entrada «SINTÉTICO» en la leyenda', () => {
       const { el } = montar(respuesta(false));

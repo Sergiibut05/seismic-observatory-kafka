@@ -5,6 +5,35 @@
   height: 100%;
 }
 
+.mapa-bloque .mapa-vistas {
+  display: inline-flex;
+  margin-left: var(--e-3);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+.mapa-bloque .mapa-vistas__boton {
+  padding: 2px var(--e-3);
+  border: 0;
+  background: var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.mapa-bloque .mapa-vistas__boton + .mapa-vistas__boton {
+  border-left: 1px solid var(--linea-fuerte);
+}
+.mapa-bloque .mapa-vistas__boton[aria-pressed='true'] {
+  background: var(--acento);
+  color: #fff;
+  font-weight: 600;
+}
+.mapa-bloque .mapa-vistas__boton:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}
+
 .mapa-bloque .mapa-avisos {
   display: grid;
   gap: var(--e-2);
