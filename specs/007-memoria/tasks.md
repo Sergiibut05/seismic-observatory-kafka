@@ -1,0 +1,89 @@
+# Tareas 007
+
+Rutas en `backend/observatorio/`, tests en `backend/tests/unit/` (pytest en la imagen: `docker compose build producer` y `docker compose run --rm --no-deps producer python -m pytest -q`) y `frontend/src/app/` (Vitest: `npm test` en `frontend/`). Los tests van antes del código de cada tarea. Los bloques **A, B y C+D** no comparten ningún fichero: pueden hacerlos desarrolladores distintos a la vez. Después van **E** (verifier) y **F** (cierre). `[P-A]`, `[P-B]`, `[P-CD]` marcan el bloque.
+
+- [x] T0 `verifier`: `/speckit-analyze` sobre `spec.md`, `plan.md` y `tasks.md` (sin tocar código). Ficheros: `specs/007-memoria/evidencias/analyze.md`
+  - Hecho cuando: hay una lista de incoherencias (o «ninguna») y cada FR/AC de la spec (en especial FR-019, FR-020, AC-19 y AC-20) aparece en alguna tarea
+
+## Bloque A: backend (`modo`, casos y limpieza) [P-A]
+
+- [ ] T1 [P-A] `api/filtros.py` + `tests/unit/test_filtros.py`: `Filtros.modo = "live"`, `modo` en `PARAMS_FILTRO` y `PARAMS_COMPARACION`, `leer_filtros` valida `live`/`replay` (otro valor o repetido → `FiltroInvalido("modo")`), `leer_ventana` recibe un ancla opcional. Ficheros: `backend/observatorio/api/filtros.py`, `backend/tests/unit/test_filtros.py`
+  - Hecho cuando: pytest cubre `modo` por defecto, `replay`, `Replay`/`todos`/vacío/repetido → 400 con `parametro=modo`, y que el valor no aparece en `construir_where`
+- [ ] T2 [P-A] `api/consultas.py` + `api/calculos.py` + sus tests: plantillas con `{tabla}` (diccionario cerrado `TABLAS`), `con_where(sql, donde, modo)`, `SQL_LISTA` y `SQL_MAPA` incluyen `ingested_at`, `geojson_mapa` y las respuestas llevan `modo` y `reproducido_en` (solo en replay), consultas de `eventos_replay` (`to_regclass` y `count`) y de `max(ocurrencia)` replay. Ficheros: `backend/observatorio/api/{consultas,calculos}.py`, `backend/tests/unit/{test_consultas,test_calculos}.py`
+  - Hecho cuando: `test_consultas` sigue verde (todo `SELECT`, sin `;`), una plantilla con `modo='replay'` apunta a `replay.evento_actual`, un `modo` ajeno a `TABLAS` lanza `KeyError`/`ValueError`; `geojson_mapa` trae `modo` y `reproducido_en`
+- [ ] T3 [P-A] (depende de T1, T2) `api/rutas.py` + `api/estado.py` + tests: todos los endpoints usan `filtros.modo`; la comparación rechaza `replay` con 400; ventana horaria anclada al último `ocurrencia` replay; `/status` con `eventos_replay` (`null` sin base). Ficheros: `backend/observatorio/api/{rutas,estado}.py`, `backend/tests/unit/{test_api_rutas,test_estado_api}.py`
+  - Hecho cuando: pytest cubre `modo=replay` en lista, mapa, recuentos y distribuciones (tabla replay), `/comparacion-historica?modo=replay` → 400, `modo=live` → 200, replay vacío con 24 h por defecto, `/status` con campos 0.2.0 intactos y `eventos_replay` `null` con la base caída; pytest completo verde en la imagen
+- [ ] T4 [P-A] Contrato 0.3.0 aditivo (se escribe desde la tabla del plan; no necesita el código). Ficheros: `docs/CONTRATO-API.md`, `specs/001-esqueleto/contracts/api.openapi.yaml`, `specs/005-api/spec.md` (nota de enmienda)
+  - Hecho cuando: el YAML parsea y declara `modo` en 7 rutas, `reproducido_en` y `eventos_replay`; el contrato tiene tabla de cambios y un ejemplo de replay recortado; la versión es 0.3.0 en ambos; los campos de 0.2.0 no cambian. Debe estar antes de que B lo use en el panel
+- [ ] T5 [P-A] `producer/casos.py` + `tests/unit/test_casos.py`: `construir_casos(base)`, `seleccionar`, `--listar`, `--solo`, `--base`, `publicar()` con acuse y log `service=producer result=publicado caso=… event_id=… updated=…`; los ocho casos del plan. Ficheros: `backend/observatorio/producer/casos.py`, `backend/tests/unit/test_casos.py`
+  - Hecho cuando: pytest comprueba ids con prefijo `synthetic-caso-`, `source=synthetic-casos`, mismo `base` → mismos bytes de `time`/`updated`, versión posterior `+60 s`, antigua `−60 s`, magnitud `null`, lon 200, punto en `[-30, 0]`, y que cada mensaje pasa `validar_mensaje` (los inválidos, solo en `calidad.evaluar`). En vivo: dos ejecuciones seguidas dejan el mismo `count(*)` de `live.evento_actual` y `live.versiones_evento`
+- [ ] T6 [P-A] (depende de T5) `scripts/borrar_sinteticos.sql` completo: `live.evento_actual`, `live.versiones_evento`, `replay.*` sintéticas y `ingesta.cuarentena` por prefijo de `clave` (`substring(clave from 1 for 10) = 'synthetic-'::bytea`), en una transacción, con recuentos y un `SELECT` final. Ficheros: `scripts/borrar_sinteticos.sql`
+  - Hecho cuando: en vivo, con los casos publicados, `docker compose exec -T postgres psql -U observatorio -d observatorio -f - < scripts/borrar_sinteticos.sql` deja 0 filas sintéticas en `live.*` y en cuarentena, `count(*)` de reales igual que antes y una segunda ejecución borra 0 (evidencia pegada en el cuerpo de la tarea)
+
+## Bloque B: frontend (REPRODUCCIÓN y sintéticos) [P-B]
+
+- [ ] T7 [P-B] Antes de tocar código, enmienda de 006: `specs/006-panel/spec.md` (FR-007 ya no dice «nunca envía `incluir_sinteticos=true`»; nota de enmienda con REPRODUCCIÓN y el interruptor de sintéticos). Después, modelos y serialización: `modelos/api.ts` (`modo`, `reproducido_en`, `eventos_replay`) y `puro/filtros.ts` (`ModoDatos`, `VistaDatos`, `VISTA_VIVO`, `aQuery(…, vista)` con `modo=replay` e `incluir_sinteticos=true` solo si procede y nunca en `comparacion`) + `puro/filtros.spec.ts`. Ficheros: `frontend/src/app/modelos/api.ts`, `frontend/src/app/puro/filtros.ts`, `frontend/src/app/puro/filtros.spec.ts`
+  - Hecho cuando: Vitest prueba que por defecto la query no cambia (sin `modo` ni `incluir_sinteticos`), que `replay` añade `modo=replay`, que sintéticos añade `incluir_sinteticos=true`, y que `comparacion` no lleva ninguno
+- [ ] T8 [P-B] (depende de T7) Estado y datos: `FiltrosStore.vista`, `fijarModo`, `fijarSinteticos` (instantáneo, página 0), `RefrescoService` observa `vista()`, `PanelDatosService` pasa la vista y **no pide la comparación en replay**. Ficheros: `frontend/src/app/nucleo/{filtros.store,refresco.service,panel-datos.service}.ts`, `frontend/src/app/nucleo/panel-datos.service.spec.ts`
+  - Hecho cuando: Vitest comprueba que cambiar de modo dispara una ronda, que en replay hay 8 GET y ninguno a `/comparacion-historica`, que `incluir_sinteticos=true` llega a 8 peticiones (no a la comparación) y que recargar (store nuevo) vuelve a `live`/`false`
+- [ ] T9 [P-B] (depende de T8) Componente `vista-datos` (selector «Datos: En directo / REPRODUCCIÓN», interruptor «Incluir casos de prueba sintéticos», franja «REPRODUCCIÓN» con `role="status"`, aviso permanente de sintéticos) en `app.html`/`app.ts`/`app.css`. Ficheros: `frontend/src/app/componentes/vista-datos/*`, `frontend/src/app/app.{html,ts,css}`, `frontend/src/app/app.spec.ts`
+  - Hecho cuando: Vitest comprueba que el interruptor está apagado y el selector en «En directo» al arrancar; en REPRODUCCIÓN la franja existe y en directo no; con sintéticos activo aparece el aviso; el control se maneja con teclado y tiene etiqueta accesible
+- [ ] T10 [P-B] (depende de T8) Tabla, mapa y comparación: columna «Reproducido (UTC)» solo en replay, insignia «SINTÉTICO» en la fila, marcador de contorno discontinuo y ficha con «SINTÉTICO» y «Reproducido», «La comparación histórica solo existe en directo» en replay, nota de `filtros.html` según la vista, `eventos_replay` en el estado. Ficheros: `frontend/src/app/componentes/{tabla,mapa,comparacion,filtros,estado}/*`
+  - Hecho cuando: `tabla.spec.ts` (columna solo en replay; `SINTÉTICO` visible; `ND` con magnitud `null`), `mapa-ficha.spec.ts` (ficha con la marca y con el tiempo de reproducción), `comparacion.spec.ts` (mensaje en replay y ninguna cifra inventada) y `estado.spec.ts` verdes
+- [ ] T11 [P-B] (depende de T10) Comprobación: `npm test` y `npm run build` sin dependencias nuevas (`package.json` intacto). Ficheros: ninguno nuevo
+  - Hecho cuando: Vitest completo verde, build sin errores ni avisos nuevos y `git diff frontend/package.json frontend/package-lock.json` vacío
+
+## Bloque C+D: mediciones y memoria (sin capturas) [P-CD]
+
+- [ ] T12 [P-CD] `mediciones.py` + `tests/unit/test_mediciones.py`: búsqueda de versión (lista frente a `dict`), país (secuencial frente a `STRtree`, mismos resultados), agregación horaria, `tracemalloc`, mediana y máximo, esquema `medicion` con limpieza en `finally`, comprobación de recuentos antes y después, Markdown con fecha y equipo. Ficheros: `backend/observatorio/mediciones.py`, `backend/tests/unit/test_mediciones.py`
+  - Hecho cuando: pytest prueba (con tamaños pequeños y sin base) mediana/máximo, que lista y `dict` devuelven la misma versión, que secuencial y `STRtree` asignan el mismo país en 200 puntos, que toda sentencia de escritura menciona `medicion.` y que un recuento distinto → exit 1
+- [ ] T13 [P-CD] (depende de T12) Ejecución real: `docker compose up --build -d` y `docker compose exec -T producer python -m observatorio.mediciones --tamanos 1000,10000,100000 --repeticiones 5 | Set-Content -Encoding utf8 docs/memoria/mediciones.md`; copia a `specs/007-memoria/evidencias/mediciones.md`. Ficheros: `docs/memoria/mediciones.md`, `specs/007-memoria/evidencias/mediciones.md`
+  - Hecho cuando: hay tres tamaños con tiempo (mediana y máximo) y memoria, `EXPLAIN (ANALYZE, BUFFERS)` sin y con índice y tamaños de relación; `count(*)` de `live`, `replay` e `historico` iguales antes y después; `\dn` no muestra `medicion`; las tablas marcan lo sintético y la fecha de medición
+- [ ] T14 [P-CD] `docs/memoria/consultas.sql`: consultas Q01… ejecutadas contra la base real (diccionario con `information_schema`, `ingesta.consultas`, hueco 2–8 de noviembre, `manifest.json` frente a `historico.evento_2025`, las seis dimensiones de calidad con antes/después, transformaciones, `pg_total_relation_size`, `EXPLAIN` reales de los índices existentes). Ficheros: `docs/memoria/consultas.sql`
+  - Hecho cuando: cada consulta lleva un comentario con su número, qué mide y la fecha; se ejecutan todas sin error con `psql -f` y devuelven las cifras que usa la memoria (18.302 en histórico, 78 % sin país, etc.)
+- [ ] T15 [P-CD] (depende de T14) `docs/MEMORIA.md` (parte 1): índice, flujo completo con fichero/tabla/log de cada paso, diccionario de datos (FR-002), registro de consultas y procedencia con el hueco y cómo recuperarlo por FDSN (FR-003), modelo conceptual/lógico/físico con diagramas Mermaid y SQL literal (FR-004), calidad (FR-005), limitaciones (FR-006). Ficheros: `docs/MEMORIA.md`
+  - Hecho cuando: cada cifra enlaza su `Qnn` o comando y lleva fecha; el diccionario cubre todas las columnas (comprobado con la consulta de `information_schema`); las seis dimensiones tienen consulta, resultado, antes/después, ejemplo, acción y limitación; la sección del hueco explica la consulta FDSN por intervalos, el reparto si se alcanza el tope y la carga
+- [ ] T16 [P-CD] (depende de T13, T15) `docs/MEMORIA.md` (parte 2): complejidad (FR-008) con la tabla del plan, mediciones (FR-009) con equipo del anfitrión (`Get-CimInstance`), razonamiento de 100 millones marcando la extrapolación, costes (FR-010) con supuestos escritos con su valor y tiempo de desarrollo desde Git, escalado, limitaciones y mejoras. Ficheros: `docs/MEMORIA.md`
+  - Hecho cuando: las cifras se copian de `mediciones.md`; hay coste medio y peor caso de las tres operaciones con la fuente; no hay ROI inventado; Netlify y ngrok no figuran como coste cero
+- [ ] T17 [P-CD] (depende de T15) `docs/MEMORIA.md` (parte 3): procedimiento de defensa (FR-015), sección de explicación individual con huecos `[ESCRIBE: …]` y decisiones candidatas con su `research.md` sin elegir (FR-016), transparencia del proceso tal como ocurrió (FR-017), tabla de rúbrica (FR-018), tabla de aceptación con las once pruebas y la columna de resultado en «pendiente de E». Ficheros: `docs/MEMORIA.md`
+  - Hecho cuando: ningún hueco `[ESCRIBE: …]` está relleno, la URL de Netlify dice «PENDIENTE (alumno)», no hay authtoken ni URL real en el texto, y los enlaces relativos del índice apuntan a ficheros que existen o a capturas marcadas «las añade F»
+
+## Bloque E: verificación (verifier) — después de A, B y C+D
+
+- [ ] T18 `verifier` (depende de T3 a T6) Pruebas de aceptación §11 en vivo con `docker compose up --build -d`: casos de `casos.py` (AC-8 a AC-12), replay (AC-14 y AC-19 con `modo=replay`), `restart consumer` en mitad de un lote, `stop api`/`start api`, limpieza (AC-15). Ficheros: `specs/007-memoria/evidencias/aceptacion.md` (+ salidas de log y SQL)
+  - Hecho cuando: cada prueba tiene comando, salida, SQL y resultado (superada, no superada o no probable con el motivo); recuentos antes y después; lag 0 tras el reinicio; la suma de `/recuentos/pais?modo=replay` = total de `/eventos?modo=replay` = `count(*)` de `replay.evento_actual`
+- [ ] T19 `verifier` (depende de T11, T18) T11 de 006 en navegador real (`cursor-ide-browser`, `http://localhost:4200`): capturas `01`–`08` de T11, `09-reproduccion` (franja, columna de reproducción, comparación «solo en directo»), `10-sinteticos` (interruptor activo con aviso, «SINTÉTICO» y «ND»), `red.md` (peticiones, cabeceras, pestaña oculta = 0 rondas). Ficheros: `specs/006-panel/evidencias/*`, `specs/007-memoria/evidencias/09-reproduccion.png`, `specs/007-memoria/evidencias/10-sinteticos.png`
+  - Hecho cuando: AC-3, AC-5, AC-13, AC-16 y AC-20 con evidencia; `07-api-apagada` ≤ 60 s y `08-recuperada` sin recargar; con el interruptor apagado ningún sintético aparece; la suma por país = total de tabla y mapa; ningún fallo de producción corregido por el verifier (los fallos vuelven al `developer`)
+- [ ] T20 `verifier` (depende de T15, T16, T19) Comprobación documental y capturas del análisis: AC-1 a AC-7 y AC-17/AC-18; las capturas de las tres conclusiones con el interruptor apagado y sus filtros anotados. Ficheros: `specs/007-memoria/evidencias/{documental.md,analisis-1.png,analisis-2.png,analisis-3.png}`
+  - Hecho cuando: ningún enlace de la memoria está roto, ninguna cifra queda sin `Qnn` o comando y fecha, 18.302 = `count(*)` de `historico.evento_2025`, el diccionario no sobra ni falta ninguna columna, y la comparación de las conclusiones usa magnitud ≥ 4 en ambos lados
+
+## Bloque F: cierre — después de E
+
+- [ ] T21 (depende de T18 a T20) `docs/MEMORIA.md` (parte 4): tabla de aceptación con resultado y enlace a la evidencia, las tres conclusiones con cifras, filtros, periodo, captura y la declaración de no-predicción, rúbrica final enlazada, sección de transparencia con lo no verificado en vivo (005 AC-1 a AC-3, CORS de Netlify) y el estado de T11. Ficheros: `docs/MEMORIA.md`
+  - Hecho cuando: ninguna prueba sin evidencia ni marcada superada sin haberlo sido; las conclusiones comparan muestras equivalentes (magnitud ≥ 4, mismo filtro, días con cero) y declaran cobertura, tipo de magnitud y último periodo incompleto
+- [ ] T22 (depende de T21) `README.md`: sustituir la línea obsoleta «Estado: feature `002-ingesta-live`…» por el estado real, actualizar la tabla de features (006 con la nota de REPRODUCCIÓN, 007) y enlazar `docs/MEMORIA.md`. Ficheros: `README.md`
+  - Hecho cuando: no queda ninguna mención de «feature 002» como estado actual, la fila de 007 resume su alcance real y los enlaces funcionan
+- [ ] T23 (depende de T19) Marcar T11 de 006 como hecha con su evidencia: `specs/006-panel/tasks.md` (`[x]` y línea «Evidencia T11» con los enlaces a `evidencias/`). Ficheros: `specs/006-panel/tasks.md`
+  - Hecho cuando: la marca coincide con las capturas y el `red.md` existentes; si algo no se pudo probar, T11 sigue abierta y dice por qué
+- [ ] T24 `verifier` (depende de T21 a T23) Limpieza y cierre: ejecutar `scripts/borrar_sinteticos.sql`, comprobar AC-15 y que no hay secretos en Git (`.env`, authtoken, URL de ngrok o Netlify), y marcar T0 a T24 con su evidencia. Ficheros: `specs/007-memoria/evidencias/cierre.md`, `specs/007-memoria/tasks.md`
+  - Hecho cuando: 0 filas sintéticas en `live.*` y en cuarentena, recuento de reales igual que antes de empezar, `git status` sin `.env` ni `data/`, y AC-1 a AC-20 con evidencia o motivo
+
+## Dependencias
+
+```
+T0 ──┬─ A: T1 ─┐
+     │         ├─ T3 ─┐
+     │    T2 ──┘      ├───────────────────────────┐
+     │    T4 (contrato, desde el plan)            │
+     │    T5 ─ T6 ────┘                           │
+     ├─ B: T7 ─ T8 ─┬─ T9 ─┐                      ├─ T18 ─ T19 ─ T20 ─ T21 ─ T22 ─ T24
+     │              └─ T10 ┴─ T11 ────────────────┤                    └─ T23 ─┘
+     └─ C+D: T12 ─ T13 ──────────┐                │
+             T14 ─ T15 ─ T16 ────┴─ T17 ──────────┘
+```
+
+- **A, B y C+D en paralelo** (tres desarrolladores) tras T0. A toca `backend/observatorio/{api,producer}/`, `backend/tests/unit/{test_filtros,test_consultas,test_calculos,test_api_rutas,test_estado_api,test_casos}.py`, `scripts/borrar_sinteticos.sql`, `docs/CONTRATO-API.md`, `specs/001-esqueleto/contracts/` y `specs/005-api/spec.md`. B toca solo `frontend/src/app/` y `specs/006-panel/spec.md`. C+D toca `backend/observatorio/mediciones.py`, `backend/tests/unit/test_mediciones.py`, `docs/MEMORIA.md` y `docs/memoria/`. Sin ficheros comunes. Si dos bloques reconstruyen la imagen a la vez, basta repetir `docker compose up --build -d` al juntar.
+- T4 se escribe desde la tabla del plan y puede acabar antes que T3; B solo necesita la forma del contrato, no el código de A.
+- Dentro de A: T1 y T2 en paralelo (no comparten fichero), T3 después; T5 y T6 son independientes de T1–T4. Dentro de B: T9 y T10 en paralelo. Dentro de C+D: T12–T13 y T14–T15 en paralelo.
+- E y F son secuenciales y los hace el `verifier` (T24 incluido), salvo T21 y T22, que son del `developer`. T23 puede hacerse en cuanto exista T19.
+- Totales: 25 tareas (T0; A: 6; B: 5; C+D: 6; E: 3; F: 4; T0 y E/F secuenciales, A, B y C+D en paralelo).
