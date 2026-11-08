@@ -1,7 +1,8 @@
 // Lógica pura de los gráficos de barras SVG (T7): escalas, tipo de barra, reparto de
 // etiquetas y texto alternativo. Sin Angular. Un cero es una barra a cero (visible como línea);
 // «sin valor» es otra categoría; un valor desconocido (`null`) es «ND» y no dibuja barra.
-import { ND, formatearEntero } from './formato';
+import { T_ES, Traductor } from '../i18n/traducir';
+import { diaMesUtc, formatearEntero, textoNd } from './formato';
 
 export type TipoBarra = 'normal' | 'cero' | 'sin-valor' | 'nd';
 
@@ -51,7 +52,7 @@ export function tipoDeBarra(d: DatoBarra): TipoBarra {
   return d.valor === 0 ? 'cero' : 'normal';
 }
 
-export function calcularBarras(datos: ReadonlyArray<DatoBarra>, max: number): BarraCalculada[] {
+export function calcularBarras(datos: ReadonlyArray<DatoBarra>, max: number, t: Traductor = T_ES): BarraCalculada[] {
   return datos.map((d) => {
     const tipo = tipoDeBarra(d);
     const conLongitud = tipo === 'normal' && max > 0;
@@ -62,7 +63,7 @@ export function calcularBarras(datos: ReadonlyArray<DatoBarra>, max: number): Ba
       valor: tipo === 'nd' ? null : d.valor,
       tipo,
       fraccion: conLongitud ? Math.min(1, (d.valor as number) / max) : 0,
-      valorTexto: tipo === 'nd' ? ND : formatearEntero(d.valor),
+      valorTexto: tipo === 'nd' ? textoNd(t) : formatearEntero(d.valor, t),
     };
   });
 }
@@ -83,19 +84,17 @@ export function acortar(texto: string, maxCaracteres: number): string {
 }
 
 /** `16:00` a partir de un instante ISO UTC (`ND` si no es válido). */
-export function etiquetaHoraUtc(iso: string): string {
+export function etiquetaHoraUtc(iso: string, t: Traductor = T_ES): string {
   const f = new Date(iso);
-  if (Number.isNaN(f.getTime())) return ND;
+  if (Number.isNaN(f.getTime())) return textoNd(t);
   return `${String(f.getUTCHours()).padStart(2, '0')}:00`;
 }
 
-/** `01/11 16:00 UTC` */
-export function etiquetaVentanaUtc(iso: string): string {
+/** `01/11 16:00 UTC` en español, `1 Nov 16:00 UTC` en inglés. */
+export function etiquetaVentanaUtc(iso: string, t: Traductor = T_ES): string {
   const f = new Date(iso);
-  if (Number.isNaN(f.getTime())) return ND;
-  const dd = String(f.getUTCDate()).padStart(2, '0');
-  const mm = String(f.getUTCMonth() + 1).padStart(2, '0');
-  return `${dd}/${mm} ${etiquetaHoraUtc(iso)} UTC`;
+  if (Number.isNaN(f.getTime())) return textoNd(t);
+  return `${diaMesUtc(f, t)} ${etiquetaHoraUtc(iso, t)} UTC`;
 }
 
 /** Texto para `aria-label`: título, total, mayor categoría y cuántas están a cero / sin valor / ND. */
@@ -103,22 +102,26 @@ export function textoAlternativo(
   titulo: string,
   barras: ReadonlyArray<BarraCalculada>,
   unidad: string,
+  t: Traductor = T_ES,
 ): string {
-  if (barras.length === 0) return `${titulo}. Sin categorías que mostrar.`;
+  if (barras.length === 0) return t('grafico.alt_vacio', { titulo });
   const conValor = barras.filter((b) => b.valor !== null);
   const total = conValor.reduce((s, b) => s + (b.valor as number), 0);
-  const partes = [`${titulo}.`, `${barras.length} categorías, ${formatearEntero(total)} ${unidad} en total.`];
+  const partes = [
+    `${titulo}.`,
+    t('grafico.alt_resumen', { n: barras.length, total: formatearEntero(total, t), unidad }),
+  ];
   const mayor = conValor
     .filter((b) => b.tipo === 'normal')
     .reduce<BarraCalculada | null>((a, b) => (a === null || (b.valor as number) > (a.valor as number) ? b : a), null);
-  if (mayor) partes.push(`Mayor: ${mayor.etiqueta}, ${mayor.valorTexto}.`);
+  if (mayor) partes.push(t('grafico.alt_mayor', { etiqueta: mayor.etiqueta, valor: mayor.valorTexto }));
   const ceros = barras.filter((b) => b.tipo === 'cero').length;
-  if (ceros > 0) partes.push(`${ceros} categorías con 0.`);
+  if (ceros > 0) partes.push(t('grafico.alt_ceros', { n: ceros }));
   const sin = barras.find((b) => b.tipo === 'sin-valor');
-  if (sin) partes.push(`Sin valor: ${sin.valorTexto}.`);
+  if (sin) partes.push(t('grafico.alt_sin_valor', { valor: sin.valorTexto }));
   const nd = barras.filter((b) => b.tipo === 'nd').length;
-  if (nd > 0) partes.push(`${nd} categorías con valor desconocido (ND).`);
-  partes.push('La tabla equivalente está debajo del gráfico.');
+  if (nd > 0) partes.push(t('grafico.alt_nd', { n: nd }));
+  partes.push(t('grafico.alt_tabla'));
   return partes.join(' ');
 }
 

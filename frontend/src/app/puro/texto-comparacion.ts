@@ -1,6 +1,8 @@
 // Textos de la comparación histórica (T8). Sin Angular. Lo desconocido es «no disponible» o «ND»,
 // nunca 0.
+import { T_ES, Traductor } from '../i18n/traducir';
 import { ComparacionHistorica, FiltrosEfectivos } from '../modelos/api';
+import { SIN_PAIS } from './filtros';
 import { formatearDecimal, formatearEntero, formatearMagnitud } from './formato';
 
 export const NO_DISPONIBLE = 'no disponible';
@@ -10,17 +12,32 @@ export const AVISO_PERIODO_INCOMPLETO =
   'El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después.';
 
 /** «magnitud ≥ 4,0 · país: todos · subregión: todas» a partir de los filtros efectivos de la API. */
-export function describirFiltrosEfectivos(f: FiltrosEfectivos): string {
+export function describirFiltrosEfectivos(f: FiltrosEfectivos, t: Traductor = T_ES): string {
   const mag =
     f.magnitud_min === null && f.magnitud_max === null
-      ? 'magnitud: sin límites'
+      ? t('comparacion.f_sin_limites')
       : [
-          f.magnitud_min !== null ? `magnitud ≥ ${formatearMagnitud(f.magnitud_min)}` : null,
-          f.magnitud_max !== null ? `magnitud ≤ ${formatearMagnitud(f.magnitud_max)}` : null,
+          f.magnitud_min !== null
+            ? t('comparacion.f_min', { valor: formatearMagnitud(f.magnitud_min, t) })
+            : null,
+          f.magnitud_max !== null
+            ? t('comparacion.f_max', { valor: formatearMagnitud(f.magnitud_max, t) })
+            : null,
         ]
-          .filter((t) => t !== null)
-          .join(' y ');
-  return `${mag} · país: ${f.pais ?? 'todos'} · subregión: ${f.subregion ?? 'todas'}`;
+          .filter((x) => x !== null)
+          .join(` ${t('comparacion.f_y')} `);
+  // El código de país no se traduce; la etiqueta fija «Sin país asignado» sí.
+  const pais = f.pais === null ? t('comparacion.f_todos') : f.pais === SIN_PAIS ? t('dominio.sin_pais') : f.pais;
+  return t('comparacion.f_completo', {
+    magnitud: mag,
+    pais,
+    subregion:
+      f.subregion === null
+        ? t('comparacion.f_todas')
+        : f.subregion === SIN_PAIS
+          ? t('dominio.sin_pais')
+          : f.subregion,
+  });
 }
 
 export interface CifrasComparacion {
@@ -32,14 +49,15 @@ export interface CifrasComparacion {
   historicoNoDisponible: boolean;
 }
 
-export function cifrasComparacion(c: ComparacionHistorica): CifrasComparacion {
+export function cifrasComparacion(c: ComparacionHistorica, t: Traductor = T_ES): CifrasComparacion {
   const h = c.historico_2025;
   const noDisp = h.estado !== 'cargado' || h.media_diaria === null;
+  const noDisponible = t('comparacion.no_disponible');
   return {
-    ultimas24h: formatearEntero(c.ventana_actual.eventos),
-    mediaDiaria2025: noDisp ? NO_DISPONIBLE : formatearDecimal(h.media_diaria, 1),
-    eventos2025: h.estado !== 'cargado' || h.eventos === null ? NO_DISPONIBLE : formatearEntero(h.eventos),
-    cociente: noDisp || c.cociente === null ? NO_DISPONIBLE : formatearDecimal(c.cociente, 2),
+    ultimas24h: formatearEntero(c.ventana_actual.eventos, t),
+    mediaDiaria2025: noDisp ? noDisponible : formatearDecimal(h.media_diaria, 1, t),
+    eventos2025: h.estado !== 'cargado' || h.eventos === null ? noDisponible : formatearEntero(h.eventos, t),
+    cociente: noDisp || c.cociente === null ? noDisponible : formatearDecimal(c.cociente, 2, t),
     historicoNoDisponible: noDisp,
   };
 }

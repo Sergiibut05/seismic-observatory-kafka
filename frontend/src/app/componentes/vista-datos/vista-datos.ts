@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { ModoDatos } from '../../puro/filtros';
 
@@ -14,6 +15,7 @@ import { ModoDatos } from '../../puro/filtros';
 })
 export class VistaDatos {
   private readonly store = inject(FiltrosStore);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly vista = this.store.vista;
   protected readonly esReplay = computed(() => this.vista().modo === 'replay');

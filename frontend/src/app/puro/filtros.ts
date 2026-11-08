@@ -1,8 +1,18 @@
 // Filtros del panel: validación, serialización al contrato y acotado de la ventana horaria.
 // Las fechas del formulario (`datetime-local`) se interpretan SIEMPRE como UTC.
+import { T_ES, Traductor } from '../i18n/traducir';
 
+/** Valor de dominio que viaja a la API tal cual; en pantalla se muestra con `nombreVisible`. */
 export const SIN_PAIS = 'Sin país asignado';
 export const MAX_VENTANA_HORA_MS = 31 * 24 * 3600 * 1000;
+
+/**
+ * Nombre para mostrar: los datos (países del catálogo, subregiones) no se traducen, pero la etiqueta
+ * fija «Sin país asignado» sí. Nunca se usa para construir parámetros de la API.
+ */
+export function nombreVisible(nombre: string | null | undefined, t: Traductor = T_ES): string {
+  return nombre === SIN_PAIS ? t('dominio.sin_pais') : (nombre ?? '');
+}
 
 /** Lo que escribe la persona: texto tal cual de los campos. */
 export interface FiltrosEditados {
@@ -53,13 +63,13 @@ export interface VistaDatos {
 export const VISTA_VIVO: VistaDatos = { modo: 'live', sinteticos: false };
 
 /** Texto de la nota de «Filtros» sobre qué eventos se muestran, según la vista. */
-export function notaOrigenDatos(vista: VistaDatos): string {
-  const sinteticos = 'Se incluyen casos de prueba sintéticos, marcados como «SINTÉTICO».';
+export function notaOrigenDatos(vista: VistaDatos, t: Traductor = T_ES): string {
+  const sinteticos = t('filtros.origen_sinteticos');
   if (vista.modo === 'replay') {
-    const base = 'Datos de REPRODUCCIÓN: eventos ya recibidos que se vuelven a publicar; no son datos en directo.';
+    const base = t('filtros.origen_replay');
     return vista.sinteticos ? `${base} ${sinteticos}` : base;
   }
-  return vista.sinteticos ? sinteticos : 'Solo se muestran eventos reales.';
+  return vista.sinteticos ? sinteticos : t('filtros.origen_reales');
 }
 
 const FECHA = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?Z?$/;
@@ -90,7 +100,7 @@ function parsearMagnitud(texto: string): number | null {
   return Number.isFinite(n) && n >= -10 && n <= 10 ? n : null;
 }
 
-export function validarFiltros(f: FiltrosEditados): ResultadoValidacion {
+export function validarFiltros(f: FiltrosEditados, t: Traductor = T_ES): ResultadoValidacion {
   const errores: ErroresFiltros = {};
   const filtros: FiltrosAplicados = {};
   const valor = (c: CampoFiltro) => f[c].trim();
@@ -99,42 +109,42 @@ export function validarFiltros(f: FiltrosEditados): ResultadoValidacion {
   let hastaMs: number | null = null;
   if (valor('desde')) {
     desdeMs = parsearInstante(valor('desde'));
-    if (desdeMs === null) errores.desde = 'Fecha no válida (UTC, formato AAAA-MM-DDThh:mm).';
+    if (desdeMs === null) errores.desde = t('filtros.err_fecha');
     else filtros.desde = new Date(desdeMs).toISOString();
   }
   if (valor('hasta')) {
     hastaMs = parsearInstante(valor('hasta'));
-    if (hastaMs === null) errores.hasta = 'Fecha no válida (UTC, formato AAAA-MM-DDThh:mm).';
+    if (hastaMs === null) errores.hasta = t('filtros.err_fecha');
     else filtros.hasta = new Date(hastaMs).toISOString();
   }
   if (desdeMs !== null && hastaMs !== null && desdeMs >= hastaMs) {
-    errores.hasta = 'La fecha final debe ser posterior a la inicial.';
+    errores.hasta = t('filtros.err_fecha_orden');
   }
 
   let min: number | null = null;
   let max: number | null = null;
   if (valor('magnitudMin')) {
     min = parsearMagnitud(valor('magnitudMin'));
-    if (min === null) errores.magnitudMin = 'Introduce un número entre −10 y 10.';
+    if (min === null) errores.magnitudMin = t('filtros.err_magnitud');
     else filtros.magnitudMin = min;
   }
   if (valor('magnitudMax')) {
     max = parsearMagnitud(valor('magnitudMax'));
-    if (max === null) errores.magnitudMax = 'Introduce un número entre −10 y 10.';
+    if (max === null) errores.magnitudMax = t('filtros.err_magnitud');
     else filtros.magnitudMax = max;
   }
   if (min !== null && max !== null && min > max) {
-    errores.magnitudMax = 'La magnitud máxima no puede ser menor que la mínima.';
+    errores.magnitudMax = t('filtros.err_magnitud_orden');
   }
 
   const pais = valor('pais');
   if (pais) {
     if (pais === SIN_PAIS || PAIS.test(pais)) filtros.pais = pais;
-    else errores.pais = 'Código de país no válido (tres letras mayúsculas).';
+    else errores.pais = t('filtros.err_pais');
   }
   const subregion = valor('subregion');
   if (subregion) {
-    if (subregion.length > 80) errores.subregion = 'Máximo 80 caracteres.';
+    if (subregion.length > 80) errores.subregion = t('filtros.err_subregion');
     else filtros.subregion = subregion;
   }
 

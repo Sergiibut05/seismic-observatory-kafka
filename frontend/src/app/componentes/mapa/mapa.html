@@ -1,21 +1,21 @@
 <section class="bloque mapa-bloque" aria-labelledby="titulo-mapa" [attr.aria-busy]="bloque().estado === 'cargando'">
   <div class="bloque__cab">
-    <h2 id="titulo-mapa" class="bloque__titulo">Mapa de eventos</h2>
-    <div class="mapa-vistas" role="group" aria-label="Tipo de mapa">
+    <h2 id="titulo-mapa" class="bloque__titulo">{{ i18n.tr('mapa.titulo') }}</h2>
+    <div class="mapa-vistas" role="group" [attr.aria-label]="i18n.tr('mapa.tipo_aria')">
       <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="!enGlobo()" (click)="enGlobo.set(false)">
-        Plano
+        {{ i18n.tr('mapa.plano') }}
       </button>
       <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="enGlobo()" (click)="enGlobo.set(true)">
-        Globo 3D
+        {{ i18n.tr('mapa.globo') }}
       </button>
     </div>
     <span class="bloque__nota">
-      Usa todos los filtros.
+      {{ i18n.tr('mapa.usa_filtros') }}
       @if (esReplay()) {
-        REPRODUCCIÓN: eventos reproducidos, no en directo.
+        {{ i18n.tr('mapa.replay_nota') }}
       }
       @if (respuesta()) {
-        {{ devueltos() }} eventos dibujados.
+        {{ i18n.tr('mapa.dibujados', { n: devueltos() }) }}
       }
     </span>
   </div>
@@ -23,27 +23,26 @@
   <div class="mapa-avisos">
     @if (truncado()) {
       <p class="aviso aviso--atencion" role="status">
-        Aviso: el mapa muestra {{ devueltos() }} de {{ total() }} eventos (límite de la API). La tabla
-        y los recuentos incluyen todos; acota los filtros para ver el resto.
+        {{ i18n.tr('mapa.truncado', { devueltos: devueltos(), total: total() }) }}
       </p>
     }
     @if (bloque().error; as error) {
       <p class="aviso aviso--atencion" role="status">
         @if (antiguos()) {
-          No se pudo actualizar el mapa ({{ error.motivo }}). Se muestran {{ etiquetaAntiguos() }}.
+          {{ i18n.tr('mapa.error_antiguo', { motivo: i18n.motivo(error), datos: etiquetaAntiguos() }) }}
         } @else {
-          No se pudo cargar el mapa ({{ error.motivo }}).
+          {{ i18n.tr('mapa.error_carga', { motivo: i18n.motivo(error) }) }}
         }
       </p>
     }
     @if (seleccionFuera()) {
       <p class="aviso" role="status">
-        El evento seleccionado no está entre los dibujados en el mapa; consúltalo en la tabla.
+        {{ i18n.tr('mapa.seleccion_fuera') }}
       </p>
     }
     @if (errorFronteras()) {
       <p class="aviso aviso--atencion" role="status">
-        No se pudieron cargar las fronteras de los países; el mapa sigue con los eventos.
+        {{ i18n.tr('mapa.error_fronteras') }}
       </p>
     }
   </div>
@@ -54,25 +53,22 @@
         #lienzo
         class="mapa-lienzo"
         role="region"
-        aria-label="Mapa de eventos sísmicos"
+        [attr.aria-label]="i18n.tr('mapa.lienzo_aria')"
         aria-describedby="mapa-descripcion"
       ></div>
       <p id="mapa-descripcion" class="solo-lectores">
-        Mapa interactivo: cada evento es un círculo; su tamaño indica la magnitud y su color la
-        profundidad. Con el mapa enfocado, las flechas lo desplazan y + y − cambian el zoom. La
-        tabla de eventos es la alternativa por teclado: el botón «Ver en el mapa» abre la ficha del
-        evento.
+        {{ i18n.tr('mapa.descripcion') }}
       </p>
       @if (bloque().estado === 'cargando' && !respuesta()) {
-        <p class="mapa-estado cargando" role="status">Cargando eventos…</p>
+        <p class="mapa-estado cargando" role="status">{{ i18n.tr('mapa.cargando') }}</p>
       }
       @if (enGlobo()) {
         <app-globo />
       }
-      <details class="mapa-leyenda" open [hidden]="enGlobo()">
-        <summary>Cómo leer el mapa</summary>
+      <details class="mapa-leyenda" open [hidden]="enGlobo()" [class.mapa-leyenda--apartada]="fichaVisible()">
+        <summary>{{ i18n.tr('mapa.leyenda_resumen') }}</summary>
         <div class="mapa-leyenda__grupo">
-          <p class="mapa-leyenda__titulo">Círculo más grande, magnitud mayor</p>
+          <p class="mapa-leyenda__titulo">{{ i18n.tr('mapa.leyenda_radio') }}</p>
           <ul class="mapa-leyenda__radios">
             @for (r of radiosLeyenda; track r.etiqueta) {
               <li>
@@ -87,8 +83,8 @@
           </ul>
         </div>
         <div class="mapa-leyenda__grupo">
-          <p class="mapa-leyenda__titulo">Color: profundidad en km</p>
-          <ul class="mapa-leyenda__escala" aria-label="Escala de profundidad">
+          <p class="mapa-leyenda__titulo">{{ i18n.tr('mapa.leyenda_color') }}</p>
+          <ul class="mapa-leyenda__escala" [attr.aria-label]="i18n.tr('mapa.leyenda_escala_aria')">
             @for (i of intervalos; track i.etiqueta) {
               <li [attr.aria-label]="i.etiqueta + ' km'">
                 <span class="mapa-leyenda__tramo" [style.background]="i.color"></span>
@@ -96,25 +92,27 @@
               </li>
             }
           </ul>
-          <p class="mapa-leyenda__extremos"><span>superficie</span><span>más profundo</span></p>
+          <p class="mapa-leyenda__extremos">
+            <span>{{ i18n.tr('mapa.superficie') }}</span><span>{{ i18n.tr('mapa.mas_profundo') }}</span>
+          </p>
         </div>
         <ul class="mapa-leyenda__notas">
           <li>
             <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
-            <span>Gris con borde discontinuo: sin dato (ND)</span>
+            <span>{{ i18n.tr('mapa.leyenda_nd') }}</span>
           </li>
           @if (sinteticos()) {
             <li class="mapa-leyenda__sintetico">
               <span class="mapa-leyenda__muestra mapa-leyenda__muestra--sintetico"></span>
-              <span>SINTÉTICO: contorno grueso discontinuo</span>
+              <span>{{ i18n.tr('mapa.leyenda_sintetico') }}</span>
             </li>
           }
         </ul>
-        <p class="mapa-leyenda__pista">Pasa el ratón por un círculo para ver la magnitud; púlsalo para ver la ficha.</p>
+        <p class="mapa-leyenda__pista">{{ i18n.tr('mapa.pista') }}</p>
       </details>
       <p class="solo-lectores" role="status">{{ anuncio() }}</p>
     } @else {
-      <p class="bloque__vacio">Mapa no disponible en este entorno. Los eventos están en la tabla.</p>
+      <p class="bloque__vacio">{{ i18n.tr('mapa.no_disponible') }}</p>
     }
   </div>
 </section>

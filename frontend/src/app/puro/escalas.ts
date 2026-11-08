@@ -1,6 +1,7 @@
 // Escalas visuales del mapa y su leyenda: fuente única de radio y color.
 // Los colores se repiten como variables CSS (`--prof-*` en styles.css) para la leyenda
 // HTML; si cambian aquí, cambian allí.
+import { T_ES, Traductor } from '../i18n/traducir';
 
 export const ETIQUETA_ND = 'ND';
 /** Radio fijo (px) de un evento sin magnitud: distinto del de M = 0 (3 px). */
@@ -69,15 +70,20 @@ export interface EstiloCirculo {
   etiquetaProfundidad: string | null;
 }
 
-export function estiloCirculo(magnitud: number | null, profundidad: number | null): EstiloCirculo {
+export function estiloCirculo(
+  magnitud: number | null,
+  profundidad: number | null,
+  t: Traductor = T_ES,
+): EstiloCirculo {
   const sinMagnitud = !esNumero(magnitud);
   const sinProfundidad = !esNumero(profundidad);
+  const nd = t('formato.nd');
   return {
     radio: radioPorMagnitud(magnitud),
     color: colorPorProfundidad(profundidad),
     bordeDiscontinuo: sinMagnitud || sinProfundidad,
-    etiquetaMagnitud: sinMagnitud ? ETIQUETA_ND : null,
-    etiquetaProfundidad: sinProfundidad ? ETIQUETA_ND : null,
+    etiquetaMagnitud: sinMagnitud ? nd : null,
+    etiquetaProfundidad: sinProfundidad ? nd : null,
   };
 }
 
@@ -86,10 +92,10 @@ export interface EntradaLeyendaRadio {
   radio: number;
 }
 
-export function leyendaRadio(): EntradaLeyendaRadio[] {
+export function leyendaRadio(t: Traductor = T_ES): EntradaLeyendaRadio[] {
   return [0, 2, 4, 6, 8]
     .map((m) => ({ etiqueta: String(m), radio: radioPorMagnitud(m) }))
-    .concat([{ etiqueta: ETIQUETA_ND, radio: RADIO_ND }]);
+    .concat([{ etiqueta: t('formato.nd'), radio: RADIO_ND }]);
 }
 
 export interface ContornoCirculo {

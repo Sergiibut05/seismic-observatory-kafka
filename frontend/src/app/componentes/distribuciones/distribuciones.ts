@@ -1,20 +1,21 @@
 import { Component, computed, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
+import { Traductor } from '../../i18n/traducir';
 import { Distribucion } from '../../modelos/api';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { DatoBarra } from '../../puro/barras';
-import { formatearEntero } from '../../puro/formato';
 import { AvisoBloque } from '../grafico-barras/aviso-bloque';
 import { GraficoBarras } from '../grafico-barras/grafico-barras';
 
-/** Barras de una distribución: los intervalos de la API y, aparte, la categoría «Sin valor». */
-function aBarras(d: Distribucion): DatoBarra[] {
+/** Barras de una distribución: los intervalos de la API (datos, no se traducen) y, aparte, «Sin valor». */
+function aBarras(d: Distribucion, t: Traductor): DatoBarra[] {
   const barras: DatoBarra[] = d.intervalos.map((i, n) => ({
     clave: `i${n}`,
     etiqueta: `${i.etiqueta} ${d.unidad === 'km' ? 'km' : ''}`.trim(),
     etiquetaCorta: i.etiqueta,
     valor: i.recuento,
   }));
-  barras.push({ clave: 'sin-valor', etiqueta: 'Sin valor', valor: d.sin_valor, sinValor: true });
+  barras.push({ clave: 'sin-valor', etiqueta: t('grafico.sin_valor'), valor: d.sin_valor, sinValor: true });
   return barras;
 }
 
@@ -27,18 +28,17 @@ function aBarras(d: Distribucion): DatoBarra[] {
 })
 export class Distribuciones {
   private readonly datos = inject(PanelDatosService);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly bloqueMagnitud = this.datos.distMagnitud;
   protected readonly bloqueProfundidad = this.datos.distProfundidad;
 
   protected readonly barrasMagnitud = computed(() => {
     const d = this.bloqueMagnitud().datos;
-    return d ? aBarras(d) : [];
+    return d ? aBarras(d, this.i18n.t()) : [];
   });
   protected readonly barrasProfundidad = computed(() => {
     const d = this.bloqueProfundidad().datos;
-    return d ? aBarras(d) : [];
+    return d ? aBarras(d, this.i18n.t()) : [];
   });
-
-  protected readonly formatearEntero = formatearEntero;
 }

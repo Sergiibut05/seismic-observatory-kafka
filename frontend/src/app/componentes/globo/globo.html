@@ -3,20 +3,20 @@
     #lienzo
     class="globo__lienzo"
     role="img"
-    aria-label="Globo 3D con los eventos del filtro. La tabla de eventos es la alternativa accesible."
+    [attr.aria-label]="i18n.tr('globo.aria')"
   ></div>
 
   @switch (estado()) {
     @case ('cargando') {
-      <p class="globo__estado" role="status">Cargando el globo…</p>
+      <p class="globo__estado" role="status">{{ i18n.tr('globo.cargando') }}</p>
     }
     @case ('sin-webgl') {
       <p class="globo__estado globo__estado--aviso" role="status">
-        Este navegador no puede dibujar el globo 3D (necesita WebGL). Usa la vista «Plano».
+        {{ i18n.tr('globo.sin_webgl') }}
       </p>
     }
     @case ('inactivo') {
-      <p class="globo__estado" role="status">Globo 3D no disponible en este entorno.</p>
+      <p class="globo__estado" role="status">{{ i18n.tr('globo.inactivo') }}</p>
     }
   }
 
@@ -24,13 +24,12 @@
     <div class="globo__leyenda">
       <p>
         @if (movimientoReducido) {
-          Color: profundidad, como en el mapa plano. Altura: magnitud.
+          {{ i18n.tr('globo.leyenda_reducido') }}
         } @else {
-          Los pulsos marcan los 60 terremotos más recientes del filtro: más anchos y más rojos cuanto mayor es
-          la magnitud (ámbar &lt; 4, naranja 4–6, rojo ≥ 6). Color de los puntos: profundidad, como en el mapa plano.
+          {{ i18n.tr('globo.leyenda_pulsos', { n: anillosMax }) }}
         }
       </p>
-      <p class="globo__pista">Arrastra para girar, rueda para acercar, pulsa un punto para seleccionarlo.</p>
+      <p class="globo__pista">{{ i18n.tr('globo.pista') }}</p>
     </div>
   }
 </div>

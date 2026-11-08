@@ -1,4 +1,5 @@
 // Datos para el globo 3D (feature 008). Sin Angular ni three.js: solo transforma la respuesta de /eventos/mapa.
+import { T_ES, Traductor } from '../i18n/traducir';
 import { EventoMapa, PropiedadesEventoMapa } from '../modelos/api';
 import { estiloCirculo } from './escalas';
 import { formatearInstanteUtc, formatearMagnitud, formatearProfundidad } from './formato';
@@ -117,15 +118,16 @@ export function escaparHtml(texto: string): string {
 }
 
 /** Etiqueta al pasar el ratón. globe.gl la inserta como HTML: todo lo que viene de la API va escapado. */
-export function etiquetaGlobo(p: PropiedadesEventoMapa): string {
-  const lugar =
-    !p.pais_nombre || p.pais_nombre === SIN_PAIS ? `${SIN_PAIS} (mar o fuera de fronteras)` : p.pais_nombre;
-  const marca = p.sintetico ? '<span class="globo-etiqueta__marca">SINTÉTICO</span> ' : '';
+export function etiquetaGlobo(p: PropiedadesEventoMapa, t: Traductor = T_ES): string {
+  const lugar = !p.pais_nombre || p.pais_nombre === SIN_PAIS ? t('dominio.sin_pais_mar') : p.pais_nombre;
+  const marca = p.sintetico
+    ? `<span class="globo-etiqueta__marca">${escaparHtml(t('dominio.sintetico'))}</span> `
+    : '';
   return (
     `<div class="globo-etiqueta">` +
-    `<strong>${marca}M ${escaparHtml(formatearMagnitud(p.magnitud))}</strong>` +
+    `<strong>${marca}M ${escaparHtml(formatearMagnitud(p.magnitud, t))}</strong>` +
     `<span>${escaparHtml(lugar)}</span>` +
-    `<span>${escaparHtml(formatearInstanteUtc(p.ocurrencia))} · ${escaparHtml(formatearProfundidad(p.profundidad))}</span>` +
+    `<span>${escaparHtml(formatearInstanteUtc(p.ocurrencia, t))} · ${escaparHtml(formatearProfundidad(p.profundidad, t))}</span>` +
     `</div>`
   );
 }

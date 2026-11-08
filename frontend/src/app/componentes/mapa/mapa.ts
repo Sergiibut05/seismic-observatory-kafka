@@ -13,6 +13,7 @@ import {
   viewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
+import { I18nService } from '../../i18n/i18n.service';
 import { EventoMapa, RespuestaMapa } from '../../modelos/api';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService, bloqueConDatosAntiguos } from '../../nucleo/panel-datos.service';
@@ -24,13 +25,12 @@ import {
   leyendaRadio,
 } from '../../puro/escalas';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
-import { formatearEntero } from '../../puro/formato';
 import { Globo } from '../globo/globo';
 import { crearFicha, crearResumen } from './mapa-ficha';
 
 const URL_TESELAS = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const ATRIBUCION =
-  '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a>';
+const atribucion = (colaboradores: string) =>
+  `© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">${colaboradores}</a>`;
 const URL_FRONTERAS = 'datos/paises.geojson';
 const COLOR_BORDE_CIRCULO = '#0f1a24'; // = --borde-circulo
 const COLOR_SELECCION = '#ffd166';
@@ -67,27 +67,35 @@ export class Mapa {
   private readonly datos = inject(PanelDatosService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly habilitado = inject(MAPA_HABILITADO);
+  protected readonly i18n = inject(I18nService);
   private readonly contenedor = viewChild<ElementRef<HTMLElement>>('lienzo');
 
   protected readonly bloque = this.datos.mapa;
   protected readonly respuesta = computed(() => this.bloque().datos);
   protected readonly antiguos = computed(() => bloqueConDatosAntiguos(this.bloque()));
   protected readonly etiquetaAntiguos = computed(() =>
-    etiquetaDatosAntiguos(this.bloque().lecturaOk),
+    etiquetaDatosAntiguos(this.bloque().lecturaOk, undefined, this.i18n.t()),
   );
   /** La rotulación sigue a los datos recibidos (modo de la respuesta), no a lo recién elegido. */
   protected readonly esReplay = computed(() => this.respuesta()?.modo === 'replay');
   protected readonly sinteticos = computed(() => this.store.vista().sinteticos);
   protected readonly truncado = computed(() => this.respuesta()?.truncado === true);
-  protected readonly devueltos = computed(() => formatearEntero(this.respuesta()?.devueltos));
-  protected readonly total = computed(() => formatearEntero(this.respuesta()?.total));
+  protected readonly devueltos = computed(() => this.i18n.entero(this.respuesta()?.devueltos));
+  protected readonly total = computed(() => this.i18n.entero(this.respuesta()?.total));
 
   protected readonly mapaDisponible = signal(this.habilitado);
   protected readonly errorFronteras = signal(false);
   protected readonly seleccionFuera = signal(false);
-  protected readonly anuncio = signal('');
+  /** Evento cuya ficha se acaba de abrir; el aviso para lectores de pantalla sigue al idioma. */
+  private readonly eventoAnunciado = signal<string | null>(null);
+  protected readonly anuncio = computed(() => {
+    const id = this.eventoAnunciado();
+    return id === null ? '' : this.i18n.tr('mapa.anuncio', { id });
+  });
   /** Vista 3D opcional (feature 008); el plano es la vista por defecto y Leaflet sigue vivo debajo. */
   protected readonly enGlobo = signal(false);
+  /** La ficha vive dentro del panel de Leaflet (z-index 400): con ella abierta, la leyenda se aparta para no taparla. */
+  protected readonly fichaVisible = signal(false);
 
   protected readonly radiosLeyenda = leyendaRadio().filter((r) => ['2', '4', '6', '8'].includes(r.etiqueta));
   protected readonly intervalos = INTERVALOS_PROFUNDIDAD;
@@ -97,6 +105,9 @@ export class Mapa {
   private mapa: L.Map | null = null;
   private capa: L.FeatureGroup | null = null;
   private popup: L.Popup | null = null;
+  private controlZoom: L.Control.Zoom | null = null;
+  /** Texto de atribución puesto en el control, para quitarlo exactamente al cambiar de idioma. */
+  private atribucionPuesta: string | null = null;
   private fichaAbierta: string | null = null;
   private cerrandoPorCodigo = false;
   private readonly dibujados = new Map<string, Dibujado>();
@@ -121,6 +132,14 @@ export class Mapa {
       untracked(() => this.aplicarSeleccion(id));
     });
 
+    // Cambio de idioma: se repinta lo que Leaflet escribe fuera de la plantilla (resumen, ficha, controles),
+    // con los datos ya cargados y sin pedir nada a la API.
+    effect(() => {
+      this.i18n.idioma();
+      if (!this.listo()) return;
+      untracked(() => this.repintarTextos());
+    });
+
     this.destroyRef.onDestroy(() => this.destruir());
   }
 
@@ -136,11 +155,15 @@ export class Mapa {
         center: [20, 0],
         zoom: 2,
       });
-      L.control.zoom({ zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(mapa);
+      this.controlZoom = L.control
+        .zoom({ zoomInTitle: this.i18n.tr('mapa.acercar'), zoomOutTitle: this.i18n.tr('mapa.alejar') })
+        .addTo(mapa);
       mapa.attributionControl.setPrefix(
         '<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>',
       );
-      L.tileLayer(URL_TESELAS, { maxZoom: 19, attribution: ATRIBUCION }).addTo(mapa);
+      // La atribución se pone en el control (no en la capa) para poder cambiarla de idioma.
+      L.tileLayer(URL_TESELAS, { maxZoom: 19 }).addTo(mapa);
+      this.ponerAtribucion(mapa);
 
       // Fronteras bajo los círculos: panel propio con su lienzo, sin depender del orden de carga.
       mapa.createPane('fronteras').style.zIndex = '350';
@@ -153,11 +176,11 @@ export class Mapa {
       });
 
       mapa.on('popupopen', (e: L.PopupEvent) => {
-        const cerrar = e.popup.getElement()?.querySelector('.leaflet-popup-close-button');
-        cerrar?.setAttribute('aria-label', 'Cerrar ficha');
-        cerrar?.setAttribute('title', 'Cerrar ficha');
+        this.rotularCierre(e.popup.getElement());
+        this.fichaVisible.set(true);
       });
       mapa.on('popupclose', () => {
+        this.fichaVisible.set(false);
         if (this.cerrandoPorCodigo) return;
         this.fichaAbierta = null;
         this.store.eventoSeleccionado.set(null);
@@ -172,6 +195,52 @@ export class Mapa {
     } catch (e) {
       console.error(`service=panel result=error bloque=mapa motivo="no se pudo iniciar Leaflet" detalle="${String(e)}"`);
       this.mapaDisponible.set(false);
+    }
+  }
+
+  private ponerAtribucion(mapa: L.Map): void {
+    const control = mapa.attributionControl;
+    if (this.atribucionPuesta !== null) control.removeAttribution(this.atribucionPuesta);
+    this.atribucionPuesta = atribucion(this.i18n.tr('mapa.osm'));
+    control.addAttribution(this.atribucionPuesta);
+  }
+
+  private rotularCierre(popup: HTMLElement | undefined): void {
+    const cerrar = popup?.querySelector('.leaflet-popup-close-button');
+    const texto = this.i18n.tr('mapa.cerrar_ficha');
+    cerrar?.setAttribute('aria-label', texto);
+    cerrar?.setAttribute('title', texto);
+  }
+
+  /** Textos que Leaflet guarda fuera de la plantilla: se rehacen con el traductor vigente. */
+  private repintarTextos(): void {
+    const mapa = this.mapa;
+    if (!mapa) return;
+    const t = this.i18n.t();
+
+    const contenedorZoom = this.controlZoom?.getContainer();
+    const rotulos: [string, string][] = [
+      ['.leaflet-control-zoom-in', t('mapa.acercar')],
+      ['.leaflet-control-zoom-out', t('mapa.alejar')],
+    ];
+    for (const [selector, texto] of rotulos) {
+      const enlace = contenedorZoom?.querySelector(selector);
+      enlace?.setAttribute('title', texto);
+      enlace?.setAttribute('aria-label', texto);
+    }
+    this.ponerAtribucion(mapa);
+
+    for (const d of this.dibujados.values()) {
+      d.marcador.setTooltipContent(crearResumen(d.evento.properties, document, t));
+    }
+    // Ficha abierta: se cambia su contenido sin cerrarla ni mover el mapa.
+    if (this.fichaAbierta !== null && this.popup?.isOpen()) {
+      const id = this.store.eventoSeleccionado();
+      const d = id === null ? undefined : this.dibujados.get(id);
+      if (d) {
+        this.popup.setContent(crearFicha(d.evento.properties, document, t));
+        this.rotularCierre(this.popup.getElement());
+      }
     }
   }
 
@@ -234,7 +303,7 @@ export class Mapa {
       if (previo?.version === version) continue;
       if (previo) capa.removeLayer(previo.marcador);
       const marcador = L.circleMarker([lat, lon], this.estiloDe(f, id === seleccion));
-      marcador.bindTooltip(crearResumen(f.properties), {
+      marcador.bindTooltip(crearResumen(f.properties, document, this.i18n.t()), {
         direction: 'top',
         offset: [0, -4],
         className: 'mapa-resumen',
@@ -283,13 +352,16 @@ export class Mapa {
     const posicion = d.marcador.getLatLng();
     this.cerrandoPorCodigo = true;
     try {
-      this.popup.setLatLng(posicion).setContent(crearFicha(d.evento.properties)).openOn(mapa);
+      this.popup
+        .setLatLng(posicion)
+        .setContent(crearFicha(d.evento.properties, document, this.i18n.t()))
+        .openOn(mapa);
     } finally {
       this.cerrandoPorCodigo = false;
     }
     this.fichaAbierta = version;
     if (!mapa.getBounds().contains(posicion)) mapa.panTo(posicion);
-    this.anuncio.set(`Evento ${id} seleccionado; ficha abierta en el mapa.`);
+    this.eventoAnunciado.set(id);
   }
 
   private cerrarFicha(): void {
@@ -315,5 +387,6 @@ export class Mapa {
     this.mapa = null;
     this.capa = null;
     this.popup = null;
+    this.controlZoom = null;
   }
 }

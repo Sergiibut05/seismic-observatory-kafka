@@ -37,6 +37,36 @@
   letter-spacing: 0.04em;
 }
 
+/* Selector «ES / EN»: botones segmentados como «Plano / Globo 3D» del mapa, con los colores de la cabecera oscura. */
+.idioma {
+  display: inline-flex;
+  justify-self: start;
+  border: 1px solid var(--sobre-oscuro-suave);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+.idioma__boton {
+  padding: 2px var(--e-3);
+  border: 0;
+  background: transparent;
+  color: var(--sobre-oscuro);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+.idioma__boton + .idioma__boton {
+  border-left: 1px solid var(--sobre-oscuro-suave);
+}
+.idioma__boton[aria-pressed='true'] {
+  background: var(--sobre-oscuro);
+  color: var(--oscuro);
+  font-weight: 600;
+}
+.idioma__boton:focus-visible {
+  outline: 3px solid var(--foco-sobre-oscuro);
+  outline-offset: -3px;
+}
+
 .rejilla {
   display: grid;
   gap: var(--e-4);
@@ -73,7 +103,10 @@
 
 @media (min-width: 72rem) {
   .cabecera__interior {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .idioma {
+    align-self: start;
   }
   .rejilla {
     grid-template-columns: 19rem minmax(0, 1fr) minmax(0, 1fr);

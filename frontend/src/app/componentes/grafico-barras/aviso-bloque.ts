@@ -1,6 +1,7 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { Bloque, bloqueConDatosAntiguos } from '../../nucleo/panel-datos.service';
-import { formatearHoraConUtc } from '../../puro/formato';
+import { textoNd } from '../../puro/formato';
 
 /**
  * Carga y error de un bloque (FR-011): «Cargando…» sin datos, error sin datos, o error con los
@@ -10,13 +11,14 @@ import { formatearHoraConUtc } from '../../puro/formato';
   selector: 'app-aviso-bloque',
   template: `
     @if (cargandoSinDatos()) {
-      <p class="cargando">Cargando datos…</p>
+      <p class="cargando">{{ i18n.tr('aviso.cargando') }}</p>
     } @else if (errorSinDatos()) {
-      <p class="aviso aviso--atencion">No se pudieron cargar los datos: {{ bloque().error?.motivo }}</p>
+      <p class="aviso aviso--atencion">
+        {{ i18n.tr('aviso.error', { motivo: i18n.motivo(bloque().error) }) }}
+      </p>
     } @else if (antiguos()) {
       <p class="aviso aviso--atencion">
-        Datos desactualizados: no se pudo actualizar ({{ bloque().error?.motivo }}). Se muestra la
-        última lectura correcta, de las {{ ultimaLectura() }}.
+        {{ i18n.tr('aviso.antiguos', { motivo: i18n.motivo(bloque().error), hora: ultimaLectura() }) }}
       </p>
     }
   `,
@@ -33,6 +35,7 @@ import { formatearHoraConUtc } from '../../puro/formato';
   `,
 })
 export class AvisoBloque {
+  protected readonly i18n = inject(I18nService);
   readonly bloque = input.required<Bloque<unknown>>();
 
   protected readonly cargandoSinDatos = computed(
@@ -44,6 +47,6 @@ export class AvisoBloque {
   protected readonly antiguos = computed(() => bloqueConDatosAntiguos(this.bloque()));
   protected readonly ultimaLectura = computed(() => {
     const t = this.bloque().lecturaOk;
-    return t === null ? 'ND' : formatearHoraConUtc(new Date(t).toISOString());
+    return t === null ? textoNd(this.i18n.t()) : this.i18n.horaConUtc(new Date(t).toISOString());
   });
 }

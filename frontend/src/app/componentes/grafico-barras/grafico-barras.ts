@@ -1,4 +1,6 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
+import { Clave } from '../../i18n/es';
 import {
   BarraCalculada,
   DatoBarra,
@@ -42,11 +44,11 @@ interface Marca {
   pos: number;
 }
 
-const OBSERVACION: Record<TipoBarra, string> = {
-  normal: '',
-  cero: 'Sin eventos (0)',
-  'sin-valor': 'Eventos sin valor registrado (no cuentan como 0)',
-  nd: 'Valor desconocido (ND)',
+const OBSERVACION: Record<TipoBarra, Clave | null> = {
+  normal: null,
+  cero: 'grafico.obs_cero',
+  'sin-valor': 'grafico.obs_sin_valor',
+  nd: 'grafico.obs_nd',
 };
 
 let contador = 0;
@@ -72,20 +74,21 @@ export class GraficoBarras {
   /** Filas de la tabla equivalente si difieren de las barras (p. ej. todos los países). */
   readonly filasTabla = input<DatoBarra[] | null>(null);
 
+  protected readonly i18n = inject(I18nService);
   protected readonly idPatron = `rayas-${++contador}`;
 
   protected readonly barras = computed<BarraCalculada[]>(() => {
     const datos = this.datos();
-    return calcularBarras(datos, escalaMaxima(datos.map((d) => d.valor)));
+    return calcularBarras(datos, escalaMaxima(datos.map((d) => d.valor)), this.i18n.t());
   });
   protected readonly maximo = computed(() => escalaMaxima(this.datos().map((d) => d.valor)));
   protected readonly filas = computed<BarraCalculada[]>(() => {
     const f = this.filasTabla();
     if (f === null) return this.barras();
-    return calcularBarras(f, escalaMaxima(f.map((d) => d.valor)));
+    return calcularBarras(f, escalaMaxima(f.map((d) => d.valor)), this.i18n.t());
   });
   protected readonly textoAlt = computed(() =>
-    textoAlternativo(this.titulo(), this.barras(), this.unidad()),
+    textoAlternativo(this.titulo(), this.barras(), this.unidad(), this.i18n.t()),
   );
   protected readonly tiposPresentes = computed(() => new Set(this.barras().map((b) => b.tipo)));
 
@@ -94,7 +97,8 @@ export class GraficoBarras {
   );
 
   protected observacion(t: TipoBarra): string {
-    return OBSERVACION[t];
+    const clave = OBSERVACION[t];
+    return clave === null ? '' : this.i18n.tr(clave);
   }
 
   private horizontal() {
@@ -135,7 +139,7 @@ export class GraficoBarras {
       };
     });
     const marcas: Marca[] = marcasEscala(max).map((m) => ({
-      texto: formatearEntero(m),
+      texto: formatearEntero(m, this.i18n.t()),
       pos: mI + (m / max) * ancho,
     }));
     const alto = y + 44;
@@ -198,7 +202,7 @@ export class GraficoBarras {
       };
     });
     const marcas: Marca[] = marcasEscala(max).map((m) => ({
-      texto: formatearEntero(m),
+      texto: formatearEntero(m, this.i18n.t()),
       pos: mS + plotAlto - (m / max) * plotAlto,
     }));
     return {

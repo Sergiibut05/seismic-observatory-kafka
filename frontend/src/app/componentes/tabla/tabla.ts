@@ -1,14 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { EventoTabla } from '../../modelos/api';
+import { I18nService } from '../../i18n/i18n.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService, bloqueConDatosAntiguos } from '../../nucleo/panel-datos.service';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
-import {
-  formatearEntero,
-  formatearInstanteUtc,
-  formatearMagnitud,
-  formatearProfundidad,
-} from '../../puro/formato';
+import { SIN_PAIS, nombreVisible } from '../../puro/filtros';
 
 /** Tabla paginada de eventos (FR-003). Es también la alternativa por teclado al mapa. */
 @Component({
@@ -18,6 +14,7 @@ import {
 })
 export class Tabla {
   protected readonly store = inject(FiltrosStore);
+  protected readonly i18n = inject(I18nService);
   private readonly datos = inject(PanelDatosService);
 
   protected readonly bloque = this.datos.tabla;
@@ -27,7 +24,7 @@ export class Tabla {
   protected readonly esReplay = computed(() => this.respuesta()?.modo === 'replay');
   protected readonly antiguos = computed(() => bloqueConDatosAntiguos(this.bloque()));
   protected readonly etiquetaAntiguos = computed(() =>
-    etiquetaDatosAntiguos(this.bloque().lecturaOk),
+    etiquetaDatosAntiguos(this.bloque().lecturaOk, undefined, this.i18n.t()),
   );
 
   protected readonly resumen = computed(() => {
@@ -49,10 +46,12 @@ export class Tabla {
     };
   });
 
-  protected readonly formatearEntero = formatearEntero;
-  protected readonly formatearInstanteUtc = formatearInstanteUtc;
-  protected readonly formatearMagnitud = formatearMagnitud;
-  protected readonly formatearProfundidad = formatearProfundidad;
+  protected readonly sinPais = SIN_PAIS;
+
+  /** País o subregión tal como vienen del catálogo; solo la etiqueta fija «Sin país asignado» se traduce. */
+  protected nombre(valor: string | null | undefined): string {
+    return nombreVisible(valor, this.i18n.t());
+  }
 
   protected seleccionado(e: EventoTabla): boolean {
     return this.store.eventoSeleccionado() === e.event_id;

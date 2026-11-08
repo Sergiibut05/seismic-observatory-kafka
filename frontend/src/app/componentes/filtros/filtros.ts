@@ -1,15 +1,17 @@
 import { Component, computed, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
+import { Clave } from '../../i18n/es';
+import { localeDe } from '../../i18n/traducir';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { RefrescoService } from '../../nucleo/refresco.service';
-import { CampoFiltro, SIN_PAIS, notaOrigenDatos } from '../../puro/filtros';
-import { formatearInstanteUtc } from '../../puro/formato';
+import { CampoFiltro, SIN_PAIS, nombreVisible, notaOrigenDatos } from '../../puro/filtros';
 
 interface CampoTexto {
   clave: CampoFiltro;
-  etiqueta: string;
+  etiqueta: Clave;
   tipo: 'datetime-local' | 'text';
-  ayuda: string;
+  ayuda: Clave;
 }
 
 export interface OpcionSelector {
@@ -18,10 +20,10 @@ export interface OpcionSelector {
 }
 
 const CAMPOS: readonly CampoTexto[] = [
-  { clave: 'desde', etiqueta: 'Desde (UTC)', tipo: 'datetime-local', ayuda: 'Fecha y hora en UTC, no en hora local.' },
-  { clave: 'hasta', etiqueta: 'Hasta (UTC)', tipo: 'datetime-local', ayuda: 'Debe ser posterior a «Desde».' },
-  { clave: 'magnitudMin', etiqueta: 'Magnitud mínima', tipo: 'text', ayuda: 'Entre −10 y 10, p. ej. 4,5.' },
-  { clave: 'magnitudMax', etiqueta: 'Magnitud máxima', tipo: 'text', ayuda: 'No menor que la mínima.' },
+  { clave: 'desde', etiqueta: 'filtros.desde', tipo: 'datetime-local', ayuda: 'filtros.desde_ayuda' },
+  { clave: 'hasta', etiqueta: 'filtros.hasta', tipo: 'datetime-local', ayuda: 'filtros.hasta_ayuda' },
+  { clave: 'magnitudMin', etiqueta: 'filtros.magnitud_min', tipo: 'text', ayuda: 'filtros.magnitud_min_ayuda' },
+  { clave: 'magnitudMax', etiqueta: 'filtros.magnitud_max', tipo: 'text', ayuda: 'filtros.magnitud_max_ayuda' },
 ];
 
 /** Formulario de filtros (FR-002, FR-007). Escribe en `FiltrosStore`; nunca llama a la API. */
@@ -32,30 +34,36 @@ const CAMPOS: readonly CampoTexto[] = [
 })
 export class Filtros {
   protected readonly store = inject(FiltrosStore);
+  protected readonly i18n = inject(I18nService);
   private readonly datos = inject(PanelDatosService);
   private readonly refresco = inject(RefrescoService);
 
   protected readonly campos = CAMPOS;
   protected readonly editados = this.store.editados;
   /** Qué eventos se muestran: solo reales, sintéticos incluidos o REPRODUCCIÓN. */
-  protected readonly nota = computed(() => notaOrigenDatos(this.store.vista()));
+  protected readonly nota = computed(() => notaOrigenDatos(this.store.vista(), this.i18n.t()));
   protected readonly errores = this.store.errores;
 
-  /** Países del catálogo con eventos (de `/recuentos/pais` sin filtros) y «Sin país asignado». */
+  /**
+   * Países del catálogo con eventos (de `/recuentos/pais` sin filtros) y «Sin país asignado».
+   * El `valor` es lo que viaja a la API; el `texto` sigue el idioma (los nombres del catálogo no se traducen).
+   */
   protected readonly opcionesPais = computed<OpcionSelector[]>(() => {
+    const t = this.i18n.t();
     const categorias = this.datos.opcionesPais().datos?.categorias ?? [];
     const lista = categorias
       .filter((c) => c.codigo !== null)
       .map((c) => ({ valor: c.codigo as string, texto: c.nombre }))
-      .sort((a, b) => a.texto.localeCompare(b.texto, 'es'));
-    return [{ valor: SIN_PAIS, texto: SIN_PAIS }, ...lista];
+      .sort((a, b) => a.texto.localeCompare(b.texto, localeDe(t.idioma)));
+    return [{ valor: SIN_PAIS, texto: nombreVisible(SIN_PAIS, t) }, ...lista];
   });
 
   protected readonly opcionesSubregion = computed<OpcionSelector[]>(() => {
+    const t = this.i18n.t();
     const categorias = this.datos.opcionesSubregion().datos?.categorias ?? [];
     const nombres = categorias.map((c) => c.nombre).filter((n) => n !== SIN_PAIS);
-    nombres.sort((a, b) => a.localeCompare(b, 'es'));
-    return [SIN_PAIS, ...nombres].map((n) => ({ valor: n, texto: n }));
+    nombres.sort((a, b) => a.localeCompare(b, localeDe(t.idioma)));
+    return [SIN_PAIS, ...nombres].map((n) => ({ valor: n, texto: nombreVisible(n, t) }));
   });
 
   protected readonly opcionesCargando = computed(
@@ -69,7 +77,7 @@ export class Filtros {
   /** Si el recuento por hora se acotó a 31 días, ventana que se está usando. */
   protected readonly horaAcotada = computed(() => {
     const v = this.datos.horaAcotada();
-    return v ? `${formatearInstanteUtc(v.desde)} – ${formatearInstanteUtc(v.hasta)}` : null;
+    return v ? `${this.i18n.instante(v.desde)} – ${this.i18n.instante(v.hasta)}` : null;
   });
 
   protected editar(clave: CampoFiltro, evento: Event): void {

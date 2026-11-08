@@ -1,4 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import {
   CampoFiltro,
   ErroresFiltros,
@@ -28,6 +29,7 @@ export interface PaginaTabla {
  */
 @Injectable({ providedIn: 'root' })
 export class FiltrosStore {
+  private readonly i18n = inject(I18nService);
   private readonly _editados = signal<FiltrosEditados>({ ...FILTROS_VACIOS });
   private readonly _aplicados = signal<FiltrosAplicados>({});
   private readonly _pagina = signal<PaginaTabla>({
@@ -49,8 +51,9 @@ export class FiltrosStore {
   /** `event_id` elegido con «Ver en el mapa» (tabla → mapa). */
   readonly eventoSeleccionado = signal<string | null>(null);
 
+  /** Mensajes de validación en el idioma vigente: al cambiarlo se recalculan sin tocar lo escrito. */
   readonly errores = computed<ErroresFiltros>(() => {
-    const v = validarFiltros(this._editados());
+    const v = validarFiltros(this._editados(), this.i18n.t());
     return v.ok ? {} : v.errores;
   });
   readonly hayErrores = computed(() => Object.keys(this.errores()).length > 0);

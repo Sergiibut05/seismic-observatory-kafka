@@ -1,7 +1,7 @@
 <section class="bloque" aria-labelledby="titulo-recuentos">
   <div class="bloque__cab">
-    <h2 id="titulo-recuentos" class="bloque__titulo">Recuentos</h2>
-    <span class="bloque__nota">Estado actual de cada evento, con todos los filtros activos</span>
+    <h2 id="titulo-recuentos" class="bloque__titulo">{{ i18n.tr('recuentos.titulo') }}</h2>
+    <span class="bloque__nota">{{ i18n.tr('bloque.estado_actual') }}</span>
   </div>
 
   <div class="bloque__cuerpo recuentos">
@@ -9,14 +9,14 @@
       <div class="recuentos__cab">
         <h3 id="titulo-recuentos-grupo">{{ rotuloGrupo() }}</h3>
         <div class="campo recuentos__selector">
-          <label for="agrupacion-recuentos">Agrupar por</label>
+          <label for="agrupacion-recuentos">{{ i18n.tr('recuentos.agrupar') }}</label>
           <select
             id="agrupacion-recuentos"
             [value]="agrupacion()"
             (change)="cambiarAgrupacion($any($event.target).value)"
           >
-            <option value="pais">País</option>
-            <option value="subregion">Subregión</option>
+            <option value="pais">{{ i18n.tr('filtros.pais') }}</option>
+            <option value="subregion">{{ i18n.tr('filtros.subregion') }}</option>
           </select>
         </div>
       </div>
@@ -24,22 +24,22 @@
       <app-aviso-bloque [bloque]="bloqueGrupo()" />
       @if (bloqueGrupo().datos; as d) {
         @if (categorias().length === 0) {
-          <p class="bloque__vacio">No hay eventos que cumplan los filtros actuales.</p>
+          <p class="bloque__vacio">{{ i18n.tr('bloque.sin_eventos') }}</p>
         } @else {
           <p class="recuentos__total">
-            Total: <strong>{{ formatearEntero(d.total) }}</strong> eventos
+            {{ i18n.tr('recuentos.total') }} <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
           </p>
           <app-grafico-barras
             [titulo]="rotuloGrupo()"
             [datos]="barrasGrupo()"
             [filasTabla]="hayResto() ? categorias() : null"
             orientacion="horizontal"
-            unidad="eventos"
-            ejeTitulo="Eventos (recuento)"
+            [unidad]="i18n.tr('grafico.eventos')"
+            [ejeTitulo]="i18n.tr('recuentos.eje_eventos')"
           />
           @if (hayResto()) {
             <p class="bloque__nota">
-              El gráfico muestra las {{ maxBarras }} mayores categorías y agrupa el resto; la tabla incluye todas.
+              {{ i18n.tr('recuentos.resto_nota', { n: maxBarras }) }}
             </p>
           }
         }
@@ -48,36 +48,35 @@
 
     <section class="recuentos__parte" aria-labelledby="titulo-recuentos-hora">
       <div class="recuentos__cab">
-        <h3 id="titulo-recuentos-hora">Eventos por hora (UTC)</h3>
+        <h3 id="titulo-recuentos-hora">{{ i18n.tr('recuentos.hora_titulo') }}</h3>
       </div>
 
       <app-aviso-bloque [bloque]="bloqueHora()" />
       @if (horaAcotada(); as a) {
         <p class="aviso aviso--atencion">
-          El rango pedido supera 31 días: se muestran los 31 días hasta {{ formatearInstanteUtc(a.hasta) }}.
+          {{ i18n.tr('recuentos.hora_acotada', { hasta: i18n.instante(a.hasta) }) }}
         </p>
       }
       @if (bloqueHora().datos; as d) {
         @if (ventanas().length === 0) {
-          <p class="bloque__vacio">No hay ventanas horarias para el periodo consultado.</p>
+          <p class="bloque__vacio">{{ i18n.tr('recuentos.sin_ventanas') }}</p>
         } @else {
           @if (horaSinFechas()) {
             <p class="bloque__nota">
-              Sin fechas en los filtros, este gráfico muestra las últimas 24 h{{
-                enReproduccion() ? ' hasta el último evento reproducido' : ''
-              }}; los demás bloques usan todo el periodo disponible.
+              {{ i18n.tr(enReproduccion() ? 'recuentos.hora_sin_fechas_replay' : 'recuentos.hora_sin_fechas') }}
             </p>
           }
           <p class="recuentos__total">
-            {{ ventanas().length }} ventanas de 1 h, {{ ceros() }} sin eventos. Total:
-            <strong>{{ formatearEntero(d.total) }}</strong> eventos
+            {{ i18n.tr('recuentos.ventanas', { n: ventanas().length, ceros: ceros() }) }}
+            {{ i18n.tr('recuentos.total') }}
+            <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
           </p>
           <app-grafico-barras
-            titulo="Eventos por hora (UTC)"
+            [titulo]="i18n.tr('recuentos.hora_titulo')"
             [datos]="ventanas()"
             orientacion="vertical"
-            unidad="eventos"
-            ejeTitulo="Hora UTC (inicio de cada ventana de 1 h, no hora local)"
+            [unidad]="i18n.tr('grafico.eventos')"
+            [ejeTitulo]="i18n.tr('recuentos.eje_hora')"
           />
         }
       }

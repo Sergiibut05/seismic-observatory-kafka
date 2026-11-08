@@ -1,7 +1,7 @@
-<section class="vista" aria-label="Origen de los datos">
+<section class="vista" [attr.aria-label]="i18n.tr('vista.aria')">
   <div class="vista__controles">
     <fieldset class="vista__modo">
-      <legend>Datos</legend>
+      <legend>{{ i18n.tr('vista.leyenda') }}</legend>
       <div class="vista__opciones">
         <span class="vista__opcion">
           <input
@@ -12,7 +12,7 @@
             [checked]="!esReplay()"
             (change)="elegirModo('live')"
           />
-          <label for="vista-modo-live">En directo</label>
+          <label for="vista-modo-live">{{ i18n.tr('vista.directo') }}</label>
         </span>
         <span class="vista__opcion vista__opcion--replay">
           <input
@@ -23,7 +23,7 @@
             [checked]="esReplay()"
             (change)="elegirModo('replay')"
           />
-          <label for="vista-modo-replay">REPRODUCCIÓN</label>
+          <label for="vista-modo-replay">{{ i18n.tr('vista.replay') }}</label>
         </span>
       </div>
     </fieldset>
@@ -38,9 +38,9 @@
         aria-describedby="vista-sinteticos-ayuda"
         (change)="alternarSinteticos($event)"
       />
-      <label for="vista-sinteticos">Incluir casos de prueba sintéticos</label>
+      <label for="vista-sinteticos">{{ i18n.tr('vista.sinteticos') }}</label>
       <span class="vista__ayuda" id="vista-sinteticos-ayuda">
-        Apagado por defecto: así solo se ven eventos reales. La comparación histórica nunca los usa.
+        {{ i18n.tr('vista.sinteticos_ayuda') }}
       </span>
     </div>
   </div>
@@ -49,12 +49,10 @@
     <div class="franja franja--replay" role="status">
       <div class="franja__interior">
         <strong class="franja__titulo">
-          <span aria-hidden="true">⟲ </span>REPRODUCCIÓN
+          <span aria-hidden="true">⟲ </span>{{ i18n.tr('dominio.replay') }}
         </strong>
         <span class="franja__texto">
-          Estos no son datos en directo: son eventos ya recibidos que se vuelven a publicar.
-          «Ocurrencia» es el tiempo original; «Reproducido» es cuándo se reprodujeron. La comparación
-          histórica solo existe en directo.
+          {{ i18n.tr('vista.franja_replay') }}
         </span>
       </div>
     </div>
@@ -64,8 +62,8 @@
     <div class="franja franja--sinteticos" role="status">
       <div class="franja__interior">
         <span class="franja__texto">
-          <strong><span aria-hidden="true">⚠ </span>Casos de prueba sintéticos incluidos:</strong> no son
-          terremotos reales; llevan la marca «SINTÉTICO».
+          <strong><span aria-hidden="true">⚠ </span>{{ i18n.tr('vista.franja_sinteticos_a') }}</strong>
+          {{ i18n.tr('vista.franja_sinteticos_b') }}
         </span>
       </div>
     </div>

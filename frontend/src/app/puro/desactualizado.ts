@@ -1,4 +1,5 @@
 // Cuándo avisar de que los datos no son frescos. Sin Angular.
+import { T_ES, Traductor } from '../i18n/traducir';
 import { EstadoApi } from '../modelos/api';
 
 /** Una lectura correcta con más de 60 s (un ciclo de refresco) se marca como antigua. */
@@ -15,26 +16,36 @@ export interface ResultadoEstado {
   avisos: Aviso[];
 }
 
-const TEXTOS: Record<CodigoAviso, string> = {
-  api_sin_respuesta: 'La API no responde: se muestran los últimos datos recibidos.',
-  base_fallida: 'La base de datos no responde: las cifras no están disponibles.',
-  datos_desactualizados: 'Los datos están desactualizados: la última ingesta de USGS es antigua.',
-};
+/** Texto del aviso en el idioma del traductor (el `texto` guardado en `Aviso` es el del idioma con que se calculó). */
+export function textoAviso(codigo: CodigoAviso, t: Traductor = T_ES): string {
+  switch (codigo) {
+    case 'api_sin_respuesta':
+      return t('avisos.api_sin_respuesta');
+    case 'base_fallida':
+      return t('avisos.base_fallida');
+    case 'datos_desactualizados':
+      return t('avisos.datos_desactualizados');
+  }
+}
 
-const aviso = (codigo: CodigoAviso): Aviso => ({ codigo, texto: TEXTOS[codigo] });
+const aviso = (codigo: CodigoAviso, t: Traductor): Aviso => ({ codigo, texto: textoAviso(codigo, t) });
 
 /**
  * Deriva los avisos del estado del sistema (FR-008).
  * @param ultimo  última respuesta correcta de `/status` (o `null` si no hubo ninguna)
  * @param fallo   `true` si la última consulta de `/status` falló
  */
-export function calcularEstado(ultimo: EstadoApi | null, fallo: boolean): ResultadoEstado {
+export function calcularEstado(
+  ultimo: EstadoApi | null,
+  fallo: boolean,
+  t: Traductor = T_ES,
+): ResultadoEstado {
   // Con la API caída no sabemos nada actual: un único aviso, sin mezclar lecturas viejas.
-  if (fallo) return { avisos: [aviso('api_sin_respuesta')] };
+  if (fallo) return { avisos: [aviso('api_sin_respuesta', t)] };
   if (!ultimo) return { avisos: [] };
   const avisos: Aviso[] = [];
-  if (ultimo.base_de_datos === 'fallida') avisos.push(aviso('base_fallida'));
-  if (ultimo.datos_desactualizados === true) avisos.push(aviso('datos_desactualizados'));
+  if (ultimo.base_de_datos === 'fallida') avisos.push(aviso('base_fallida', t));
+  if (ultimo.datos_desactualizados === true) avisos.push(aviso('datos_desactualizados', t));
   return { avisos };
 }
 

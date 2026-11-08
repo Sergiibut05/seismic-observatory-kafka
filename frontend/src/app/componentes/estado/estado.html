@@ -1,24 +1,24 @@
-<section class="estado sobre-oscuro" aria-label="Estado del sistema">
+<section class="estado sobre-oscuro" [attr.aria-label]="i18n.tr('estado.aria')">
   <dl class="estado__datos">
     <div>
-      <dt>Último acceso correcto a la API</dt>
-      <dd>{{ cargando() ? 'comprobando…' : ultimoAcceso() }}</dd>
+      <dt>{{ i18n.tr('estado.ultimo_acceso') }}</dt>
+      <dd>{{ cargando() ? i18n.tr('estado.comprobando') : ultimoAcceso() }}</dd>
     </div>
     <div>
-      <dt>Última ingesta correcta de USGS</dt>
+      <dt>{{ i18n.tr('estado.ultima_ingesta') }}</dt>
       <dd>{{ ultimaIngesta() }}</dd>
     </div>
     <div>
-      <dt>Periodo consultado</dt>
+      <dt>{{ i18n.tr('estado.periodo') }}</dt>
       <dd>{{ periodo() }}</dd>
     </div>
     <div>
-      <dt>Eventos reales</dt>
+      <dt>{{ i18n.tr('estado.eventos_reales') }}</dt>
       <dd>{{ eventosReales() }}</dd>
     </div>
     @if (esReplay()) {
       <div class="estado__replay">
-        <dt>Eventos en reproducción</dt>
+        <dt>{{ i18n.tr('estado.eventos_replay') }}</dt>
         <dd>{{ eventosReplay() }}</dd>
       </div>
     }
@@ -26,10 +26,10 @@
 
   <div class="estado__avisos" aria-live="polite" aria-atomic="false">
     @for (a of avisosCorteses(); track a.codigo) {
-      <p class="aviso aviso--atencion" [attr.data-aviso]="a.codigo"><span aria-hidden="true">⚠ </span>{{ a.texto }}</p>
+      <p class="aviso aviso--atencion" [attr.data-aviso]="a.codigo"><span aria-hidden="true">⚠ </span>{{ textoAviso(a) }}</p>
     }
   </div>
   @if (alerta(); as a) {
-    <p class="aviso aviso--alerta" role="alert" [attr.data-aviso]="a.codigo"><span aria-hidden="true">⛔ </span>{{ a.texto }}</p>
+    <p class="aviso aviso--alerta" role="alert" [attr.data-aviso]="a.codigo"><span aria-hidden="true">⛔ </span>{{ textoAviso(a) }}</p>
   }
 </section>

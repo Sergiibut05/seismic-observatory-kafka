@@ -12,9 +12,18 @@ import {
   viewChild,
 } from '@angular/core';
 import type { GlobeInstance } from 'globe.gl';
+import { I18nService } from '../../i18n/i18n.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
-import { AnilloGlobo, PuntoGlobo, anillosGlobo, colorAnillo, etiquetaGlobo, puntosGlobo } from '../../puro/globo';
+import {
+  ANILLOS_MAX,
+  AnilloGlobo,
+  PuntoGlobo,
+  anillosGlobo,
+  colorAnillo,
+  etiquetaGlobo,
+  puntosGlobo,
+} from '../../puro/globo';
 
 /** jsdom no tiene WebGL: allí el globo no se inicia. En un navegador es siempre `true`. */
 export const GLOBO_HABILITADO = new InjectionToken<boolean>('GLOBO_HABILITADO', {
@@ -45,6 +54,8 @@ const COLOR_SELECCION = '#ffd166';
 export class Globo {
   private readonly datos = inject(PanelDatosService);
   private readonly store = inject(FiltrosStore);
+  protected readonly i18n = inject(I18nService);
+  protected readonly anillosMax = ANILLOS_MAX;
   private readonly habilitado = inject(GLOBO_HABILITADO);
   private readonly destroyRef = inject(DestroyRef);
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
@@ -75,6 +86,14 @@ export class Globo {
       const id = this.store.eventoSeleccionado();
       if (this.estado() !== 'listo') return;
       untracked(() => this.centrar(id));
+    });
+
+    // Cambio de idioma: la etiqueta se genera al pasar el ratón; se vuelve a fijar el accesor para que
+    // globe.gl no conserve ninguna etiqueta en el idioma anterior. No se pide nada a la API.
+    effect(() => {
+      this.i18n.idioma();
+      if (this.estado() !== 'listo') return;
+      untracked(() => this.globo?.pointLabel((p: object) => this.etiquetaPunto(p as PuntoGlobo)));
     });
 
     this.destroyRef.onDestroy(() => {
@@ -109,7 +128,7 @@ export class Globo {
         .pointAltitude('altura')
         .pointRadius('radio')
         .pointColor((p: object) => this.colorPunto(p as PuntoGlobo))
-        .pointLabel((p: object) => etiquetaGlobo((p as PuntoGlobo).props))
+        .pointLabel((p: object) => this.etiquetaPunto(p as PuntoGlobo))
         .pointsTransitionDuration(0)
         .pointResolution(6)
         .onPointClick((p: object) => this.store.eventoSeleccionado.set((p as PuntoGlobo).id))
@@ -180,6 +199,10 @@ export class Globo {
     this.globo
       .pointsData(puntosGlobo(features))
       .ringsData(anillosGlobo(features, { movimientoReducido: this.movimientoReducido }));
+  }
+
+  private etiquetaPunto(p: PuntoGlobo): string {
+    return etiquetaGlobo(p.props, this.i18n.t());
   }
 
   private colorPunto(p: PuntoGlobo): string {

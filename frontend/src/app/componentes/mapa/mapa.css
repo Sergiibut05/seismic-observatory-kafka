@@ -93,6 +93,9 @@
 .mapa-bloque .mapa-leyenda:not([open]) {
   width: auto;
 }
+.mapa-bloque .mapa-leyenda--apartada {
+  visibility: hidden;
+}
 .mapa-bloque .mapa-leyenda summary {
   cursor: pointer;
   font-weight: 650;

@@ -1,17 +1,32 @@
-<a class="saltar" href="#contenido">Saltar al contenido</a>
+<a class="saltar" href="#contenido">{{ i18n.tr('cabecera.saltar') }}</a>
 
 @if (config.valida()) {
   <header class="cabecera sobre-oscuro">
     <div class="cabecera__interior">
       <div class="cabecera__marca">
-        <h1>Observatorio de actividad sísmica</h1>
+        <h1>{{ i18n.tr('cabecera.titulo') }}</h1>
         @if (vista().modo === 'replay') {
-          <p class="cabecera__replay">REPRODUCCIÓN: no son datos en directo · tiempos en UTC</p>
+          <p class="cabecera__replay">{{ i18n.tr('cabecera.replay') }}</p>
         } @else {
-          <p>Eventos reales de USGS, tiempos en UTC</p>
+          <p>{{ i18n.tr('cabecera.directo') }}</p>
         }
       </div>
       <app-estado />
+      <div class="idioma" role="group" [attr.aria-label]="i18n.tr('selector.idioma')">
+        @for (o of idiomas; track o.codigo) {
+          <button
+            type="button"
+            class="idioma__boton"
+            [attr.lang]="o.codigo"
+            [attr.aria-label]="o.nombre"
+            [attr.title]="o.nombre"
+            [attr.aria-pressed]="i18n.idioma() === o.codigo"
+            (click)="i18n.fijar(o.codigo)"
+          >
+            {{ o.rotulo }}
+          </button>
+        }
+      </div>
     </div>
   </header>
 
@@ -32,12 +47,14 @@
   </footer>
 } @else {
   <main id="contenido" class="error-configuracion" tabindex="-1">
-    <h1>Configuración no válida</h1>
-    <p class="aviso aviso--alerta" role="alert">{{ config.error() }}</p>
+    <h1>{{ i18n.tr('config.titulo') }}</h1>
+    @if (config.errorClave(); as clave) {
+      <p class="aviso aviso--alerta" role="alert">{{ i18n.tr(clave) }}</p>
+    }
     <p>
-      Edita <code>public/config.json</code> (una sola clave, <code>apiBaseUrl</code>) y vuelve a
-      compilar. Usa <code>config.ejemplo.json</code> como modelo: HTTPS de ngrok, o
-      <code>http://127.0.0.1:8000</code> solo en desarrollo.
+      {{ i18n.tr('config.ayuda_a') }} <code>public/config.json</code> {{ i18n.tr('config.ayuda_b') }}
+      <code>apiBaseUrl</code>{{ i18n.tr('config.ayuda_c') }} <code>config.ejemplo.json</code>
+      {{ i18n.tr('config.ayuda_d') }} <code>http://127.0.0.1:8000</code> {{ i18n.tr('config.ayuda_e') }}
     </p>
   </main>
 }

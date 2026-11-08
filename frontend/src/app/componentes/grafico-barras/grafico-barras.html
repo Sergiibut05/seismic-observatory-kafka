@@ -86,30 +86,30 @@
   </svg>
 
   @if (tiposPresentes().has('cero') || tiposPresentes().has('sin-valor') || tiposPresentes().has('nd')) {
-    <ul class="grafico__leyenda" aria-label="Cómo leer las barras">
-      <li><span class="muestra muestra--normal"></span> Barra: recuento</li>
+    <ul class="grafico__leyenda" [attr.aria-label]="i18n.tr('grafico.leyenda_aria')">
+      <li><span class="muestra muestra--normal"></span> {{ i18n.tr('grafico.leyenda_barra') }}</li>
       @if (tiposPresentes().has('cero')) {
-        <li><span class="muestra muestra--cero"></span> Línea con borde: 0, sin eventos</li>
+        <li><span class="muestra muestra--cero"></span> {{ i18n.tr('grafico.leyenda_cero') }}</li>
       }
       @if (tiposPresentes().has('sin-valor')) {
-        <li><span class="muestra muestra--sin-valor"></span> Rayada: eventos sin valor (no son 0)</li>
+        <li><span class="muestra muestra--sin-valor"></span> {{ i18n.tr('grafico.leyenda_sin_valor') }}</li>
       }
       @if (tiposPresentes().has('nd')) {
-        <li><em class="nd">ND</em>: valor desconocido</li>
+        <li><em class="nd">{{ i18n.tr('formato.nd') }}</em>: {{ i18n.tr('grafico.leyenda_nd') }}</li>
       }
     </ul>
   }
 
   <details class="grafico__tabla">
-    <summary>Ver «{{ titulo() }}» como tabla</summary>
+    <summary>{{ i18n.tr('grafico.ver_tabla', { titulo: titulo() }) }}</summary>
     <div class="tabla-scroll">
       <table class="tabla-datos">
         <caption>{{ titulo() }}</caption>
         <thead>
           <tr>
-            <th scope="col">Categoría</th>
+            <th scope="col">{{ i18n.tr('grafico.col_categoria') }}</th>
             <th scope="col" class="num">{{ unidad() }}</th>
-            <th scope="col">Observación</th>
+            <th scope="col">{{ i18n.tr('grafico.col_observacion') }}</th>
           </tr>
         </thead>
         <tbody>
