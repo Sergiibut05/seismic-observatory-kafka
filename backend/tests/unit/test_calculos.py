@@ -14,6 +14,7 @@ from observatorio.api.calculos import (
     desactualizado,
     geojson_mapa,
     rellenar_horas,
+    reproducido_en,
 )
 
 UTC = timezone.utc
@@ -157,6 +158,7 @@ def fila(n, magnitud=4.5, profundidad=10.0):
         37.25,
         "Estados Unidos",
         False,
+        utc(2026, 11, 2, 10, 6, 0, 456000),
     )
 
 
@@ -176,9 +178,37 @@ def test_geojson_con_coordenadas_lon_lat_y_propiedades():
         "profundidad": 10.0,
         "pais_nombre": "Estados Unidos",
         "sintetico": False,
+        "reproducido_en": None,
     }
     assert (datos["total"], datos["devueltos"], datos["limite"], datos["truncado"]) == (1, 1, MAPA_TOPE, False)
     assert datos["generated_at"] == "2026-11-02T12:00:00.000Z"
+    assert datos["modo"] == "live"
+
+
+def test_mapa_replay_trae_modo_y_el_tiempo_de_reproduccion():
+    datos = geojson_mapa([fila(1)], 1, MAPA_TOPE, GENERADO, "replay")
+    assert datos["modo"] == "replay"
+    propiedades = datos["features"][0]["properties"]
+    assert propiedades["reproducido_en"] == "2026-11-02T10:06:00.456Z"
+    # El tiempo original no se toca: sigue siendo el de ocurrencia.
+    assert propiedades["ocurrencia"] == "2026-11-02T10:00:00.123Z"
+
+
+def test_mapa_live_no_expone_la_ingesta_como_reproduccion():
+    datos = geojson_mapa([fila(1)], 1, MAPA_TOPE, GENERADO, "live")
+    assert datos["features"][0]["properties"]["reproducido_en"] is None
+
+
+def test_mapa_con_modo_ajeno_es_un_error_de_programacion():
+    with pytest.raises(ValueError):
+        geojson_mapa([fila(1)], 1, MAPA_TOPE, GENERADO, "otro")
+
+
+def test_reproducido_en_solo_en_replay():
+    ingesta = utc(2026, 11, 2, 10, 6, 0, 456000)
+    assert reproducido_en(ingesta, "live") is None
+    assert reproducido_en(ingesta, "replay") == "2026-11-02T10:06:00.456Z"
+    assert reproducido_en(None, "replay") is None
 
 
 def test_nulos_se_conservan_nunca_como_cero():

@@ -5,6 +5,9 @@ import {
   FILTROS_VACIOS,
   FiltrosAplicados,
   FiltrosEditados,
+  ModoDatos,
+  VISTA_VIVO,
+  VistaDatos,
   validarFiltros,
 } from '../puro/filtros';
 
@@ -31,8 +34,14 @@ export class FiltrosStore {
     limite: LIMITE_TABLA_INICIAL,
     desplazamiento: 0,
   });
+  private readonly _vista = signal<VistaDatos>({ ...VISTA_VIVO });
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * De dónde salen los datos (en directo o REPRODUCCIÓN) y si entran los casos sintéticos.
+   * Solo vive en memoria: al recargar vuelve a «en directo» y sin sintéticos (FR-013 de 007).
+   */
+  readonly vista = this._vista.asReadonly();
   readonly editados = this._editados.asReadonly();
   readonly aplicados = this._aplicados.asReadonly();
   /** Paginación de la tabla (`limite`/`desplazamiento`); vuelve a 0 al cambiar los filtros. */
@@ -79,6 +88,25 @@ export class FiltrosStore {
   restablecer(): void {
     this._editados.set({ ...FILTROS_VACIOS });
     this.aplicarYa();
+  }
+
+  /** Cambia entre en directo y REPRODUCCIÓN. Instantáneo (no es texto): sin debounce. */
+  fijarModo(modo: ModoDatos): void {
+    this.cambiarVista({ ...this._vista(), modo });
+  }
+
+  /** Activa o apaga los casos de prueba sintéticos. Instantáneo. */
+  fijarSinteticos(sinteticos: boolean): void {
+    this.cambiarVista({ ...this._vista(), sinteticos });
+  }
+
+  /** Otra vista = otro conjunto de eventos: la tabla vuelve a la página 0 y se suelta la selección. */
+  private cambiarVista(nueva: VistaDatos): void {
+    const actual = this._vista();
+    if (actual.modo === nueva.modo && actual.sinteticos === nueva.sinteticos) return;
+    this._vista.set(nueva);
+    this._pagina.update((p) => (p.desplazamiento === 0 ? p : { ...p, desplazamiento: 0 }));
+    this.eventoSeleccionado.set(null);
   }
 
   irAPagina(desplazamiento: number): void {

@@ -1,7 +1,8 @@
 # Contrato de la API
 
-> Versión **0.2.0** (feature 005-api; cambio **aditivo** sobre la 0.1.0 de 001-esqueleto). El panel
-> solo debe consumir campos definidos en este documento (Constitución II).
+> Versión **0.3.0** (feature 007-memoria; cambio **aditivo** sobre la 0.2.0 de 005-api, que lo fue
+> sobre la 0.1.0 de 001-esqueleto: ningún campo anterior cambia). El panel solo debe consumir campos
+> definidos en este documento (Constitución II). Resumen de la 0.3.0 en [Cambios](#cambios).
 >
 > Fuente máquina: [specs/001-esqueleto/contracts/api.openapi.yaml](../specs/001-esqueleto/contracts/api.openapi.yaml).
 > La API **no** sirve `/docs`, `/redoc` ni `/openapi.json`.
@@ -31,9 +32,18 @@ Parámetros de consulta, los mismos en `/eventos`, `/eventos/mapa`, `/recuentos/
 | `magnitud_min`, `magnitud_max` | Número finito entre −10 y 10, sin notación científica; `min ≤ max`. Con filtro, la magnitud nula **queda fuera**; sin él, entra |
 | `pais` | Código `ADM0_A3` (tres mayúsculas, `USA`) o `Sin país asignado` (eventos sin polígono) |
 | `subregion` | Texto de hasta 80 caracteres, igualdad exacta con la subregión del catálogo; `Sin país asignado` = eventos sin país. Con `pais`, se combinan con Y |
-| `incluir_sinteticos` | `true` o `false` (defecto `false`). Los sintéticos llevan `sintetico: true`. La API nunca lee datos de reproducción |
+| `incluir_sinteticos` | `true` o `false` (defecto `false`). Los sintéticos llevan `sintetico: true`. Rige igual con `modo=replay` |
+| `modo` | **0.3.0.** `live` (defecto) o `replay`. Cualquier otro valor (`Replay`, `todos`, vacío) o repetido = 400 con `parametro: modo`. Solo elige la tabla (diccionario cerrado en la API); el valor nunca llega al SQL |
 
-`/comparacion-historica` solo admite `magnitud_min`, `magnitud_max`, `pais` y `subregion`.
+`/comparacion-historica` solo admite `magnitud_min`, `magnitud_max`, `pais`, `subregion` y `modo` (este último únicamente con el valor `live`; `replay` es 400).
+
+### `modo=replay` (REPRODUCCIÓN)
+
+- Con `modo=live` (o sin `modo`) la API lee el estado actual de `live.evento_actual`, como en la 0.2.0. Con `modo=replay` lee el estado actual de la **reproducción** (`replay.evento_actual`): tabla propia, nunca mezclada con las cifras en directo. Las cifras siguen saliendo del estado actual, no de contar mensajes.
+- Aplica a `/eventos`, `/eventos/mapa`, `/recuentos/{pais,subregion,hora}` y `/distribuciones/{magnitud,profundidad}` (7 rutas). Todos los filtros comunes valen igual.
+- **Dos tiempos**: `ocurrencia` es el tiempo **original** del evento (`properties.time` de USGS); `reproducido_en` es el instante UTC en que se reprodujo (el `ingested_at` que fija la reproducción). En `live` `reproducido_en` es `null`: allí `ingested_at` es ingesta, no reproducción.
+- Toda respuesta de esas rutas (y la de la comparación) lleva `"modo": "live" | "replay"`; en el mapa es un miembro más de la `FeatureCollection`.
+- La reproducción vacía no es un error: `total: 0` y listas vacías.
 
 ## Errores
 
@@ -68,6 +78,7 @@ Estado del sistema para el panel. **Siempre 200** mientras la API esté viva.
 | `base_de_datos` | `"conectada"` \| `"fallida"` | Resultado de la última comprobación de la conexión a PostgreSQL |
 | `eventos_reales` | entero \| `null` | Eventos distintos (`event_id`) **no** sintéticos. `null` = no disponible (la base no responde); nunca se informa como 0 |
 | `eventos_sinteticos` | entero \| `null` | Eventos distintos sintéticos. `null` = no disponible |
+| `eventos_replay` | entero \| `null` | **0.3.0.** Eventos distintos del estado actual de la reproducción (`replay.evento_actual`). `0` si la tabla existe y está vacía; `null` con la base caída o si la tabla no existe |
 | `ultimo_evento` | objeto \| `null` | Última versión procesada por el consumidor; `null` si no hay eventos o la base no responde |
 | `ultimo_evento.event_id` | texto | Identificador del evento |
 | `ultimo_evento.updated` | instante UTC | Versión del evento |
@@ -85,6 +96,7 @@ Estado del sistema para el panel. **Siempre 200** mientras la API esté viva.
   "base_de_datos": "conectada",
   "eventos_reales": 254,
   "eventos_sinteticos": 2,
+  "eventos_replay": 100,
   "ultimo_evento": {
     "event_id": "mb90211798",
     "updated": "2026-11-02T15:59:20.370Z",
@@ -107,6 +119,7 @@ Con PostgreSQL caído (los datos de la base, `null`; el umbral es configuración
   "base_de_datos": "fallida",
   "eventos_reales": null,
   "eventos_sinteticos": null,
+  "eventos_replay": null,
   "ultimo_evento": null,
   "ultima_ingesta_correcta": null,
   "periodo_consultado": null,
@@ -125,6 +138,7 @@ Lista paginada (tabla alternativa al mapa). Filtros comunes más `limite` (1–5
 
 ```json
 {
+  "modo": "live",
   "eventos": [
     {
       "event_id": "hv75067836",
@@ -137,10 +151,38 @@ Lista paginada (tabla alternativa al mapa). Filtros comunes más `limite` (1–5
       "pais_codigo": null,
       "pais_nombre": "Sin país asignado",
       "subregion": null,
-      "sintetico": false
+      "sintetico": false,
+      "reproducido_en": null
     }
   ],
   "total": 254,
+  "limite": 100,
+  "desplazamiento": 0
+}
+```
+
+Con `?modo=replay` (ejemplo recortado: un evento de la reproducción; tiempo original y tiempo de reproducción por separado):
+
+```json
+{
+  "modo": "replay",
+  "eventos": [
+    {
+      "event_id": "us7000mabc",
+      "ocurrencia": "2025-03-01T11:58:12.000Z",
+      "updated": "2025-03-01T12:20:05.123Z",
+      "magnitud": 4.6,
+      "profundidad": 10.0,
+      "longitud": -72.1,
+      "latitud": -33.4,
+      "pais_codigo": "CHL",
+      "pais_nombre": "Chile",
+      "subregion": "South America",
+      "sintetico": false,
+      "reproducido_en": "2026-11-08T14:30:00.456Z"
+    }
+  ],
+  "total": 100,
   "limite": 100,
   "desplazamiento": 0
 }
@@ -155,6 +197,7 @@ GeoJSON `FeatureCollection` listo para `L.geoJSON`. Mismos filtros, sin paginar,
 ```json
 {
   "type": "FeatureCollection",
+  "modo": "live",
   "features": [
     {
       "type": "Feature",
@@ -166,7 +209,8 @@ GeoJSON `FeatureCollection` listo para `L.geoJSON`. Mismos filtros, sin paginar,
         "magnitud": 2.1,
         "profundidad": 30.52,
         "pais_nombre": "Sin país asignado",
-        "sintetico": false
+        "sintetico": false,
+        "reproducido_en": null
       }
     }
   ],
@@ -186,6 +230,7 @@ Filtros comunes. «Sin país asignado» es una categoría más (en país con `co
 
 ```json
 {
+  "modo": "live",
   "total": 254,
   "categorias": [
     { "codigo": "USA", "nombre": "Estados Unidos", "recuento": 197 },
@@ -196,6 +241,7 @@ Filtros comunes. «Sin país asignado» es una categoría más (en país con `co
 
 ```json
 {
+  "modo": "live",
   "total": 254,
   "categorias": [
     { "nombre": "Northern America", "recuento": 198 },
@@ -208,8 +254,11 @@ Filtros comunes. «Sin país asignado» es una categoría más (en país con `co
 
 Una ventana por cada hora UTC de `[desde, hasta)`, **incluidas las horas con 0 eventos**. Sin `desde` ni `hasta`: últimas 24 h; solo `desde` llega hasta ahora; solo `hasta` retrocede 24 h. Máximo 31 días (400 si se excede). La primera y la última ventana pueden ser parciales si `desde`/`hasta` no son horas en punto. Un evento a las 10:59:59.999Z y otro a las 11:00:00.000Z caen en ventanas distintas.
 
+**`modo=replay` (0.3.0).** Los eventos reproducidos no son de las últimas 24 h, así que «últimas 24 h hasta ahora» daría 24 ceros. Sin `desde` ni `hasta`, la ventana de 24 h **termina en el último `ocurrencia` de la reproducción** (+1 ms, porque `hasta` es exclusivo); con la reproducción vacía, son las 24 h hasta ahora. Con solo `desde`, la ventana llega hasta ese mismo final por defecto. Con `desde` y `hasta` explícitos funciona igual que en `live`. Límite: 24 h pueden no cubrir una reproducción larga; usa `desde`/`hasta`.
+
 ```json
 {
+  "modo": "live",
   "desde": "2026-11-02T06:00:00.000Z",
   "hasta": "2026-11-02T09:00:00.000Z",
   "total": 3,
@@ -232,6 +281,7 @@ Un valor nulo **no cae en ningún intervalo ni se cuenta como 0**: va a `sin_val
 
 ```json
 {
+  "modo": "live",
   "unidad": "magnitud",
   "total": 254,
   "sin_valor": 0,
@@ -244,7 +294,7 @@ Un valor nulo **no cae en ningún intervalo ni se cuenta como 0**: va a `sin_val
 
 ## `GET /comparacion-historica`
 
-Eventos reales de las **últimas 24 h** frente a la **media diaria de 2025**. Solo `magnitud_min`, `magnitud_max`, `pais` y `subregion` (el resto, 400). Magnitud mínima efectiva = máx(4, `magnitud_min`), declarada en `filtros_efectivos`. Denominador: 365 días, incluidos los de cero eventos. El histórico sale de una tabla propia (18.302 eventos de 2025), no del estado actual.
+Eventos reales de las **últimas 24 h** frente a la **media diaria de 2025**. Solo `magnitud_min`, `magnitud_max`, `pais`, `subregion` y `modo` (el resto, 400). **0.3.0:** la comparación solo existe en directo: `modo=live` (o sin `modo`) vale y la respuesta declara `"modo": "live"`; `modo=replay` es 400 `{"error":"parametro_invalido","parametro":"modo"}`. Magnitud mínima efectiva = máx(4, `magnitud_min`), declarada en `filtros_efectivos`. Denominador: 365 días, incluidos los de cero eventos. El histórico sale de una tabla propia (18.302 eventos de 2025), no del estado actual.
 
 | Campo | Descripción |
 | --- | --- |
@@ -257,6 +307,7 @@ Eventos reales de las **últimas 24 h** frente a la **media diaria de 2025**. So
 
 ```json
 {
+  "modo": "live",
   "ventana_actual": { "desde": "2026-11-01T16:03:32.143Z", "hasta": "2026-11-02T16:03:32.143Z", "eventos": 30 },
   "historico_2025": { "estado": "cargado", "eventos": 18302, "dias": 365, "media_diaria": 50.1425 },
   "cociente": 0.6,
@@ -270,6 +321,7 @@ Con el histórico sin cargar (200, nunca un 0 inventado; el panel muestra «no d
 
 ```json
 {
+  "modo": "live",
   "ventana_actual": { "desde": "2026-11-01T16:04:51.483Z", "hasta": "2026-11-02T16:04:51.483Z", "eventos": 0 },
   "historico_2025": { "estado": "no_cargado", "eventos": null, "dias": 365, "media_diaria": null },
   "cociente": null,
@@ -285,3 +337,15 @@ Con el histórico sin cargar (200, nunca un 0 inventado; el panel muestra «no d
 | --- | --- | --- |
 | 0.1.0 | 001-esqueleto | `GET /health`, `GET /status` |
 | 0.2.0 | 005-api | Aditivo: `/eventos`, `/eventos/mapa`, `/recuentos/{pais,subregion,hora}`, `/distribuciones/{magnitud,profundidad}`, `/comparacion-historica`; `/status` añade `ultima_ingesta_correcta`, `periodo_consultado`, `datos_desactualizados` y `umbral_datos_desactualizados_segundos` (los campos de la 0.1.0 no cambian); filtros comunes, errores 400/503/500 genéricos y CORS (`GET`/`OPTIONS`, `ngrok-skip-browser-warning`) |
+| 0.3.0 | 007-memoria | Aditivo (REPRODUCCIÓN en la API): parámetro `modo` (`live` por defecto \| `replay`) en `/eventos`, `/eventos/mapa`, `/recuentos/{pais,subregion,hora}` y `/distribuciones/{magnitud,profundidad}` (7 rutas); `/comparacion-historica` admite `modo=live` y rechaza `replay` con 400 `parametro: modo`; campo `modo` en todas las respuestas (en el mapa, miembro de la `FeatureCollection`); `reproducido_en` en `eventos[]` y en `properties` del mapa (instante UTC en replay, `null` en live); `/status` añade `eventos_replay` (entero o `null`); `/recuentos/hora` en replay ancla la ventana por defecto al último `ocurrencia`. Rutas, `incluir_sinteticos`, errores 503/500, CORS y límites no cambian |
+
+### Tabla de cambios de la 0.3.0
+
+| Cambio | Detalle |
+| --- | --- |
+| `modo` (parámetro) | `live` (defecto) \| `replay`; 7 rutas. `/comparacion-historica`: `live` vale, `replay` → 400 `{"error":"parametro_invalido","parametro":"modo"}`. Otro valor o repetido → 400 |
+| `modo` (respuesta) | en todas: `"modo": "live"` \| `"replay"` |
+| `reproducido_en` | `/eventos` (`eventos[]`) y `properties` del mapa: instante UTC en replay (= `ingested_at`), `null` en live |
+| `/status` | `eventos_replay`: entero o `null` (base caída o tabla inexistente) |
+| `/recuentos/hora` en replay | sin `desde`/`hasta`: 24 h que terminan en el último `ocurrencia` replay |
+| Sin cambios | rutas, `incluir_sinteticos` (rige también en replay), errores 503/500, CORS, límites |

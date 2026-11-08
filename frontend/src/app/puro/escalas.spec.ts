@@ -4,6 +4,7 @@ import {
   INTERVALOS_PROFUNDIDAD,
   RADIO_ND,
   colorPorProfundidad,
+  contornoCirculo,
   estiloCirculo,
   intervaloProfundidad,
   leyendaRadio,
@@ -119,5 +120,27 @@ describe('leyendaRadio', () => {
     expect(l.map((e) => e.etiqueta)).toEqual(['0', '2', '4', '6', '8', 'ND']);
     expect(l[2]).toEqual({ etiqueta: '4', radio: 13 });
     expect(l[5]).toEqual({ etiqueta: 'ND', radio: RADIO_ND });
+  });
+});
+
+describe('contornoCirculo', () => {
+  it('un evento normal: contorno fino y continuo', () => {
+    expect(contornoCirculo(false, false)).toEqual({ grosor: 1, discontinuo: undefined });
+  });
+
+  it('un valor desconocido (ND): contorno fino discontinuo', () => {
+    expect(contornoCirculo(false, true)).toEqual({ grosor: 1, discontinuo: '3 2' });
+  });
+
+  it('un caso sintético: contorno grueso y discontinuo, distinto del de ND', () => {
+    const sintetico = contornoCirculo(true, false);
+    const nd = contornoCirculo(false, true);
+    expect(sintetico.discontinuo).toBeDefined();
+    expect(sintetico.grosor).toBeGreaterThan(nd.grosor);
+    expect(sintetico.discontinuo).not.toBe(nd.discontinuo);
+  });
+
+  it('sintético y además ND: manda la marca de sintético', () => {
+    expect(contornoCirculo(true, true)).toEqual(contornoCirculo(true, false));
   });
 });

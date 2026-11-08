@@ -1,10 +1,12 @@
 openapi: 3.1.0
 info:
   title: API del observatorio sísmico
-  version: 0.2.0
+  version: 0.3.0
   description: |
     0.1.0 (feature 001): `/health` y `/status`. 0.2.0 (feature 005, **cambio aditivo**): consultas
-    analíticas de solo lectura, `/status` ampliado y CORS. Los campos de la 0.1.0 no cambian.
+    analíticas de solo lectura, `/status` ampliado y CORS. 0.3.0 (feature 007, **cambio aditivo**):
+    parámetro `modo` (`live` por defecto o `replay`) en 7 endpoints, campo `modo` en las respuestas,
+    `reproducido_en` en los eventos y `eventos_replay` en `/status`. Los campos de 0.1.0 y 0.2.0 no cambian.
 
     Todos los endpoints son **públicos** (pueden consultarse a través del túnel) y solo admiten `GET`
     (y `OPTIONS` para CORS); cualquier otro método da 405. Devuelven información agregada o de eventos
@@ -13,8 +15,10 @@ info:
     `docs/CONTRATO-API.md`.
 
     **Filtros comunes** (parámetros de consulta; desconocido o repetido = 400): `desde`/`hasta`,
-    `magnitud_min`/`magnitud_max`, `pais`, `subregion`, `incluir_sinteticos`. Toda cifra sale del
-    estado actual (una fila por evento), nunca de contar mensajes.
+    `magnitud_min`/`magnitud_max`, `pais`, `subregion`, `incluir_sinteticos`, `modo`. Toda cifra sale del
+    estado actual (una fila por evento), nunca de contar mensajes. Con `modo=replay` las cifras salen del
+    estado actual de la **reproducción** (tabla propia): `ocurrencia` es el tiempo original del evento y
+    `reproducido_en` el instante en que se reprodujo. `/comparacion-historica` solo existe en `live`.
 servers:
   - url: http://127.0.0.1:8000
     description: Puerto publicado en el anfitrión (FR-022, FR-025)
@@ -64,6 +68,7 @@ paths:
                     base_de_datos: conectada
                     eventos_reales: 254
                     eventos_sinteticos: 2
+                    eventos_replay: 100
                     ultimo_evento:
                       event_id: mb90211798
                       updated: "2026-11-02T15:59:20.370Z"
@@ -83,6 +88,7 @@ paths:
                     base_de_datos: conectada
                     eventos_reales: 0
                     eventos_sinteticos: 0
+                    eventos_replay: 0
                     ultimo_evento: null
                     ultima_ingesta_correcta: null
                     periodo_consultado: null
@@ -95,6 +101,7 @@ paths:
                     base_de_datos: fallida
                     eventos_reales: null
                     eventos_sinteticos: null
+                    eventos_replay: null
                     ultimo_evento: null
                     ultima_ingesta_correcta: null
                     periodo_consultado: null
@@ -117,6 +124,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
         - name: limite
           in: query
           schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
@@ -129,22 +137,47 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ListaEventos" }
-              example:
-                eventos:
-                  - event_id: hv75067836
-                    ocurrencia: "2026-11-02T15:41:58.430Z"
-                    updated: "2026-11-02T15:45:31.280Z"
-                    magnitud: 2.1
-                    profundidad: 30.52
-                    longitud: -155.461
-                    latitud: 19.1575
-                    pais_codigo: null
-                    pais_nombre: Sin país asignado
-                    subregion: null
-                    sintetico: false
-                total: 254
-                limite: 100
-                desplazamiento: 0
+              examples:
+                live:
+                  summary: modo=live (por defecto); `reproducido_en` es null
+                  value:
+                    modo: live
+                    eventos:
+                      - event_id: hv75067836
+                        ocurrencia: "2026-11-02T15:41:58.430Z"
+                        updated: "2026-11-02T15:45:31.280Z"
+                        magnitud: 2.1
+                        profundidad: 30.52
+                        longitud: -155.461
+                        latitud: 19.1575
+                        pais_codigo: null
+                        pais_nombre: Sin país asignado
+                        subregion: null
+                        sintetico: false
+                        reproducido_en: null
+                    total: 254
+                    limite: 100
+                    desplazamiento: 0
+                replay:
+                  summary: modo=replay (recortado); tiempo original en `ocurrencia`, de reproducción en `reproducido_en`
+                  value:
+                    modo: replay
+                    eventos:
+                      - event_id: us7000mabc
+                        ocurrencia: "2025-03-01T11:58:12.000Z"
+                        updated: "2025-03-01T12:20:05.123Z"
+                        magnitud: 4.6
+                        profundidad: 10.0
+                        longitud: -72.1
+                        latitud: -33.4
+                        pais_codigo: CHL
+                        pais_nombre: Chile
+                        subregion: South America
+                        sintetico: false
+                        reproducido_en: "2026-11-08T14:30:00.456Z"
+                    total: 100
+                    limite: 100
+                    desplazamiento: 0
         "400": { $ref: "#/components/responses/ParametroInvalido" }
         "503": { $ref: "#/components/responses/ServicioNoDisponible" }
         "500": { $ref: "#/components/responses/ErrorInterno" }
@@ -165,6 +198,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: FeatureCollection
@@ -173,6 +207,7 @@ paths:
               schema: { $ref: "#/components/schemas/Mapa" }
               example:
                 type: FeatureCollection
+                modo: live
                 features:
                   - type: Feature
                     geometry: { type: Point, coordinates: [-155.461, 19.1575] }
@@ -184,6 +219,7 @@ paths:
                       profundidad: 30.52
                       pais_nombre: Sin país asignado
                       sintetico: false
+                      reproducido_en: null
                 total: 254
                 devueltos: 1
                 limite: 5000
@@ -205,6 +241,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: Recuentos
@@ -212,6 +249,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/RecuentoPais" }
               example:
+                modo: live
                 total: 254
                 categorias:
                   - { codigo: USA, nombre: Estados Unidos, recuento: 197 }
@@ -232,6 +270,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: Recuentos
@@ -239,6 +278,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/RecuentoSubregion" }
               example:
+                modo: live
                 total: 254
                 categorias:
                   - { nombre: Northern America, recuento: 198 }
@@ -256,6 +296,11 @@ paths:
         Máximo 31 días (400 si se excede). La primera y la última ventana pueden ser parciales si
         `desde`/`hasta` no son horas en punto. Un evento a las 10:59:59.999Z y otro a las 11:00:00.000Z
         caen en ventanas distintas.
+
+        **0.3.0, `modo=replay`**: sin `desde`/`hasta`, la ventana de 24 h termina en el último `ocurrencia`
+        de la reproducción (+1 ms, porque `hasta` es exclusivo) y no en ahora; los eventos reproducidos son de
+        otra época y «últimas 24 h» daría 24 ceros. Con la reproducción vacía, 24 h hasta ahora. La ventana puede no
+        cubrir una reproducción larga: úsense `desde`/`hasta` explícitos.
       parameters:
         - $ref: "#/components/parameters/desde"
         - $ref: "#/components/parameters/hasta"
@@ -264,6 +309,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: Ventanas horarias
@@ -271,6 +317,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/RecuentoHora" }
               example:
+                modo: live
                 desde: "2026-11-02T06:00:00.000Z"
                 hasta: "2026-11-02T09:00:00.000Z"
                 total: 3
@@ -296,6 +343,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: Distribución
@@ -303,6 +351,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Distribucion" }
               example:
+                modo: live
                 unidad: magnitud
                 total: 254
                 sin_valor: 0
@@ -325,6 +374,7 @@ paths:
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
         - $ref: "#/components/parameters/incluir_sinteticos"
+        - $ref: "#/components/parameters/modo"
       responses:
         "200":
           description: Distribución
@@ -332,6 +382,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Distribucion" }
               example:
+                modo: live
                 unidad: km
                 total: 254
                 sin_valor: 0
@@ -352,11 +403,18 @@ paths:
         `cociente = eventos de 24 h / media_diaria`; es `null` si la media es 0 o si el histórico no está
         cargado (`historico_2025.estado = no_cargado`, con `eventos` y `media_diaria` `null`). `desde`,
         `hasta` e `incluir_sinteticos` no aplican (400). `aviso` va siempre.
+
+        **0.3.0**: la comparación solo existe en directo. `modo=live` (o sin `modo`) vale y la respuesta
+        declara `modo: live`; `modo=replay` es 400 con `parametro: modo`.
       parameters:
         - $ref: "#/components/parameters/magnitud_min"
         - $ref: "#/components/parameters/magnitud_max"
         - $ref: "#/components/parameters/pais"
         - $ref: "#/components/parameters/subregion"
+        - name: modo
+          in: query
+          description: "0.3.0. Solo `live` (por defecto). `replay` da 400: el histórico de 2025 se compara con eventos reales de ahora."
+          schema: { type: string, enum: [live], default: live }
       responses:
         "200":
           description: Comparación
@@ -366,6 +424,7 @@ paths:
               examples:
                 cargado:
                   value:
+                    modo: live
                     ventana_actual: { desde: "2026-11-01T16:03:32.143Z", hasta: "2026-11-02T16:03:32.143Z", eventos: 30 }
                     historico_2025: { estado: cargado, eventos: 18302, dias: 365, media_diaria: 50.1425 }
                     cociente: 0.6
@@ -374,6 +433,7 @@ paths:
                     generated_at: "2026-11-02T16:03:32.143Z"
                 noCargado:
                   value:
+                    modo: live
                     ventana_actual: { desde: "2026-11-01T16:04:51.483Z", hasta: "2026-11-02T16:04:51.483Z", eventos: 0 }
                     historico_2025: { estado: no_cargado, eventos: null, dias: 365, media_diaria: null }
                     cociente: null
@@ -418,8 +478,16 @@ components:
     incluir_sinteticos:
       name: incluir_sinteticos
       in: query
-      description: "`true` incluye los eventos sintéticos (marcados con `sintetico: true`). Por defecto `false`: solo reales. Nunca se leen datos de reproducción."
+      description: "`true` incluye los eventos sintéticos (marcados con `sintetico: true`). Por defecto `false`: solo reales. Rige igual con `modo=replay`."
       schema: { type: string, enum: ["true", "false"], default: "false" }
+    modo:
+      name: modo
+      in: query
+      description: |
+        0.3.0. `live` (por defecto) lee el estado actual en directo; `replay` lee el estado actual de la
+        reproducción (tabla propia, nunca mezclada con `live`). Cualquier otro valor, vacío o repetido es 400
+        con `parametro: modo`.
+      schema: { type: string, enum: [live, replay], default: live }
   responses:
     ParametroInvalido:
       description: Parámetro mal formado, desconocido o repetido. Sin detalles internos ni el valor recibido.
@@ -455,6 +523,7 @@ components:
         - base_de_datos
         - eventos_reales
         - eventos_sinteticos
+        - eventos_replay
         - ultimo_evento
         - ultima_ingesta_correcta
         - periodo_consultado
@@ -473,6 +542,12 @@ components:
           type: [integer, "null"]
           minimum: 0
           description: Eventos distintos sintéticos; null si la base no responde
+        eventos_replay:
+          type: [integer, "null"]
+          minimum: 0
+          description: |
+            0.3.0. Eventos distintos del estado actual de la reproducción (`replay.evento_actual`). null si la
+            base no responde o la tabla de reproducción no existe; 0 si existe y está vacía.
         ultimo_evento:
           description: Última versión procesada (mayor `processed_at`); null si no hay eventos o la base no responde
           oneOf:
@@ -531,8 +606,9 @@ components:
       type: object
       additionalProperties: false
       required:
-        [event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_codigo, pais_nombre, subregion, sintetico]
+        [event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_codigo, pais_nombre, subregion, sintetico, reproducido_en]
       properties:
+        reproducido_en: { $ref: "#/components/schemas/ReproducidoEn" }
         event_id: { type: string }
         ocurrencia: { type: string, format: date-time, description: Instante del evento (UTC) }
         updated: { type: string, format: date-time, description: Versión del evento (UTC) }
@@ -544,11 +620,22 @@ components:
         pais_nombre: { type: string, description: "«Sin país asignado» si no hay polígono" }
         subregion: { type: [string, "null"], description: "null si no hay país" }
         sintetico: { type: boolean }
+    Modo:
+      type: string
+      enum: [live, replay]
+      description: 0.3.0. Origen de las cifras de la respuesta
+    ReproducidoEn:
+      type: [string, "null"]
+      format: date-time
+      description: |
+        0.3.0. Instante UTC en que se reprodujo el evento (el `ingested_at` de la reproducción). null en `live`:
+        allí `ingested_at` es ingesta, no reproducción. El tiempo original sigue en `ocurrencia`.
     ListaEventos:
       type: object
       additionalProperties: false
-      required: [eventos, total, limite, desplazamiento]
+      required: [modo, eventos, total, limite, desplazamiento]
       properties:
+        modo: { $ref: "#/components/schemas/Modo" }
         eventos:
           type: array
           items: { $ref: "#/components/schemas/EventoLista" }
@@ -557,9 +644,10 @@ components:
         desplazamiento: { type: integer }
     Mapa:
       type: object
-      required: [type, features, total, devueltos, limite, truncado, generated_at]
+      required: [type, modo, features, total, devueltos, limite, truncado, generated_at]
       properties:
         type: { const: FeatureCollection }
+        modo: { $ref: "#/components/schemas/Modo" }
         features:
           type: array
           items:
@@ -580,8 +668,9 @@ components:
                     description: "[longitud, latitud]"
               properties:
                 type: object
-                required: [event_id, ocurrencia, updated, magnitud, profundidad, pais_nombre, sintetico]
+                required: [event_id, ocurrencia, updated, magnitud, profundidad, pais_nombre, sintetico, reproducido_en]
                 properties:
+                  reproducido_en: { $ref: "#/components/schemas/ReproducidoEn" }
                   event_id: { type: string }
                   ocurrencia: { type: string, format: date-time }
                   updated: { type: string, format: date-time }
@@ -597,8 +686,9 @@ components:
     RecuentoPais:
       type: object
       additionalProperties: false
-      required: [total, categorias]
+      required: [modo, total, categorias]
       properties:
+        modo: { $ref: "#/components/schemas/Modo" }
         total: { type: integer, minimum: 0 }
         categorias:
           type: array
@@ -613,8 +703,9 @@ components:
     RecuentoSubregion:
       type: object
       additionalProperties: false
-      required: [total, categorias]
+      required: [modo, total, categorias]
       properties:
+        modo: { $ref: "#/components/schemas/Modo" }
         total: { type: integer, minimum: 0 }
         categorias:
           type: array
@@ -628,8 +719,9 @@ components:
     RecuentoHora:
       type: object
       additionalProperties: false
-      required: [desde, hasta, total, ventanas]
+      required: [modo, desde, hasta, total, ventanas]
       properties:
+        modo: { $ref: "#/components/schemas/Modo" }
         desde: { type: string, format: date-time, description: Ventana efectiva (incluye los valores por defecto) }
         hasta: { type: string, format: date-time }
         total: { type: integer, minimum: 0 }
@@ -645,8 +737,9 @@ components:
     Distribucion:
       type: object
       additionalProperties: false
-      required: [unidad, total, sin_valor, intervalos]
+      required: [modo, unidad, total, sin_valor, intervalos]
       properties:
+        modo: { $ref: "#/components/schemas/Modo" }
         unidad: { type: string, enum: [magnitud, km] }
         total: { type: integer, minimum: 0, description: Intervalos más `sin_valor` }
         sin_valor: { type: integer, minimum: 0 }
@@ -664,8 +757,9 @@ components:
     Comparacion:
       type: object
       additionalProperties: false
-      required: [ventana_actual, historico_2025, cociente, filtros_efectivos, aviso, generated_at]
+      required: [modo, ventana_actual, historico_2025, cociente, filtros_efectivos, aviso, generated_at]
       properties:
+        modo: { const: live, description: "0.3.0. Siempre `live`: la comparación no existe en replay" }
         ventana_actual:
           type: object
           additionalProperties: false

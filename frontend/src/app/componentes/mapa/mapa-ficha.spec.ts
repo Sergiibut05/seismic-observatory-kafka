@@ -9,6 +9,7 @@ const base: PropiedadesEventoMapa = {
   profundidad: 10,
   pais_nombre: 'México',
   sintetico: false,
+  reproducido_en: null,
 };
 
 describe('crearFicha', () => {
@@ -34,6 +35,53 @@ describe('crearFicha', () => {
     const ficha = crearFicha({ ...base, pais_nombre: '<img src=x onerror=alert(1)>' });
     expect(ficha.querySelector('img')).toBeNull();
     expect(ficha.textContent).toContain('<img');
+  });
+
+  describe('REPRODUCCIÓN y sintéticos (007)', () => {
+    const filas = (p: PropiedadesEventoMapa) =>
+      Object.fromEntries(
+        Array.from(crearFicha(p).querySelectorAll('dt')).map((dt) => [
+          dt.textContent,
+          dt.nextElementSibling?.textContent,
+        ]),
+      );
+
+    it('un evento real en directo no lleva «SINTÉTICO» ni «Reproducido»', () => {
+      const ficha = crearFicha(base);
+      expect(ficha.textContent).not.toContain('SINTÉTICO');
+      expect(ficha.textContent).not.toContain('Reproducido');
+      expect(ficha.querySelector('.ficha__marca')).toBeNull();
+    });
+
+    it('un sintético muestra la marca «SINTÉTICO» junto al título', () => {
+      const ficha = crearFicha({ ...base, event_id: 'synthetic-caso-nuevo', sintetico: true });
+      expect(ficha.querySelector('.ficha__marca')?.textContent?.trim()).toBe('SINTÉTICO');
+      expect(ficha.querySelector('.ficha__titulo')?.textContent).toContain('SINTÉTICO');
+      expect(ficha.getAttribute('aria-label')).toContain('sintético');
+    });
+
+    it('en replay muestra «Reproducido» con su hora UTC, además de la ocurrencia original', () => {
+      const f = filas({ ...base, reproducido_en: '2026-11-08T13:00:05.000Z' });
+      expect(f['Reproducido']).toBe('08/11/2026 13:00:05 UTC');
+      expect(f['Ocurrencia']).toBe('02/11/2026 10:15:30 UTC');
+    });
+
+    it('sintético en replay: ambas marcas', () => {
+      const ficha = crearFicha({
+        ...base,
+        sintetico: true,
+        reproducido_en: '2026-11-08T13:00:05.000Z',
+      });
+      expect(ficha.textContent).toContain('SINTÉTICO');
+      expect(ficha.textContent).toContain('Reproducido');
+    });
+
+    it('magnitud nula + sintético: «ND» y «SINTÉTICO», nunca 0', () => {
+      const ficha = crearFicha({ ...base, magnitud: null, sintetico: true });
+      expect(ficha.querySelector('.ficha__titulo')?.textContent).toContain('ND');
+      expect(ficha.textContent).toContain('SINTÉTICO');
+      expect(ficha.textContent).not.toMatch(/0,0/);
+    });
   });
 
   it('es un grupo con nombre accesible', () => {

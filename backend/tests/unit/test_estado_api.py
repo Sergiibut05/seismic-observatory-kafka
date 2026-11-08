@@ -12,7 +12,7 @@ from observatorio.common.db import SinConexion
 AHORA = datetime(2026, 11, 2, 12, 0, 5, tzinfo=timezone.utc)
 ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 
-# Campos de la 0.1.0 (intactos) y los añadidos en la 0.2.0.
+# Campos de la 0.1.0 (intactos), los añadidos en la 0.2.0 y el de la 0.3.0 (`eventos_replay`).
 CLAVES_0_1 = {"base_de_datos", "eventos_reales", "eventos_sinteticos", "ultimo_evento", "generated_at"}
 CLAVES_NUEVAS = {
     "ultima_ingesta_correcta",
@@ -20,7 +20,8 @@ CLAVES_NUEVAS = {
     "datos_desactualizados",
     "umbral_datos_desactualizados_segundos",
 }
-CLAVES = CLAVES_0_1 | CLAVES_NUEVAS
+CLAVES_0_3 = {"eventos_replay"}
+CLAVES = CLAVES_0_1 | CLAVES_NUEVAS | CLAVES_0_3
 CLAVES_ULTIMO = {"event_id", "updated", "source", "sintetico", "processed_at"}
 
 INGESTA = AHORA - timedelta(seconds=40)
@@ -183,10 +184,13 @@ def test_consultar_estado_lee_ingesta_y_periodo():
             "ORDER BY processed_at": [],
             "FROM ingesta.consultas": [(ahora - timedelta(seconds=30),)],
             "min(ocurrencia)": [(ahora - timedelta(days=10), ahora - timedelta(minutes=5))],
+            "to_regclass": [(True,)],
+            "FROM replay.evento_actual": [(42,)],
         }
     )
     estado = asyncio.run(consultar_estado(bd, umbral_segundos=120))
     assert estado["base_de_datos"] == "conectada"
+    assert estado["eventos_replay"] == 42
     assert estado["eventos_reales"] == 7 and estado["eventos_sinteticos"] == 1
     assert estado["datos_desactualizados"] is False
     assert estado["umbral_datos_desactualizados_segundos"] == 120
@@ -200,11 +204,50 @@ def test_consultar_estado_sin_filas_de_ingesta_esta_desactualizado():
             "ORDER BY processed_at": [],
             "FROM ingesta.consultas": [],
             "min(ocurrencia)": [(None, None)],
+            "to_regclass": [(True,)],
+            "FROM replay.evento_actual": [(0,)],
         }
     )
     estado = asyncio.run(consultar_estado(bd))
     assert estado["datos_desactualizados"] is True
     assert estado["ultima_ingesta_correcta"] is None and estado["periodo_consultado"] is None
+    # Replay vacío es 0 (la tabla existe y no tiene filas), no «no disponible».
+    assert estado["eventos_replay"] == 0
+
+
+def test_eventos_replay_es_none_si_la_tabla_no_existe_y_no_se_cuenta():
+    consultas = []
+
+    class Bd(BdFalsa):
+        async def consultar(self, sql, params=None, timeout=3.0):
+            consultas.append(sql)
+            return await super().consultar(sql, params, timeout)
+
+    bd = Bd(
+        {
+            "count(*) FILTER": [(1, 0)],
+            "ORDER BY processed_at": [],
+            "FROM ingesta.consultas": [],
+            "min(ocurrencia)": [(None, None)],
+            "to_regclass": [(False,)],
+        }
+    )
+    estado = asyncio.run(consultar_estado(bd))
+    assert estado["base_de_datos"] == "conectada" and estado["eventos_replay"] is None
+    assert not any(sql.startswith("SELECT count(*) FROM replay") for sql in consultas)
+
+
+def test_armar_estado_lleva_eventos_replay():
+    assert armar_estado((1, 0), None, True, AHORA, eventos_replay=5)["eventos_replay"] == 5
+    assert armar_estado((1, 0), None, True, AHORA)["eventos_replay"] is None
+    # Con la base caída es `None`, nunca 0, aunque se pase un valor residual.
+    assert armar_estado(None, None, False, AHORA, eventos_replay=5)["eventos_replay"] is None
+
+
+def test_los_campos_de_la_0_2_0_siguen_intactos_con_la_0_3_0():
+    estado = armar_estado((3, 2), ultimo(), True, AHORA, INGESTA, PERIODO, 300)
+    assert (CLAVES_0_1 | CLAVES_NUEVAS) <= set(estado)
+    assert estado["eventos_reales"] == 3 and estado["umbral_datos_desactualizados_segundos"] == 300
 
 
 @pytest.mark.parametrize("campo", sorted(CLAVES_0_1))

@@ -17,6 +17,24 @@
   box-shadow: inset 4px 0 0 var(--acento);
 }
 
+/* Marca del caso de prueba: texto + borde discontinuo, no solo color. */
+.insignia-sintetico {
+  display: inline-block;
+  margin-left: var(--e-2);
+  padding: 0 var(--e-2);
+  border: 1px dashed var(--atencion-borde);
+  border-radius: var(--radio);
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tabla__reproducido {
+  white-space: nowrap;
+}
+
 .tabla__id {
   font-family: var(--fuente-mono);
   font-size: var(--t-xs);

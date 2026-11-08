@@ -1,0 +1,2 @@
+﻿ Container seismic-observatory-api-1  Starting
+ Container seismic-observatory-api-1  Started

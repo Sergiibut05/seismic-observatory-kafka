@@ -16,6 +16,12 @@
       <dt>Eventos reales</dt>
       <dd>{{ eventosReales() }}</dd>
     </div>
+    @if (esReplay()) {
+      <div class="estado__replay">
+        <dt>Eventos en reproducción</dt>
+        <dd>{{ eventosReplay() }}</dd>
+      </div>
+    }
   </dl>
 
   <div class="estado__avisos" aria-live="polite" aria-atomic="false">

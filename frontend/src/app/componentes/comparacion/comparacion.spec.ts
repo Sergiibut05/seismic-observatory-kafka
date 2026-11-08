@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ComparacionHistorica } from '../../modelos/api';
+import { FiltrosStore } from '../../nucleo/filtros.store';
 import { Bloque, PanelDatosService } from '../../nucleo/panel-datos.service';
 import { Comparacion } from './comparacion';
 
@@ -62,6 +63,49 @@ describe('Comparacion', () => {
     expect(valores).toEqual(['30', 'no disponible', 'no disponible']);
     expect(el.textContent).toContain('no está cargado');
     expect(el.querySelector('.comparacion__aviso')).not.toBeNull();
+  });
+
+  describe('REPRODUCCIÓN (007)', () => {
+    async function montarReplay(b: Bloque<ComparacionHistorica>) {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PanelDatosService, useValue: { comparacion: signal(b) } }],
+      });
+      TestBed.inject(FiltrosStore).fijarModo('replay');
+      const fixture = TestBed.createComponent(Comparacion);
+      await fixture.whenStable();
+      return { fixture, el: fixture.nativeElement as HTMLElement };
+    }
+
+    it('dice que la comparación histórica solo existe en directo', async () => {
+      const { el } = await montarReplay(bloque<ComparacionHistorica>(null, { estado: 'cargando', lecturaOk: null }));
+      expect(el.querySelector('.comparacion__solo-directo')?.textContent).toContain(
+        'La comparación histórica solo existe en directo',
+      );
+      expect(el.querySelector('.bloque__nota')?.textContent).toContain('Solo existe en directo');
+    });
+
+    it('no inventa cifras: ni 24 h, ni media, ni cociente, ni ceros', async () => {
+      const { el } = await montarReplay(bloque<ComparacionHistorica>(null, { estado: 'cargando', lecturaOk: null }));
+      expect(el.querySelector('dl')).toBeNull();
+      expect(el.querySelector('.cifra__valor')).toBeNull();
+      expect(el.querySelector('.comparacion__filtros')).toBeNull();
+      expect(el.textContent).not.toMatch(/Últimas 24 h|Media diaria de 2025|Cociente|Filtro efectivo/);
+    });
+
+    it('tampoco muestra la última lectura en directo que hubiera quedado en el bloque', async () => {
+      const { el } = await montarReplay(bloque(COMP));
+      expect(el.textContent).not.toContain('0,6');
+      expect(el.textContent).not.toContain('Media diaria de 2025');
+      expect(el.querySelector('.comparacion__aviso')).toBeNull();
+    });
+
+    it('al volver a «En directo» reaparecen las cifras', async () => {
+      const { fixture, el } = await montarReplay(bloque(COMP));
+      TestBed.inject(FiltrosStore).fijarModo('live');
+      await fixture.whenStable();
+      expect(el.querySelector('.comparacion__solo-directo')).toBeNull();
+      expect(el.textContent).toContain('Media diaria de 2025');
+    });
   });
 
   it('error con datos antiguos: etiquetados', async () => {

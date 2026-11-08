@@ -7,7 +7,12 @@ import logging
 from datetime import datetime, timezone
 
 from observatorio.api.calculos import desactualizado
-from observatorio.api.consultas import SQL_PERIODO, SQL_ULTIMA_INGESTA
+from observatorio.api.consultas import (
+    SQL_PERIODO,
+    SQL_REPLAY_EXISTE,
+    SQL_REPLAY_RECUENTO,
+    SQL_ULTIMA_INGESTA,
+)
 from observatorio.common.db import Database, SinConexion
 from observatorio.common.logging import registrar
 from observatorio.common.retry import motivo_de
@@ -37,6 +42,7 @@ def armar_estado(
     ultima_ingesta: datetime | None = None,
     periodo: tuple[datetime | None, datetime | None] | None = None,
     umbral_segundos: int = UMBRAL_DEFECTO_SEGUNDOS,
+    eventos_replay: int | None = None,
 ) -> dict:
     """Con la base caída todo dato de la base es `None` («no disponible»), nunca 0."""
     if not db_ok:
@@ -44,6 +50,7 @@ def armar_estado(
             "base_de_datos": "fallida",
             "eventos_reales": None,
             "eventos_sinteticos": None,
+            "eventos_replay": None,
             "ultimo_evento": None,
             "ultima_ingesta_correcta": None,
             "periodo_consultado": None,
@@ -69,6 +76,7 @@ def armar_estado(
         "base_de_datos": "conectada",
         "eventos_reales": reales,
         "eventos_sinteticos": sinteticos,
+        "eventos_replay": eventos_replay,
         "ultimo_evento": ultimo_evento,
         "ultima_ingesta_correcta": iso_utc(ultima_ingesta) if ultima_ingesta is not None else None,
         "periodo_consultado": periodo_consultado,
@@ -91,12 +99,19 @@ async def consultar_estado(
         ultima_ingesta = ingestas[0][0] if ingestas else None
         periodos = await db.consultar(SQL_PERIODO, timeout=3)
         periodo = (periodos[0][0], periodos[0][1]) if periodos else None
+        # Como el histórico: primero `to_regclass`, porque una tabla inexistente cerraría la conexión.
+        eventos_replay = None
+        existe = await db.consultar(SQL_REPLAY_EXISTE, timeout=3)
+        if existe and existe[0][0]:
+            recuento = await db.consultar(SQL_REPLAY_RECUENTO, timeout=3)
+            eventos_replay = int(recuento[0][0]) if recuento else 0
         db_ok = True
     except SinConexion:
-        conteos, ultimo, ultima_ingesta, periodo, db_ok = None, None, None, None, False
+        conteos, ultimo, ultima_ingesta, periodo, eventos_replay, db_ok = None, None, None, None, None, False
     except Exception as exc:
         registrar(logger, "error", nivel="WARNING", component="postgres", reason=motivo_de(exc))
-        conteos, ultimo, ultima_ingesta, periodo, db_ok = None, None, None, None, False
+        conteos, ultimo, ultima_ingesta, periodo, eventos_replay, db_ok = None, None, None, None, None, False
     return armar_estado(
-        conteos, ultimo, db_ok, datetime.now(timezone.utc), ultima_ingesta, periodo, umbral_segundos
+        conteos, ultimo, db_ok, datetime.now(timezone.utc), ultima_ingesta, periodo, umbral_segundos,
+        eventos_replay,
     )

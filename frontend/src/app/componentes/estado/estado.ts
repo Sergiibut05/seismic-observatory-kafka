@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { Aviso } from '../../puro/desactualizado';
 import { formatearEntero, formatearHoraConUtc, formatearInstanteUtc, ND } from '../../puro/formato';
@@ -11,6 +12,7 @@ import { formatearEntero, formatearHoraConUtc, formatearInstanteUtc, ND } from '
 })
 export class Estado {
   private readonly datos = inject(PanelDatosService);
+  private readonly store = inject(FiltrosStore);
   protected readonly bloque = this.datos.status;
 
   /** Último acceso correcto a la API, medido por el panel (no por la API). */
@@ -26,6 +28,9 @@ export class Estado {
     return p ? `${formatearInstanteUtc(p.desde)} → ${formatearInstanteUtc(p.hasta)}` : ND;
   });
   protected readonly eventosReales = computed(() => formatearEntero(this.bloque().datos?.eventos_reales));
+  protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');
+  /** Eventos de `replay.evento_actual`; «ND» si no hay base de datos (`null`). */
+  protected readonly eventosReplay = computed(() => formatearEntero(this.bloque().datos?.eventos_replay));
 
   private readonly avisos = computed<Aviso[]>(() => this.datos.estadoSistema().avisos);
   /** El único `role="alert"`: el aviso más grave (API sin respuesta o base caída), si lo hay. */

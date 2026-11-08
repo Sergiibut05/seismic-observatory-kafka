@@ -1,13 +1,19 @@
-// Tipos de la API 0.2.0 (docs/CONTRATO-API.md). Solo campos documentados.
+// Tipos de la API 0.3.0 (docs/CONTRATO-API.md). Solo campos documentados.
 // Un dato desconocido es `null`, nunca 0: los componentes deben pintarlo «ND».
 
 /** Instante UTC ISO 8601 con `Z` y milisegundos. */
 export type InstanteUtc = string;
 
+/** `live` (en directo) o `replay` (REPRODUCCIÓN). Toda respuesta de datos lo indica desde 0.3.0. */
+export type { ModoDatos } from '../puro/filtros';
+import type { ModoDatos } from '../puro/filtros';
+
 export interface EstadoApi {
   base_de_datos: 'conectada' | 'fallida';
   eventos_reales: number | null;
   eventos_sinteticos: number | null;
+  /** Eventos de `replay.evento_actual`; `null` si no hay base de datos. */
+  eventos_replay: number | null;
   ultimo_evento: {
     event_id: string;
     updated: InstanteUtc;
@@ -34,9 +40,12 @@ export interface EventoTabla {
   pais_nombre: string;
   subregion: string | null;
   sintetico: boolean;
+  /** Instante UTC en que se reprodujo (solo con `modo=replay`); `null` en directo. */
+  reproducido_en: InstanteUtc | null;
 }
 
 export interface RespuestaEventos {
+  modo: ModoDatos;
   eventos: EventoTabla[];
   total: number;
   limite: number;
@@ -51,6 +60,8 @@ export interface PropiedadesEventoMapa {
   profundidad: number | null;
   pais_nombre: string;
   sintetico: boolean;
+  /** Instante UTC en que se reprodujo (solo con `modo=replay`); `null` en directo. */
+  reproducido_en: InstanteUtc | null;
 }
 
 export interface EventoMapa {
@@ -62,6 +73,7 @@ export interface EventoMapa {
 
 export interface RespuestaMapa {
   type: 'FeatureCollection';
+  modo: ModoDatos;
   features: EventoMapa[];
   total: number;
   devueltos: number;
@@ -81,12 +93,18 @@ export interface CategoriaSubregion {
   recuento: number;
 }
 
+/*
+ * Recuentos y distribuciones también traen `modo` en 0.3.0; el panel no lo lee (la vista ya
+ * decide qué pide), así que es opcional para no obligar a rellenarlo en cada prueba.
+ */
 export interface RecuentosPais {
+  modo?: ModoDatos;
   total: number;
   categorias: CategoriaPais[];
 }
 
 export interface RecuentosSubregion {
+  modo?: ModoDatos;
   total: number;
   categorias: CategoriaSubregion[];
 }
@@ -97,6 +115,7 @@ export interface VentanaHora {
 }
 
 export interface RecuentosHora {
+  modo?: ModoDatos;
   desde: InstanteUtc;
   hasta: InstanteUtc;
   total: number;
@@ -111,6 +130,7 @@ export interface IntervaloDistribucion {
 }
 
 export interface Distribucion {
+  modo?: ModoDatos;
   unidad: 'magnitud' | 'km';
   total: number;
   sin_valor: number;

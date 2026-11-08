@@ -91,3 +91,18 @@ export function leyendaRadio(): EntradaLeyendaRadio[] {
     .map((m) => ({ etiqueta: String(m), radio: radioPorMagnitud(m) }))
     .concat([{ etiqueta: ETIQUETA_ND, radio: RADIO_ND }]);
 }
+
+export interface ContornoCirculo {
+  grosor: number;
+  /** Patrón dashArray de Leaflet; undefined = línea continua. */
+  discontinuo: string | undefined;
+}
+
+/**
+ * Contorno del círculo. ND: fino y discontinuo. Caso sintético: grueso y con trazo más largo,
+ * para que no se confunda con ND ni con un terremoto real (no depende solo del color).
+ */
+export function contornoCirculo(sintetico: boolean, bordeDiscontinuo: boolean): ContornoCirculo {
+  if (sintetico) return { grosor: 2.5, discontinuo: '7 4' };
+  return { grosor: 1, discontinuo: bordeDiscontinuo ? '3 2' : undefined };
+}

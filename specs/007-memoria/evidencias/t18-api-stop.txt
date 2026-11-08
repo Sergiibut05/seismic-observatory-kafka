@@ -1,0 +1,2 @@
+﻿ Container seismic-observatory-api-1  Stopping
+ Container seismic-observatory-api-1  Stopped

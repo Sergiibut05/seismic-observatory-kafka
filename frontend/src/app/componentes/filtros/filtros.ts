@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
-import { CampoFiltro, SIN_PAIS } from '../../puro/filtros';
+import { CampoFiltro, SIN_PAIS, notaOrigenDatos } from '../../puro/filtros';
 import { formatearInstanteUtc } from '../../puro/formato';
 
 interface CampoTexto {
@@ -35,6 +35,8 @@ export class Filtros {
 
   protected readonly campos = CAMPOS;
   protected readonly editados = this.store.editados;
+  /** Qué eventos se muestran: solo reales, sintéticos incluidos o REPRODUCCIÓN. */
+  protected readonly nota = computed(() => notaOrigenDatos(this.store.vista()));
   protected readonly errores = this.store.errores;
 
   /** Países del catálogo con eventos (de `/recuentos/pais` sin filtros) y «Sin país asignado». */

@@ -23,11 +23,13 @@ from observatorio.api.calculos import (
     comparar,
     geojson_mapa,
     rellenar_horas,
+    reproducido_en,
 )
 from observatorio.api.filtros import (
     PARAMS_COMPARACION,
     PARAMS_FILTRO,
     PARAMS_LISTA,
+    FiltroInvalido,
     Filtros,
     construir_where,
     leer_filtros,
@@ -90,10 +92,12 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
         filtros = leer_filtros(valores)
         limite, desplazamiento = leer_paginacion(valores)
         donde, params = construir_where(filtros)
-        total = (await ejecutar(db, sql.con_where(sql.SQL_TOTAL, donde), params))[0][0]
-        filas = await ejecutar(db, sql.con_where(sql.SQL_LISTA, donde), [*params, limite, desplazamiento])
+        modo = filtros.modo
+        total = (await ejecutar(db, sql.con_where(sql.SQL_TOTAL, donde, modo), params))[0][0]
+        filas = await ejecutar(db, sql.con_where(sql.SQL_LISTA, donde, modo), [*params, limite, desplazamiento])
         return JSONResponse(
             {
+                "modo": modo,
                 "eventos": [
                     {
                         "event_id": event_id,
@@ -107,10 +111,11 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
                         "pais_nombre": pais_nombre,
                         "subregion": subregion,
                         "sintetico": bool(sintetico),
+                        "reproducido_en": reproducido_en(ingested_at, modo),
                     }
                     for (
                         event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud,
-                        pais_codigo, pais_nombre, subregion, sintetico,
+                        pais_codigo, pais_nombre, subregion, sintetico, ingested_at,
                     ) in filas
                 ],
                 "total": total,
@@ -124,23 +129,26 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
         _, filtros = _leer(peticion, PARAMS_FILTRO)
         donde, params = construir_where(filtros)
         generado = reloj()
-        total = (await ejecutar(db, sql.con_where(sql.SQL_TOTAL, donde), params))[0][0]
-        filas = await ejecutar(db, sql.con_where(sql.SQL_MAPA, donde), [*params, MAPA_TOPE])
-        return JSONResponse(geojson_mapa(filas, total, MAPA_TOPE, generado))
+        modo = filtros.modo
+        total = (await ejecutar(db, sql.con_where(sql.SQL_TOTAL, donde, modo), params))[0][0]
+        filas = await ejecutar(db, sql.con_where(sql.SQL_MAPA, donde, modo), [*params, MAPA_TOPE])
+        return JSONResponse(geojson_mapa(filas, total, MAPA_TOPE, generado, modo))
 
     @router.get("/recuentos/pais")
     async def recuentos_pais(peticion: Request) -> JSONResponse:
         _, filtros = _leer(peticion, PARAMS_FILTRO)
         donde, params = construir_where(filtros)
-        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_PAIS, donde), params)
+        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_PAIS, donde, filtros.modo), params)
         categorias = [{"codigo": codigo, "nombre": nombre, "recuento": n} for codigo, nombre, n in filas]
-        return JSONResponse({"total": sum(c["recuento"] for c in categorias), "categorias": categorias})
+        return JSONResponse(
+            {"modo": filtros.modo, "total": sum(c["recuento"] for c in categorias), "categorias": categorias}
+        )
 
     @router.get("/recuentos/subregion")
     async def recuentos_subregion(peticion: Request) -> JSONResponse:
         _, filtros = _leer(peticion, PARAMS_FILTRO)
         donde, params = construir_where(filtros)
-        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_SUBREGION, donde), params)
+        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_SUBREGION, donde, filtros.modo), params)
         acumulado: dict[str, int] = {}
         for subregion, sin_pais, n in filas:
             nombre = SIN_PAIS if sin_pais else (subregion or SIN_SUBREGION)
@@ -149,17 +157,26 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
             {"nombre": nombre, "recuento": n}
             for nombre, n in sorted(acumulado.items(), key=lambda par: (-par[1], par[0]))
         ]
-        return JSONResponse({"total": sum(acumulado.values()), "categorias": categorias})
+        return JSONResponse({"modo": filtros.modo, "total": sum(acumulado.values()), "categorias": categorias})
 
     @router.get("/recuentos/hora")
     async def recuentos_hora(peticion: Request) -> JSONResponse:
         _, filtros = _leer(peticion, PARAMS_FILTRO)
-        filtros = leer_ventana(filtros, reloj())
+        ancla = None
+        if filtros.modo == "replay" and filtros.hasta is None:
+            # Los eventos reproducidos no son de las últimas 24 h: la ventana termina en el último
+            # `ocurrencia` (+1 ms, porque `hasta` es exclusivo). Replay vacío: 24 h hasta ahora.
+            ultimas = await ejecutar(db, sql.SQL_REPLAY_ULTIMA_OCURRENCIA)
+            ultima = ultimas[0][0] if ultimas else None
+            if ultima is not None:
+                ancla = ultima + timedelta(milliseconds=1)
+        filtros = leer_ventana(filtros, reloj(), ancla)
         donde, params = construir_where(filtros)
-        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_HORA, donde), params)
+        filas = await ejecutar(db, sql.con_where(sql.SQL_RECUENTO_HORA, donde, filtros.modo), params)
         ventanas = rellenar_horas(filas, filtros.desde, filtros.hasta)
         return JSONResponse(
             {
+                "modo": filtros.modo,
                 "desde": iso_utc(filtros.desde),
                 "hasta": iso_utc(filtros.hasta),
                 "total": sum(v["recuento"] for v in ventanas),
@@ -170,9 +187,17 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
     async def _distribucion(peticion: Request, consulta: str, bordes: tuple[int, ...], unidad: str) -> JSONResponse:
         _, filtros = _leer(peticion, PARAMS_FILTRO)
         donde, params = construir_where(filtros)
-        filas = await ejecutar(db, sql.con_where(consulta, donde), params)
+        filas = await ejecutar(db, sql.con_where(consulta, donde, filtros.modo), params)
         intervalos, sin_valor, total = armar_intervalos(filas, bordes)
-        return JSONResponse({"unidad": unidad, "total": total, "sin_valor": sin_valor, "intervalos": intervalos})
+        return JSONResponse(
+            {
+                "modo": filtros.modo,
+                "unidad": unidad,
+                "total": total,
+                "sin_valor": sin_valor,
+                "intervalos": intervalos,
+            }
+        )
 
     @router.get("/distribuciones/magnitud")
     async def distribucion_magnitud(peticion: Request) -> JSONResponse:
@@ -185,6 +210,9 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
     @router.get("/comparacion-historica")
     async def comparacion_historica(peticion: Request) -> JSONResponse:
         _, pedidos = _leer(peticion, PARAMS_COMPARACION)
+        if pedidos.modo != "live":
+            # El histórico de 2025 se compara con eventos reales de ahora: en replay no tiene sentido.
+            raise FiltroInvalido("modo")
         generado = reloj()
         # Magnitud mínima efectiva = máx(4, pedida); la ventana es fija y siempre de eventos reales.
         minima = max(MAGNITUD_MINIMA_COMPARACION, pedidos.magnitud_min or 0.0)
@@ -203,6 +231,7 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
         historico, cociente = comparar(n_24h, n_2025, cargado)
         return JSONResponse(
             {
+                "modo": "live",
                 "ventana_actual": {"desde": iso_utc(reciente.desde), "hasta": iso_utc(reciente.hasta), "eventos": n_24h},
                 "historico_2025": historico,
                 "cociente": cociente,

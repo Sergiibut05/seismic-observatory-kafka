@@ -175,6 +175,66 @@ def test_comparacion_y_historico_ajustan_fechas_y_sinteticos():
     assert sql == " WHERE pais_codigo = %s" and params == ["USA"]
 
 
+# --- modo (feature 007, contrato 0.3.0) ------------------------------------
+
+
+def test_modo_por_defecto_es_live():
+    assert filtros().modo == "live"
+    assert Filtros().modo == "live"
+
+
+def test_modo_replay_se_lee_y_no_aparece_en_el_where():
+    f = filtros(modo="replay")
+    assert f.modo == "replay"
+    assert construir_where(f) == (" WHERE NOT sintetico", [])
+    sql, params = construir_where(filtros(modo="replay", pais="USA"))
+    assert "replay" not in sql and params == ["USA"]
+
+
+def test_modo_live_explicito_vale():
+    assert filtros(modo="live").modo == "live"
+
+
+@pytest.mark.parametrize("texto", ["Replay", "REPLAY", "todos", "", "LIVE", "replay ", "reproduccion", "'; DROP TABLE x;--"])
+def test_modo_invalido_es_400_con_el_nombre_del_parametro(texto):
+    assert invalido(modo=texto) == "modo"
+
+
+def test_modo_repetido_es_invalido():
+    with pytest.raises(FiltroInvalido) as exc:
+        valores_unicos([("modo", "live"), ("modo", "replay")], PARAMS_FILTRO)
+    assert exc.value.parametro == "modo"
+
+
+def test_modo_viaja_en_los_conjuntos_de_parametros():
+    assert "modo" in PARAMS_FILTRO and "modo" in PARAMS_LISTA and "modo" in PARAMS_COMPARACION
+    assert valores_unicos([("modo", "replay")], PARAMS_COMPARACION) == {"modo": "replay"}
+
+
+def test_la_ventana_con_ancla_termina_en_el_ancla():
+    ancla = datetime(2025, 3, 1, 12, 0, 0, 1000, tzinfo=UTC)
+    f = leer_ventana(Filtros(modo="replay"), AHORA, ancla)
+    assert f.hasta == ancla and f.hasta - f.desde == timedelta(hours=24)
+    assert f.modo == "replay"
+
+
+def test_la_ventana_sin_ancla_sigue_terminando_ahora():
+    assert leer_ventana(Filtros(), AHORA, None).hasta == AHORA
+
+
+def test_la_ventana_explicita_ignora_el_ancla():
+    desde = datetime(2025, 3, 1, tzinfo=UTC)
+    hasta = datetime(2025, 3, 2, tzinfo=UTC)
+    f = leer_ventana(Filtros(desde=desde, hasta=hasta), AHORA, AHORA)
+    assert (f.desde, f.hasta) == (desde, hasta)
+
+
+def test_la_ventana_con_solo_desde_y_ancla_llega_al_ancla():
+    ancla = datetime(2025, 3, 1, 12, tzinfo=UTC)
+    f = leer_ventana(Filtros(desde=ancla - timedelta(hours=5)), AHORA, ancla)
+    assert f.hasta == ancla
+
+
 # --- inyección SQL ---------------------------------------------------------
 
 INTENTO = "'; DROP TABLE x;--"

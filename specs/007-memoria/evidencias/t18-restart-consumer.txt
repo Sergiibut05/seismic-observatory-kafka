@@ -1,0 +1,2 @@
+ Container seismic-observatory-consumer-1  Restarting
+ Container seismic-observatory-consumer-1  Started

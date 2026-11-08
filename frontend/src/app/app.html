@@ -5,11 +5,17 @@
     <div class="cabecera__interior">
       <div class="cabecera__marca">
         <h1>Observatorio de actividad sísmica</h1>
-        <p>Eventos reales de USGS, tiempos en UTC</p>
+        @if (vista().modo === 'replay') {
+          <p class="cabecera__replay">REPRODUCCIÓN: no son datos en directo · tiempos en UTC</p>
+        } @else {
+          <p>Eventos reales de USGS, tiempos en UTC</p>
+        }
       </div>
       <app-estado />
     </div>
   </header>
+
+  <app-vista-datos />
 
   <!-- El orden del DOM es el orden de tabulación: filtros → mapa → tabla → gráficos. -->
   <main id="contenido" class="rejilla" tabindex="-1">

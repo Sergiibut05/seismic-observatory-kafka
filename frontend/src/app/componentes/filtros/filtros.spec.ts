@@ -91,8 +91,34 @@ describe('Filtros', () => {
     expect(el.querySelector<HTMLInputElement>('#campo-magnitudMin')!.value).toBe('');
   });
 
-  it('no hay control de eventos sintéticos y las fechas se rotulan en UTC', () => {
+  it('la nota de origen de los datos sigue a la vista (007)', () => {
+    const { fixture, store, el } = montar();
+    const nota = () => el.querySelector('form > .bloque__nota')?.textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(nota()).toContain('Solo se muestran eventos reales.');
+
+    store.fijarSinteticos(true);
+    fixture.detectChanges();
+    expect(nota()).toContain('casos de prueba sintéticos');
+    expect(nota()).not.toContain('Solo se muestran eventos reales');
+
+    store.fijarModo('replay');
+    fixture.detectChanges();
+    expect(nota()).toContain('REPRODUCCIÓN');
+
+    store.fijarSinteticos(false);
+    store.fijarModo('live');
+    fixture.detectChanges();
+    expect(nota()).toContain('Solo se muestran eventos reales.');
+  });
+
+  it('la nota conserva lo de la comparación histórica', () => {
     const { el } = montar();
+    expect(el.querySelector('form > .bloque__nota')?.textContent).toContain('La comparación histórica');
+  });
+
+  it('el formulario de filtros no tiene control de sintéticos (está en «Datos») y las fechas se rotulan en UTC', () => {
+    const { el } = montar();
+    expect(el.querySelector('input[type="checkbox"]')).toBeNull();
     expect(el.textContent?.toLowerCase()).not.toContain('sintétic');
     expect(el.querySelector('label[for="campo-desde"]')?.textContent).toContain('UTC');
     expect(el.querySelector('label[for="campo-hasta"]')?.textContent).toContain('UTC');

@@ -1,9 +1,19 @@
 # Feature 006: Panel Angular + Leaflet
 
-**Rama**: `006-panel` | **Depende de**: 005 (API 0.2.0, `docs/CONTRATO-API.md`) y el catálogo `catalogo/paises.geojson`
+**Rama**: `006-panel` | **Depende de**: 005 (API 0.2.0, y 0.3.0 desde la enmienda 007; `docs/CONTRATO-API.md`) y el catálogo `catalogo/paises.geojson`
 
 Panel web en `frontend/` que consume **solo nuestra API** (nunca USGS) y se publica en
 Netlify. Toda la interfaz va en español. Librerías, estructura y estado los fija el `plan.md`.
+
+> **Enmienda 007 (API 0.3.0, FR-013, FR-019 y FR-020 de `specs/007-memoria/spec.md`)**: el panel
+> pasa a consumir la API 0.3.0 y gana dos controles, ambos **sin persistir al recargar**.
+> (1) Un selector «Datos: En directo / REPRODUCCIÓN» (por defecto, en directo): en REPRODUCCIÓN
+> envía `modo=replay`, muestra una franja permanente «REPRODUCCIÓN», la columna «Reproducido (UTC)»
+> y no pide `/comparacion-historica` (solo existe en directo). (2) Un interruptor «Incluir casos de
+> prueba sintéticos», apagado por defecto: encendido, envía `incluir_sinteticos=true` (nunca a la
+> comparación), muestra un aviso permanente y marca «SINTÉTICO» en tabla, ficha y mapa. Por eso el
+> FR-007 ya no dice «nunca envía `incluir_sinteticos=true`» y el FR-016 ya no dice que el panel no
+> muestra datos de reproducción (antes la API no los exponía). El resto de requisitos no cambia.
 
 ## Requisitos
 
@@ -31,7 +41,10 @@ Netlify. Toda la interfaz va en español. Librerías, estructura y estado los fi
   a la vez mapa, tabla y gráficos; la comparación solo usa magnitud y país/subregión y lo
   indica. Se serializan al formato del contrato (ISO con `Z`, `%2B` si hiciera falta).
   Valores incoherentes (`desde ≥ hasta`, mín > máx) se rechazan en el formulario sin
-  llamar a la API. Sin sintéticos: el panel nunca envía `incluir_sinteticos=true`.
+  llamar a la API. Sintéticos (enmienda 007): apagados por defecto, de modo que el panel no
+  envía `incluir_sinteticos`; solo con el interruptor «Incluir casos de prueba sintéticos»
+  encendido envía `incluir_sinteticos=true` (a todo menos a la comparación), con aviso permanente
+  y marca «SINTÉTICO». El selector «Datos» añade `modo=replay` en REPRODUCCIÓN.
 - **FR-008** (Enunciado §8, §9): estado del sistema siempre visible: último acceso correcto
   a la API (medido por el panel, hora local con UTC), última ingesta correcta de USGS,
   periodo consultado y eventos reales. Aviso destacado si `datos_desactualizados=true`,
@@ -56,8 +69,10 @@ Netlify. Toda la interfaz va en español. Librerías, estructura y estado los fi
 - **FR-015** (Enunciado §8, §13): accesibilidad básica: contraste suficiente, foco visible
   y navegación por teclado, etiquetas y roles `aria`, información que no depende solo del
   color (tamaño, texto, tabla) y texto alternativo de cada gráfico y del mapa.
-- **FR-016** (Enunciado §11): sin datos de reproducción: el panel no los pide ni los
-  muestra (la API no los expone).
+- **FR-016** (Enunciado §11): datos de reproducción solo bajo demanda. Enmienda 007: la API 0.3.0
+  los expone con `modo=replay`; el panel los pide únicamente con el selector en REPRODUCCIÓN
+  (por defecto, en directo), con franja «REPRODUCCIÓN» y columna «Reproducido (UTC)». Nunca se
+  mezclan con los datos en directo en una misma vista.
 - **FR-017** (Enunciado §3, §12): `frontend/` con dependencias fijadas y archivo de
   bloqueo, sin `node_modules` en Git; guía de ejecución, ngrok y Netlify en el `quickstart.md`.
 
@@ -109,7 +124,8 @@ Netlify. Toda la interfaz va en español. Librerías, estructura y estado los fi
 
 ## Fuera de alcance
 
-Autenticación, panel de calidad, modo replay en pantalla, despliegue real en Netlify (se
+Autenticación, panel de calidad, modo replay en pantalla (añadido después por la enmienda 007),
+despliegue real en Netlify (se
 documenta el procedimiento y se deja el build listo; lo hace el alumno con su cuenta),
 memoria y conclusiones (007), cambios en la API.
 

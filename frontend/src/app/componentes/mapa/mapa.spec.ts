@@ -7,6 +7,7 @@ import { Mapa } from './mapa';
 
 const respuesta = (truncado: boolean): RespuestaMapa => ({
   type: 'FeatureCollection',
+  modo: 'live',
   features: [],
   total: 7312,
   devueltos: 5000,
@@ -46,6 +47,26 @@ describe('Mapa (avisos y estado; el dibujo se comprueba en navegador real)', () 
     fixture.detectChanges();
     expect(el.textContent).toContain('sin conexión con la API');
     expect(el.textContent).toContain('desactualizados');
+  });
+
+  describe('REPRODUCCIÓN y sintéticos (007)', () => {
+    it('en directo y sin sintéticos: ni nota de reproducción ni entrada «SINTÉTICO» en la leyenda', () => {
+      const { el } = montar(respuesta(false));
+      expect(el.textContent).not.toContain('REPRODUCCIÓN');
+      expect(el.textContent).not.toContain('SINTÉTICO');
+    });
+
+    it('con datos de replay lo rotula en la cabecera del mapa', () => {
+      const { el } = montar({ ...respuesta(false), modo: 'replay' });
+      expect(el.querySelector('.bloque__nota')?.textContent).toContain('REPRODUCCIÓN');
+    });
+
+    it('la cabecera vuelve a su texto al recibir datos en directo', () => {
+      const { fixture, datos, el } = montar({ ...respuesta(false), modo: 'replay' });
+      datos.mapa.update((b) => ({ ...b, datos: respuesta(false) }));
+      fixture.detectChanges();
+      expect(el.querySelector('.bloque__nota')?.textContent).not.toContain('REPRODUCCIÓN');
+    });
   });
 
   it('un error sin datos no habla de datos antiguos', () => {

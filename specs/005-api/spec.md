@@ -5,6 +5,14 @@
 La API ofrece al panel (feature 006) consultas de solo lectura sobre el estado actual,
 con los mismos filtros en todas. Rutas, tablas e índices los fija el `plan.md`.
 
+> **Enmienda (feature 007-memoria, contrato 0.3.0, aditiva)**: la API admite el parámetro `modo`
+> (`live` por defecto | `replay`) en `/eventos`, `/eventos/mapa`, `/recuentos/*` y
+> `/distribuciones/*`, y lo declara en las respuestas. Con `modo=replay` lee el estado actual de la
+> reproducción (`replay.evento_actual`) y expone `reproducido_en`; `/comparacion-historica` solo
+> acepta `live` (`replay` es 400). `/status` añade `eventos_replay`. Esto sustituye lo que dicen esta
+> spec («Nada lee `replay.*`», «la 005 no expone replay») y el contrato 0.2.0 (FR-019 de 007). Los campos de
+> 0.2.0 no cambian. Detalle en `docs/CONTRATO-API.md` y `specs/007-memoria/plan.md`.
+
 ## Requisitos
 
 - **FR-001** (Enunciado §8): lista de eventos paginada, ordenada por `ocurrencia`

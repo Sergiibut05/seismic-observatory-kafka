@@ -1,0 +1,10 @@
+﻿ts=2026-11-08T14:31:52.180Z level=INFO service=producer result=listo component=topic action=topic_conforme topic=eventos.live partitions=3 retention_ms=604800000
+ts=2026-11-08T14:31:52.186Z level=INFO service=producer result=publicado caso=nuevo paso=unico event_id=synthetic-caso-nuevo updated=1794146400000 topic=eventos.live partition=0 offset=196
+ts=2026-11-08T14:31:52.187Z level=INFO service=producer result=publicado caso=reenvio paso=unico event_id=synthetic-caso-nuevo updated=1794146400000 topic=eventos.live partition=0 offset=197
+ts=2026-11-08T14:31:52.188Z level=INFO service=producer result=publicado caso=revision paso=v1 event_id=synthetic-caso-revision updated=1794146400000 topic=eventos.live partition=2 offset=244
+ts=2026-11-08T14:31:52.189Z level=INFO service=producer result=publicado caso=revision paso=v2 event_id=synthetic-caso-revision updated=1794146460000 topic=eventos.live partition=2 offset=245
+ts=2026-11-08T14:31:52.190Z level=INFO service=producer result=publicado caso=antigua paso=unico event_id=synthetic-caso-revision updated=1794146340000 topic=eventos.live partition=2 offset=246
+ts=2026-11-08T14:31:52.190Z level=INFO service=producer result=publicado caso=magnitud_nula paso=unico event_id=synthetic-caso-magnitud-nula updated=1794146400000 topic=eventos.live partition=2 offset=247
+ts=2026-11-08T14:31:52.191Z level=INFO service=producer result=publicado caso=coordenadas_invalidas paso=unico event_id=synthetic-caso-coordenadas-invalidas updated=1794146400000 topic=eventos.live partition=2 offset=248
+ts=2026-11-08T14:31:52.192Z level=INFO service=producer result=publicado caso=mar paso=unico event_id=synthetic-caso-mar updated=1794146400000 topic=eventos.live partition=0 offset=198
+ts=2026-11-08T14:31:52.192Z level=INFO service=producer result=publicado caso=profundidad_negativa paso=unico event_id=synthetic-caso-profundidad-negativa updated=1794146400000 topic=eventos.live partition=2 offset=249

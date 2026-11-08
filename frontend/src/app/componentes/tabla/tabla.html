@@ -27,12 +27,15 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col">Ocurrencia (UTC)</th>
+              <th scope="col">{{ esReplay() ? 'Ocurrencia original (UTC)' : 'Ocurrencia (UTC)' }}</th>
               <th scope="col" class="num">Magnitud</th>
               <th scope="col" class="num">Profundidad</th>
               <th scope="col">País</th>
               <th scope="col">Subregión</th>
               <th scope="col">Actualizado (UTC)</th>
+              @if (esReplay()) {
+                <th scope="col">Reproducido (UTC)</th>
+              }
               <th scope="col">Identificador</th>
               <th scope="col">Mapa</th>
             </tr>
@@ -40,7 +43,12 @@
           <tbody>
             @for (e of eventos(); track e.event_id) {
               <tr [class.seleccionada]="seleccionado(e)">
-                <th scope="row">{{ formatearInstanteUtc(e.ocurrencia) }}</th>
+                <th scope="row">
+                  {{ formatearInstanteUtc(e.ocurrencia) }}
+                  @if (e.sintetico) {
+                    <span class="insignia-sintetico">SINTÉTICO</span>
+                  }
+                </th>
                 <td class="num" [class.nd]="e.magnitud === null">{{ formatearMagnitud(e.magnitud) }}</td>
                 <td class="num" [class.nd]="e.profundidad === null">
                   {{ formatearProfundidad(e.profundidad) }}
@@ -48,6 +56,11 @@
                 <td>{{ e.pais_nombre }}</td>
                 <td>{{ e.subregion ?? 'Sin país asignado' }}</td>
                 <td>{{ formatearInstanteUtc(e.updated) }}</td>
+                @if (esReplay()) {
+                  <td class="tabla__reproducido" [class.nd]="e.reproducido_en === null">
+                    {{ formatearInstanteUtc(e.reproducido_en) }}
+                  </td>
+                }
                 <td class="tabla__id">{{ e.event_id }}</td>
                 <td>
                   <button

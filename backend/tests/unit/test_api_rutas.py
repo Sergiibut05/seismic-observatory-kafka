@@ -7,7 +7,7 @@ de cada respuesta. El SQL real, los índices y los tiempos se comprueban en vivo
 import asyncio
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import psycopg
 import pytest
@@ -258,6 +258,7 @@ FILA_LISTA = (
     "Sin país asignado",
     None,
     False,
+    datetime(2026, 11, 2, 10, 6, 0, 456000, tzinfo=UTC),
 )
 
 
@@ -275,6 +276,8 @@ def test_lista_con_total_paginacion_y_nulos():
     assert evento["pais_nombre"] == "Sin país asignado" and evento["sintetico"] is False
     assert bd.llamadas[1][1][-2:] == [10, 20]
     assert "pais_codigo IS NULL" in bd.llamadas[0][0]
+    # En live `ingested_at` es la ingesta, no una reproducción: se informa `null`.
+    assert datos["modo"] == "live" and evento["reproducido_en"] is None
 
 
 def test_valores_del_usuario_viajan_como_parametros():
@@ -294,15 +297,20 @@ def test_lista_por_defecto_100_y_solo_reales():
 
 # --- /eventos/mapa ---------------------------------------------------------
 
+FILA_MAPA = (
+    "us1", datetime(2026, 11, 2, tzinfo=UTC), datetime(2026, 11, 2, tzinfo=UTC), 4.5, None, 1.0, 2.0, "X", False,
+    datetime(2026, 11, 3, 8, 30, tzinfo=UTC),
+)
+
 
 def test_mapa_geojson_con_tope_y_truncado():
-    fila = ("us1", datetime(2026, 11, 2, tzinfo=UTC), datetime(2026, 11, 2, tzinfo=UTC), 4.5, None, 1.0, 2.0, "X", False)
+    fila = FILA_MAPA
 
     def responder(sql, params):
         return [(9999,)] if sql.startswith("SELECT count(*)") else [fila]
 
     estado, datos = obtener(app_con(BdFalsa(responder)), "/eventos/mapa")
-    assert estado == 200 and datos["type"] == "FeatureCollection"
+    assert estado == 200 and datos["type"] == "FeatureCollection" and datos["modo"] == "live"
     assert datos["total"] == 9999 and datos["limite"] == 5000 and datos["truncado"] is True
     assert datos["features"][0]["geometry"]["coordinates"] == [1.0, 2.0]
     assert datos["features"][0]["properties"]["profundidad"] is None
@@ -415,6 +423,162 @@ def test_historico_no_cargado_inexistente_o_vacio(existe, cargado):
     assert not any("count(*) FROM historico.evento_2025" in sql for sql, _ in bd.llamadas)
 
 
+# --- modo=replay (feature 007, contrato 0.3.0) ------------------------------
+
+
+def responder_replay(sql, params):
+    """Una fila de lista/mapa y recuentos sencillos; el ancla de la ventana horaria es el último evento."""
+    if sql.startswith("SELECT max(ocurrencia)"):
+        return [(datetime(2025, 3, 1, 12, 0, tzinfo=UTC),)]
+    if sql.startswith("SELECT count(*)"):
+        return [(7,)]
+    if "FROM (SELECT * FROM" in sql:
+        return [FILA_LISTA]
+    if sql.startswith("SELECT event_id"):
+        return [FILA_MAPA]
+    return []
+
+
+def solo_replay(bd):
+    for consulta, _ in bd.llamadas:
+        assert "live.evento_actual" not in consulta, consulta
+
+
+def test_lista_en_replay_lee_la_tabla_replay_y_expone_el_tiempo_de_reproduccion():
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(app_con(bd), "/eventos", "modo=replay")
+    assert estado == 200 and datos["modo"] == "replay" and datos["total"] == 7
+    assert all("replay.evento_actual" in consulta for consulta, _ in bd.llamadas)
+    solo_replay(bd)
+    evento = datos["eventos"][0]
+    # Tiempo original y de reproducción, por separado.
+    assert evento["ocurrencia"] == "2026-11-02T10:00:00.123Z"
+    assert evento["reproducido_en"] == "2026-11-02T10:06:00.456Z"
+    # El modo no entra en el WHERE ni en los parámetros.
+    assert all("replay" not in str(params) for _, params in bd.llamadas)
+
+
+def test_modo_live_explicito_es_igual_que_sin_modo():
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(app_con(bd), "/eventos", "modo=live")
+    assert estado == 200 and datos["modo"] == "live"
+    assert all("live.evento_actual" in consulta for consulta, _ in bd.llamadas)
+    assert datos["eventos"][0]["reproducido_en"] is None
+
+
+def test_mapa_en_replay():
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(app_con(bd), "/eventos/mapa", "modo=replay")
+    assert estado == 200 and datos["modo"] == "replay"
+    assert datos["features"][0]["properties"]["reproducido_en"] == "2026-11-03T08:30:00.000Z"
+    solo_replay(bd)
+
+
+@pytest.mark.parametrize(
+    "ruta",
+    ["/recuentos/pais", "/recuentos/subregion", "/recuentos/hora", "/distribuciones/magnitud", "/distribuciones/profundidad"],
+)
+def test_recuentos_y_distribuciones_en_replay_usan_la_tabla_replay(ruta):
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(app_con(bd), ruta, "modo=replay")
+    assert estado == 200 and datos["modo"] == "replay", ruta
+    assert any("FROM replay.evento_actual" in consulta for consulta, _ in bd.llamadas), ruta
+    solo_replay(bd)
+
+
+@pytest.mark.parametrize(
+    "ruta",
+    ["/recuentos/pais", "/recuentos/subregion", "/recuentos/hora", "/distribuciones/magnitud", "/distribuciones/profundidad"],
+)
+def test_recuentos_en_live_siguen_en_live_y_llevan_el_modo(ruta):
+    bd = BdFalsa()
+    estado, datos = obtener(app_con(bd), ruta)
+    assert estado == 200 and datos["modo"] == "live", ruta
+    assert all("replay" not in consulta for consulta, _ in bd.llamadas), ruta
+
+
+@pytest.mark.parametrize("valor", ["Replay", "todos", "", "live%20", "x%27%3B--"])
+def test_modo_invalido_es_400_sin_llegar_a_la_base(valor):
+    bd = BdFalsa()
+    estado, datos = obtener(app_con(bd), "/eventos", f"modo={valor}")
+    assert estado == 400 and datos == {"error": "parametro_invalido", "parametro": "modo"}
+    assert bd.llamadas == []
+
+
+def test_modo_repetido_es_400():
+    estado, datos = obtener(app_con(), "/eventos/mapa", "modo=live&modo=replay")
+    assert estado == 400 and datos["parametro"] == "modo"
+
+
+def test_sinteticos_rigen_tambien_en_replay():
+    bd = BdFalsa(responder_replay)
+    obtener(app_con(bd), "/recuentos/pais", "modo=replay")
+    assert "NOT sintetico" in bd.llamadas[0][0]
+    bd = BdFalsa(responder_replay)
+    obtener(app_con(bd), "/recuentos/pais", "modo=replay&incluir_sinteticos=true")
+    assert "sintetico" not in bd.llamadas[0][0]
+
+
+def test_replay_con_la_base_caida_es_503():
+    estado, datos = obtener(app_con(BdFalsa(error=SinConexion("x"))), "/eventos", "modo=replay")
+    assert estado == 503 and datos == {"error": "servicio_no_disponible"}
+
+
+def test_ventana_horaria_de_replay_anclada_al_ultimo_ocurrencia():
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(app_con(bd), "/recuentos/hora", "modo=replay")
+    assert estado == 200
+    # max(ocurrencia) = 2025-03-01T12:00:00Z; `hasta` es exclusivo, así que termina 1 ms después.
+    assert datos["hasta"] == "2025-03-01T12:00:00.001Z"
+    assert datos["desde"] == "2025-02-28T12:00:00.001Z"
+    assert len(datos["ventanas"]) == 25 and datos["ventanas"][-1]["inicio"] == "2025-03-01T12:00:00.000Z"
+    assert "max(ocurrencia)" in bd.llamadas[0][0] and "replay.evento_actual" in bd.llamadas[0][0]
+
+
+def test_ventana_horaria_de_replay_vacio_usa_las_24_horas_por_defecto():
+    bd = BdFalsa(lambda sql, params: [(None,)] if sql.startswith("SELECT max(") else [])
+    estado, datos = obtener(app_con(bd), "/recuentos/hora", "modo=replay")
+    assert estado == 200
+    hasta = datetime.fromisoformat(datos["hasta"].replace("Z", "+00:00"))
+    desde = datetime.fromisoformat(datos["desde"].replace("Z", "+00:00"))
+    assert hasta - desde == timedelta(hours=24)
+    assert abs((datetime.now(UTC) - hasta).total_seconds()) < 60
+    assert datos["total"] == 0 and len(datos["ventanas"]) in (24, 25)
+
+
+def test_ventana_horaria_de_replay_con_filtros_explicitos_no_busca_el_ancla():
+    bd = BdFalsa(responder_replay)
+    estado, datos = obtener(
+        app_con(bd), "/recuentos/hora", "modo=replay&desde=2025-03-01T00:00:00Z&hasta=2025-03-01T03:00:00Z"
+    )
+    assert estado == 200 and len(datos["ventanas"]) == 3
+    assert not any(consulta.startswith("SELECT max(") for consulta, _ in bd.llamadas)
+
+
+def test_ventana_horaria_live_no_busca_ancla():
+    bd = BdFalsa()
+    obtener(app_con(bd), "/recuentos/hora")
+    assert not any(consulta.startswith("SELECT max(") for consulta, _ in bd.llamadas)
+
+
+def test_comparacion_historica_rechaza_replay():
+    bd = comparacion_bd()
+    estado, datos = obtener(app_con(bd), "/comparacion-historica", "modo=replay")
+    assert estado == 400 and datos == {"error": "parametro_invalido", "parametro": "modo"}
+    assert bd.llamadas == []
+
+
+def test_comparacion_historica_acepta_modo_live_y_lo_declara():
+    estado, datos = obtener(app_con(comparacion_bd()), "/comparacion-historica", "modo=live")
+    assert estado == 200 and datos["modo"] == "live"
+    estado, datos = obtener(app_con(comparacion_bd()), "/comparacion-historica")
+    assert estado == 200 and datos["modo"] == "live"
+
+
+def test_comparacion_historica_con_modo_invalido_es_400():
+    assert obtener(app_con(comparacion_bd()), "/comparacion-historica", "modo=otro")[1]["parametro"] == "modo"
+
+
 # --- /status ---------------------------------------------------------------
 
 
@@ -422,7 +586,9 @@ def test_status_con_la_base_caida_es_200_con_nulos():
     estado, datos = obtener(app_con(BdFalsa(error=SinConexion("x"))), "/status")
     assert estado == 200
     assert datos["base_de_datos"] == "fallida"
-    for campo in ("eventos_reales", "ultima_ingesta_correcta", "periodo_consultado", "datos_desactualizados"):
+    for campo in (
+        "eventos_reales", "ultima_ingesta_correcta", "periodo_consultado", "datos_desactualizados", "eventos_replay"
+    ):
         assert datos[campo] is None
     assert datos["umbral_datos_desactualizados_segundos"] == 300
 

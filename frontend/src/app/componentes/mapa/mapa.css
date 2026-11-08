@@ -101,6 +101,10 @@
 .mapa-bloque .mapa-leyenda__muestra--nd {
   border-style: dashed;
 }
+.mapa-bloque .mapa-leyenda__muestra--sintetico {
+  border: 3px dashed var(--borde-circulo);
+  background: var(--superficie-2);
+}
 
 /* ── Controles de Leaflet: foco visible y tamaño táctil ───────────── */
 .mapa-bloque .leaflet-container {
@@ -137,6 +141,21 @@
 .mapa-bloque .ficha__titulo {
   margin: 0 var(--e-4) var(--e-2) 0;
   font-size: var(--t-md);
+}
+/* Marca de texto de un caso de prueba (no depende solo del color). */
+.mapa-bloque .ficha__marca {
+  display: inline-block;
+  margin-left: var(--e-1);
+  padding: 0 var(--e-2);
+  border: 1px dashed var(--atencion-borde);
+  border-radius: var(--radio);
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  font-style: normal;
 }
 .mapa-bloque .ficha__datos {
   display: grid;

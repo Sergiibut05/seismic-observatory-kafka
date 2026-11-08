@@ -19,6 +19,7 @@ import { PanelDatosService, bloqueConDatosAntiguos } from '../../nucleo/panel-da
 import {
   INTERVALOS_PROFUNDIDAD,
   COLOR_ND,
+  contornoCirculo,
   estiloCirculo,
   leyendaRadio,
 } from '../../puro/escalas';
@@ -72,6 +73,9 @@ export class Mapa {
   protected readonly etiquetaAntiguos = computed(() =>
     etiquetaDatosAntiguos(this.bloque().lecturaOk),
   );
+  /** La rotulación sigue a los datos recibidos (modo de la respuesta), no a lo recién elegido. */
+  protected readonly esReplay = computed(() => this.respuesta()?.modo === 'replay');
+  protected readonly sinteticos = computed(() => this.store.vista().sinteticos);
   protected readonly truncado = computed(() => this.respuesta()?.truncado === true);
   protected readonly devueltos = computed(() => formatearEntero(this.respuesta()?.devueltos));
   protected readonly total = computed(() => formatearEntero(this.respuesta()?.total));
@@ -193,13 +197,14 @@ export class Mapa {
 
   private estiloDe(e: EventoMapa, seleccionado: boolean): L.CircleMarkerOptions {
     const est = estiloCirculo(e.properties.magnitud, e.properties.profundidad);
+    const contorno = contornoCirculo(e.properties.sintetico, est.bordeDiscontinuo);
     return {
       radius: est.radio,
       fillColor: est.color,
       fillOpacity: 0.85,
       color: seleccionado ? COLOR_SELECCION : COLOR_BORDE_CIRCULO,
-      weight: seleccionado ? 4 : 1,
-      dashArray: est.bordeDiscontinuo && !seleccionado ? '3 2' : undefined,
+      weight: seleccionado ? 4 : contorno.grosor,
+      dashArray: seleccionado ? undefined : contorno.discontinuo,
     };
   }
 
@@ -213,7 +218,8 @@ export class Mapa {
       const [lon, lat] = f.geometry.coordinates;
       if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
       const id = f.properties.event_id;
-      const version = `${f.properties.updated}|${lon}|${lat}`;
+      const { updated, sintetico, reproducido_en } = f.properties;
+      const version = `${updated}|${lon}|${lat}|${sintetico}|${reproducido_en}`;
       vigentes.add(id);
       const previo = this.dibujados.get(id);
       if (previo?.version === version) continue;

@@ -14,11 +14,14 @@ from datetime import datetime, timedelta, timezone
 from observatorio.common.catalogo import SIN_PAIS
 
 PARAMS_FILTRO = frozenset(
-    {"desde", "hasta", "magnitud_min", "magnitud_max", "pais", "subregion", "incluir_sinteticos"}
+    {"desde", "hasta", "magnitud_min", "magnitud_max", "pais", "subregion", "incluir_sinteticos", "modo"}
 )
 PARAMS_LISTA = PARAMS_FILTRO | {"limite", "desplazamiento"}
-# La ventana de la comparación es fija (24 h) y sus datos son siempre reales.
-PARAMS_COMPARACION = frozenset({"magnitud_min", "magnitud_max", "pais", "subregion"})
+# La ventana de la comparación es fija (24 h) y sus datos son siempre reales. Admite `modo` solo
+# para poder rechazar `replay` con un 400 que nombre el parámetro (contrato 0.3.0).
+PARAMS_COMPARACION = frozenset({"magnitud_min", "magnitud_max", "pais", "subregion", "modo"})
+
+MODOS = ("live", "replay")
 
 LIMITE_DEFECTO = 100
 LIMITE_MAXIMO = 500
@@ -50,6 +53,8 @@ class Filtros:
     pais: str | None = None
     subregion: str | None = None
     incluir_sinteticos: bool = False
+    # Solo selecciona la tabla (diccionario cerrado en `consultas.TABLAS`); nunca entra en el WHERE.
+    modo: str = "live"
 
 
 def valores_unicos(pares: Iterable[tuple[str, str]], permitidos: frozenset[str]) -> dict[str, str]:
@@ -104,7 +109,10 @@ def leer_filtros(valores: dict[str, str]) -> Filtros:
     sinteticos = valores.get("incluir_sinteticos", "false")
     if sinteticos not in ("true", "false"):
         raise FiltroInvalido("incluir_sinteticos")
-    return Filtros(desde, hasta, magnitud_min, magnitud_max, pais, subregion, sinteticos == "true")
+    modo = valores.get("modo", "live")
+    if modo not in MODOS:
+        raise FiltroInvalido("modo")
+    return Filtros(desde, hasta, magnitud_min, magnitud_max, pais, subregion, sinteticos == "true", modo)
 
 
 def leer_paginacion(valores: dict[str, str]) -> tuple[int, int]:
@@ -123,19 +131,21 @@ def leer_paginacion(valores: dict[str, str]) -> tuple[int, int]:
     return limite, desplazamiento
 
 
-def leer_ventana(filtros: Filtros, ahora: datetime) -> Filtros:
+def leer_ventana(filtros: Filtros, ahora: datetime, ancla: datetime | None = None) -> Filtros:
     """Fija `desde`/`hasta` para los recuentos por hora (sin ninguno: últimas 24 h; máximo 31 días).
 
-    Solo `desde` llega hasta `ahora`; solo `hasta` retrocede 24 h.
+    Solo `desde` llega hasta el final por defecto; solo `hasta` retrocede 24 h. El final por defecto
+    es `ahora`, o `ancla` si se da (replay: el último `ocurrencia`, porque sus eventos no son de hoy).
     """
     desde, hasta = filtros.desde, filtros.hasta
+    fin = ancla if ancla is not None else ahora
     if desde is None and hasta is None:
-        hasta = ahora
-        desde = ahora - VENTANA_DEFECTO
+        hasta = fin
+        desde = fin - VENTANA_DEFECTO
     elif desde is None:
         desde = hasta - VENTANA_DEFECTO
     elif hasta is None:
-        hasta = ahora
+        hasta = fin
     if not desde < hasta:
         raise FiltroInvalido("desde")
     if hasta - desde > VENTANA_MAXIMA:

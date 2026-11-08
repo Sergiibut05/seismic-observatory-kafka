@@ -1,0 +1,73 @@
+<section class="vista" aria-label="Origen de los datos">
+  <div class="vista__controles">
+    <fieldset class="vista__modo">
+      <legend>Datos</legend>
+      <div class="vista__opciones">
+        <span class="vista__opcion">
+          <input
+            id="vista-modo-live"
+            type="radio"
+            name="vista-modo"
+            value="live"
+            [checked]="!esReplay()"
+            (change)="elegirModo('live')"
+          />
+          <label for="vista-modo-live">En directo</label>
+        </span>
+        <span class="vista__opcion vista__opcion--replay">
+          <input
+            id="vista-modo-replay"
+            type="radio"
+            name="vista-modo"
+            value="replay"
+            [checked]="esReplay()"
+            (change)="elegirModo('replay')"
+          />
+          <label for="vista-modo-replay">REPRODUCCIÓN</label>
+        </span>
+      </div>
+    </fieldset>
+
+    <div class="vista__sinteticos">
+      <input
+        id="vista-sinteticos"
+        class="vista__interruptor"
+        type="checkbox"
+        role="switch"
+        [checked]="sinteticos()"
+        aria-describedby="vista-sinteticos-ayuda"
+        (change)="alternarSinteticos($event)"
+      />
+      <label for="vista-sinteticos">Incluir casos de prueba sintéticos</label>
+      <span class="vista__ayuda" id="vista-sinteticos-ayuda">
+        Apagado por defecto: así solo se ven eventos reales. La comparación histórica nunca los usa.
+      </span>
+    </div>
+  </div>
+
+  @if (esReplay()) {
+    <div class="franja franja--replay" role="status">
+      <div class="franja__interior">
+        <strong class="franja__titulo">
+          <span aria-hidden="true">⟲ </span>REPRODUCCIÓN
+        </strong>
+        <span class="franja__texto">
+          Estos no son datos en directo: son eventos ya recibidos que se vuelven a publicar.
+          «Ocurrencia» es el tiempo original; «Reproducido» es cuándo se reprodujeron. La comparación
+          histórica solo existe en directo.
+        </span>
+      </div>
+    </div>
+  }
+
+  @if (sinteticos()) {
+    <div class="franja franja--sinteticos" role="status">
+      <div class="franja__interior">
+        <span class="franja__texto">
+          <strong><span aria-hidden="true">⚠ </span>Casos de prueba sintéticos incluidos:</strong> no son
+          terremotos reales; llevan la marca «SINTÉTICO».
+        </span>
+      </div>
+    </div>
+  }
+</section>

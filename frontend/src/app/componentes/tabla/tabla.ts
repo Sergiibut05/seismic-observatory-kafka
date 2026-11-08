@@ -23,6 +23,8 @@ export class Tabla {
   protected readonly bloque = this.datos.tabla;
   protected readonly respuesta = computed(() => this.bloque().datos);
   protected readonly eventos = computed(() => this.respuesta()?.eventos ?? []);
+  /** La columna de reproducción sale de lo que dice la respuesta, no de lo que se acaba de elegir. */
+  protected readonly esReplay = computed(() => this.respuesta()?.modo === 'replay');
   protected readonly antiguos = computed(() => bloqueConDatosAntiguos(this.bloque()));
   protected readonly etiquetaAntiguos = computed(() =>
     etiquetaDatosAntiguos(this.bloque().lecturaOk),

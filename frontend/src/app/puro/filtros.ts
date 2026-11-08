@@ -41,6 +41,27 @@ export type ResultadoValidacion =
 
 export type ModoQuery = 'completo' | 'comparacion' | 'hora';
 
+/** Origen de los datos: `live` (en directo) o `replay` (REPRODUCCIÓN). Parámetro `modo` de la API 0.3.0. */
+export type ModoDatos = 'live' | 'replay';
+
+/** Lo que elige la persona fuera de los filtros: de dónde salen los datos y si entran los sintéticos. */
+export interface VistaDatos {
+  modo: ModoDatos;
+  sinteticos: boolean;
+}
+
+export const VISTA_VIVO: VistaDatos = { modo: 'live', sinteticos: false };
+
+/** Texto de la nota de «Filtros» sobre qué eventos se muestran, según la vista. */
+export function notaOrigenDatos(vista: VistaDatos): string {
+  const sinteticos = 'Se incluyen casos de prueba sintéticos, marcados como «SINTÉTICO».';
+  if (vista.modo === 'replay') {
+    const base = 'Datos de REPRODUCCIÓN: eventos ya recibidos que se vuelven a publicar; no son datos en directo.';
+    return vista.sinteticos ? `${base} ${sinteticos}` : base;
+  }
+  return vista.sinteticos ? sinteticos : 'Solo se muestran eventos reales.';
+}
+
 const FECHA = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?Z?$/;
 const NUMERO = /^-?\d{1,2}(?:[.,]\d{1,4})?$/;
 const PAIS = /^[A-Z]{3}$/;
@@ -146,7 +167,9 @@ export function acotarVentanaHora(f: FiltrosAplicados, ahoraMs: number): Ventana
 }
 
 /**
- * Serializa los filtros al contrato. Nunca emite `incluir_sinteticos`.
+ * Serializa los filtros al contrato. Con la vista por defecto (en directo, sin sintéticos) la
+ * query es la de 0.2.0. `modo=replay` e `incluir_sinteticos=true` solo salen si la vista los pide
+ * y **nunca** en la comparación (que solo existe en directo y ignora los sintéticos).
  * `extra` (p. ej. `limite`, `desplazamiento`) va al final.
  */
 export function aQuery(
@@ -154,6 +177,7 @@ export function aQuery(
   modo: ModoQuery,
   extra: Record<string, string | number> = {},
   ahoraMs: number = Date.now(),
+  vista: VistaDatos = VISTA_VIVO,
 ): string {
   const f = modo === 'hora' ? acotarVentanaHora(filtros, ahoraMs).filtros : filtros;
   const p = new URLSearchParams();
@@ -165,6 +189,10 @@ export function aQuery(
   if (f.magnitudMax !== undefined) p.set('magnitud_max', String(f.magnitudMax));
   if (f.pais) p.set('pais', f.pais);
   if (f.subregion) p.set('subregion', f.subregion);
+  if (modo !== 'comparacion') {
+    if (vista.modo === 'replay') p.set('modo', 'replay');
+    if (vista.sinteticos) p.set('incluir_sinteticos', 'true');
+  }
   for (const [clave, valor] of Object.entries(extra)) p.set(clave, String(valor));
   return p.toString();
 }

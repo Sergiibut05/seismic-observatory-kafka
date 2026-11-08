@@ -1,0 +1,2 @@
+HTTP 400
+{"error":"parametro_invalido","parametro":"modo"}

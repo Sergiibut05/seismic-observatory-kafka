@@ -1,0 +1,166 @@
+:host {
+  display: block;
+}
+
+/* Barra de controles: mismo ancho y márgenes que la rejilla del panel. */
+.vista__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--e-3) var(--e-8);
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: var(--e-3) var(--e-4) 0;
+}
+
+/* ── Selector «Datos»: dos opciones como un control segmentado ────── */
+.vista__modo {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.vista__modo legend {
+  padding: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.vista__opciones {
+  display: inline-flex;
+  margin-top: var(--e-1);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  overflow: hidden;
+}
+.vista__opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: 2.5rem;
+  padding: var(--e-1) var(--e-4);
+  color: var(--acento);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.vista__opcion + .vista__opcion {
+  border-left: 1px solid var(--linea-fuerte);
+}
+/* El radio nativo se ve y se enfoca como cualquiera: la opción elegida se resalta entera. */
+.vista__opcion input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: currentColor;
+  cursor: pointer;
+}
+.vista__opcion label {
+  cursor: pointer;
+}
+/* La etiqueta cubre toda la opción: se puede pulsar en cualquier punto. */
+.vista__opcion label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.vista__opcion:has(input:checked) {
+  background: var(--acento);
+  color: var(--sobre-acento);
+}
+.vista__opcion--replay:has(input:checked) {
+  background: var(--atencion-texto);
+  color: var(--atencion-fondo);
+}
+.vista__opcion:has(input:focus-visible) {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}
+/* ── Interruptor de casos sintéticos ──────────────────────────────── */
+.vista__sinteticos {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--e-1) var(--e-2);
+  min-width: 0;
+  max-width: 34rem;
+}
+.vista__sinteticos label {
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.vista__ayuda {
+  grid-column: 2;
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.vista__interruptor {
+  appearance: none;
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  margin: 0;
+  border: 2px solid var(--linea-fuerte);
+  border-radius: 999px;
+  background: var(--superficie);
+  cursor: pointer;
+}
+.vista__interruptor::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--linea-fuerte);
+  transition: transform 0.12s ease-out;
+}
+.vista__interruptor:checked {
+  border-color: var(--atencion-borde);
+  background: var(--atencion-fondo);
+}
+.vista__interruptor:checked::before {
+  transform: translateX(1.25rem);
+  background: var(--atencion-borde);
+}
+
+/* ── Franjas ──────────────────────────────────────────────────────── */
+.franja {
+  margin-top: var(--e-3);
+  color: var(--atencion-texto);
+  background: var(--atencion-fondo);
+}
+.franja__interior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--e-1) var(--e-4);
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding: var(--e-2) var(--e-4);
+}
+.franja__texto {
+  flex: 1 1 24rem;
+  min-width: 0;
+  font-size: var(--t-sm);
+}
+
+/*
+ * REPRODUCCIÓN: banda a todo el ancho con doble filete discontinuo y un título grande en
+ * mayúsculas. No depende solo del color: el borde discontinuo y el texto la identifican.
+ */
+.franja--replay {
+  border-block: 3px dashed var(--atencion-borde);
+}
+.franja__titulo {
+  font-size: var(--t-lg);
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+}
+
+/* Aviso de sintéticos: más discreto, solo un filete superior. */
+.franja--sinteticos {
+  border-block: 1px solid var(--atencion-borde);
+}

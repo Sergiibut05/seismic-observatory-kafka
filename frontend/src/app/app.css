@@ -30,6 +30,13 @@
   color: var(--sobre-oscuro-suave);
 }
 
+/* En REPRODUCCIÓN la cabecera fija lo recuerda aunque la franja ya haya salido de la pantalla. */
+.cabecera__marca .cabecera__replay {
+  color: var(--foco-sobre-oscuro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .rejilla {
   display: grid;
   gap: var(--e-4);

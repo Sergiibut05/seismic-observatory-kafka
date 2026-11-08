@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { formatearInstanteUtc } from '../../puro/formato';
 import {
@@ -16,7 +17,10 @@ import { AvisoBloque } from '../grafico-barras/aviso-bloque';
   styleUrl: './comparacion.css',
 })
 export class Comparacion {
+  private readonly store = inject(FiltrosStore);
   protected readonly bloque = inject(PanelDatosService).comparacion;
+  /** En REPRODUCCIÓN no se pide la comparación: solo existe con datos en directo. */
+  protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');
 
   protected readonly datos = computed(() => this.bloque().datos);
   protected readonly cifras = computed(() => {

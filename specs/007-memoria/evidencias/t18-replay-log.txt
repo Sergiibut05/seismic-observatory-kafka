@@ -1,0 +1,2 @@
+consumer result=omitido event_id=us6000pjr6 updated=1742247237040 reason=duplicado etiqueta=REPRODUCCIÓN
+consumer result=omitido event_id=us6000pjr6 updated=1742247297040 reason=duplicado etiqueta=REPRODUCCIÓN

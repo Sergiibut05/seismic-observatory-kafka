@@ -18,11 +18,12 @@ const evento = (n: number, extra: Partial<EventoTabla> = {}): EventoTabla => ({
   pais_nombre: 'México',
   subregion: 'América Central',
   sintetico: false,
+  reproducido_en: null,
   ...extra,
 });
 
 function respuesta(eventos: EventoTabla[], total: number, desplazamiento = 0): RespuestaEventos {
-  return { eventos, total, limite: 50, desplazamiento };
+  return { modo: 'live', eventos, total, limite: 50, desplazamiento };
 }
 
 function montar(r: RespuestaEventos) {
@@ -94,6 +95,74 @@ describe('Tabla', () => {
     fixture.detectChanges();
     expect(el.querySelector('.aviso')?.textContent).toContain('desactualizados');
     expect(el.querySelectorAll('tbody tr').length).toBe(1);
+  });
+
+  describe('REPRODUCCIÓN y sintéticos (007)', () => {
+    const cabeceras = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll('thead th')).map((th) => th.textContent?.trim());
+
+    it('en directo no hay columna «Reproducido (UTC)»', () => {
+      const { el } = montar(respuesta([evento(1)], 1));
+      expect(cabeceras(el)).not.toContain('Reproducido (UTC)');
+      expect(cabeceras(el)[0]).toBe('Ocurrencia (UTC)');
+    });
+
+    it('en replay hay columna «Reproducido (UTC)» con el tiempo de reproducción y el original aparte', () => {
+      const r: RespuestaEventos = {
+        ...respuesta([evento(1, { reproducido_en: '2026-11-08T13:00:05.000Z' })], 1),
+        modo: 'replay',
+      };
+      const { el } = montar(r);
+      const cab = cabeceras(el);
+      expect(cab).toContain('Reproducido (UTC)');
+      expect(cab[0]).toBe('Ocurrencia original (UTC)');
+      const idx = cab.indexOf('Reproducido (UTC)');
+      const celdas = el.querySelectorAll('tbody tr:first-child > *');
+      expect(celdas[idx].textContent).toContain('08/11/2026 13:00:05 UTC');
+      expect(celdas[0].textContent).toContain('02/11/2026 10:00:00 UTC');
+      // Una celda por cabecera: la columna no descuadra la tabla.
+      expect(celdas.length).toBe(cab.length);
+    });
+
+    it('en replay, un `reproducido_en` nulo se muestra «ND», nunca otra hora', () => {
+      const r: RespuestaEventos = { ...respuesta([evento(1, { reproducido_en: null })], 1), modo: 'replay' };
+      const { el } = montar(r);
+      expect(el.querySelector('td.tabla__reproducido')?.textContent?.trim()).toBe('ND');
+      expect(el.querySelector('td.tabla__reproducido')?.classList.contains('nd')).toBe(true);
+    });
+
+    it('la columna sigue a los datos recibidos: con datos en directo no aparece aunque se elija replay', () => {
+      const { el, store } = montar(respuesta([evento(1)], 1));
+      store.fijarModo('replay');
+      expect(cabeceras(el)).not.toContain('Reproducido (UTC)');
+    });
+
+    it('un evento sintético lleva la insignia «SINTÉTICO» en su fila; uno real no', () => {
+      const { el } = montar(
+        respuesta([evento(1, { event_id: 'synthetic-caso-nuevo', sintetico: true }), evento(2)], 2),
+      );
+      const filas = el.querySelectorAll('tbody tr');
+      expect(filas[0].querySelector('.insignia-sintetico')?.textContent?.trim()).toBe('SINTÉTICO');
+      expect(filas[0].querySelector('th')?.textContent).toContain('SINTÉTICO');
+      expect(filas[1].querySelector('.insignia-sintetico')).toBeNull();
+      expect(el.querySelectorAll('.insignia-sintetico').length).toBe(1);
+    });
+
+    it('sintético con magnitud nula: «SINTÉTICO» y «ND» a la vez, sin 0', () => {
+      const { el } = montar(
+        respuesta([evento(1, { event_id: 'synthetic-caso-magnitud-nula', sintetico: true, magnitud: null })], 1),
+      );
+      expect(el.querySelector('.insignia-sintetico')).not.toBeNull();
+      const celdas = Array.from(el.querySelectorAll('tbody td.num')).map((c) => c.textContent?.trim());
+      expect(celdas[0]).toBe('ND');
+      expect(celdas[0]).not.toBe('0,0');
+    });
+
+    it('sin eventos sintéticos en la respuesta no hay ninguna insignia (interruptor apagado)', () => {
+      const { el } = montar(respuesta([evento(1), evento(2)], 2));
+      expect(el.querySelector('.insignia-sintetico')).toBeNull();
+      expect(el.textContent).not.toContain('SINTÉTICO');
+    });
   });
 
   it('sin eventos lo dice, sin tabla vacía', () => {

@@ -1,0 +1,6 @@
+live_reales_final=480
+live_total_final=485
+live_sinteticos_final=5
+versiones_evento_final=544
+cuarentena_final=11
+replay_final=40

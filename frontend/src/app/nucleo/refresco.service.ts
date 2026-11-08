@@ -1,14 +1,14 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { ColaRefresco } from '../puro/cola-refresco';
-import { FiltrosAplicados } from '../puro/filtros';
+import { FiltrosAplicados, VistaDatos } from '../puro/filtros';
 import { FiltrosStore } from './filtros.store';
 import { PanelDatosService } from './panel-datos.service';
 
 /**
  * Orquesta el refresco (FR-010): una ronda al arrancar y cada 60 s, una ronda por cambio
- * de filtros aplicados, pausa con la pestaña oculta y ronda inmediata al volver.
- * La paginación de la tabla solo recarga la tabla.
+ * de filtros aplicados o de vista (en directo/REPRODUCCIÓN, sintéticos), pausa con la pestaña
+ * oculta y ronda inmediata al volver. La paginación de la tabla solo recarga la tabla.
  */
 @Injectable({ providedIn: 'root' })
 export class RefrescoService {
@@ -19,14 +19,22 @@ export class RefrescoService {
   private readonly activo = signal(false);
   private readonly cola = new ColaRefresco(() => this.datos.rondaCompleta());
   private anteriores: FiltrosAplicados | undefined;
+  private vistaAnterior: VistaDatos | undefined;
 
   constructor() {
     effect(() => {
       if (!this.activo()) return;
       const aplicados = this.store.aplicados();
+      const vista = this.store.vista();
       this.store.pagina();
       untracked(() => {
-        if (aplicados !== this.anteriores) {
+        const cambioVista = this.vistaAnterior !== undefined && vista !== this.vistaAnterior;
+        this.vistaAnterior = vista;
+        if (cambioVista) {
+          // Otro conjunto de datos: los selectores de país y subregión también cambian.
+          void this.datos.cargarOpciones();
+        }
+        if (aplicados !== this.anteriores || cambioVista) {
           this.anteriores = aplicados;
           this.cola.pedir();
         } else {

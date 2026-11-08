@@ -33,18 +33,73 @@ def test_toda_constante_sql_es_select(nombre):
     assert ";" not in sentencia, nombre
 
 
-@pytest.mark.parametrize("nombre", sorted(CONSTANTES))
-def test_las_constantes_no_leen_replay(nombre):
-    assert "replay." not in CONSTANTES[nombre]
+# Las plantillas leen replay solo a través de `{tabla}` (diccionario cerrado); únicamente las
+# consultas explícitas de existencia, recuento y ancla de replay nombran la tabla.
+REPLAY_EXPLICITAS = {"SQL_REPLAY_EXISTE", "SQL_REPLAY_RECUENTO", "SQL_REPLAY_ULTIMA_OCURRENCIA"}
 
+
+@pytest.mark.parametrize("nombre", sorted(CONSTANTES))
+def test_las_constantes_solo_leen_replay_por_la_plantilla_o_de_forma_explicita(nombre):
+    if nombre in REPLAY_EXPLICITAS:
+        assert "replay.evento_actual" in CONSTANTES[nombre]
+    else:
+        assert "replay." not in CONSTANTES[nombre]
+
+
+def test_las_consultas_de_replay_existen():
+    assert REPLAY_EXPLICITAS <= set(CONSTANTES)
+    assert "to_regclass" in consultas.SQL_REPLAY_EXISTE
+    assert "count(*)" in consultas.SQL_REPLAY_RECUENTO
+    assert "max(ocurrencia)" in consultas.SQL_REPLAY_ULTIMA_OCURRENCIA
 
 def test_el_where_completo_tampoco_escribe():
     f = Filtros(pais="USA", subregion="x", magnitud_min=1.0, magnitud_max=2.0, incluir_sinteticos=True)
     donde, _ = construir_where(f)
-    for nombre, plantilla in CONSTANTES.items():
-        sentencia = consultas.con_where(plantilla, donde)
-        assert re.match(r"^(SELECT|WITH)\b", sentencia) and not PROHIBIDAS.search(sentencia), nombre
-        assert "{where}" not in sentencia
+    for modo in ("live", "replay"):
+        for nombre, plantilla in CONSTANTES.items():
+            sentencia = consultas.con_where(plantilla, donde, modo)
+            assert re.match(r"^(SELECT|WITH)\b", sentencia) and not PROHIBIDAS.search(sentencia), nombre
+            assert "{where}" not in sentencia and "{tabla}" not in sentencia
+
+
+PLANTILLAS_CON_TABLA = [
+    "SQL_TOTAL", "SQL_LISTA", "SQL_MAPA", "SQL_RECUENTO_PAIS", "SQL_RECUENTO_SUBREGION",
+    "SQL_RECUENTO_HORA", "SQL_DISTRIBUCION_MAGNITUD", "SQL_DISTRIBUCION_PROFUNDIDAD",
+]
+
+
+@pytest.mark.parametrize("nombre", PLANTILLAS_CON_TABLA)
+def test_la_plantilla_apunta_a_live_o_a_replay_segun_el_modo(nombre):
+    plantilla = CONSTANTES[nombre]
+    assert "{tabla}" in plantilla
+    en_live = consultas.con_where(plantilla, " WHERE NOT sintetico", "live")
+    en_replay = consultas.con_where(plantilla, " WHERE NOT sintetico", "replay")
+    assert "live.evento_actual" in en_live and "replay." not in en_live
+    assert "replay.evento_actual" in en_replay and "live.evento_actual" not in en_replay
+
+
+def test_el_modo_por_defecto_es_live():
+    assert "live.evento_actual" in consultas.con_where(consultas.SQL_TOTAL, "")
+
+
+@pytest.mark.parametrize("modo", ["otro", "", "LIVE", "live; DROP TABLE x", None])
+def test_un_modo_ajeno_a_las_tablas_lanza_key_error(modo):
+    with pytest.raises(KeyError):
+        consultas.con_where(consultas.SQL_TOTAL, "", modo)
+
+
+def test_las_tablas_son_un_diccionario_cerrado():
+    assert consultas.TABLAS == {"live": "live.evento_actual", "replay": "replay.evento_actual"}
+
+
+def test_el_historico_no_usa_la_plantilla_de_tabla():
+    sentencia = consultas.con_where(consultas.SQL_HISTORICO_RECUENTO, " WHERE magnitud >= %s", "live")
+    assert "historico.evento_2025" in sentencia
+
+
+def test_lista_y_mapa_traen_la_ingesta_como_ultima_columna():
+    assert "e.ingested_at FROM" in consultas.SQL_LISTA
+    assert "sintetico, ingested_at FROM" in consultas.SQL_MAPA
 
 
 def test_los_marcadores_coinciden_con_los_parametros():

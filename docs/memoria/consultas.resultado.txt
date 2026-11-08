@@ -1,0 +1,657 @@
+Null display is "(nulo)".
+Timing is off.
+== instante de la ejecución ==
+       ejecutado_utc        |                                        postgresql                                        
+----------------------------+------------------------------------------------------------------------------------------
+ 2026-11-08 14:23:23.191544 | PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+
+
+== Q01 · columnas por tabla (live, replay, ingesta, historico); la última fila es el total ==
+  esquema  |      tabla       | columnas 
+-----------+------------------+----------
+ historico | evento_2025      |       10
+ historico |                  |       10
+ ingesta   | consultas        |       12
+ ingesta   | cuarentena       |        9
+ ingesta   | exclusiones      |        6
+ ingesta   | pais             |        4
+ ingesta   | publicadas       |        3
+ ingesta   | version_esquema  |        3
+ ingesta   |                  |       37
+ live      | evento_actual    |       14
+ live      | versiones_evento |       12
+ live      |                  |       26
+ replay    | evento_actual    |       14
+ replay    | versiones_evento |       12
+ replay    |                  |       26
+ TOTAL     |                  |       99
+
+
+== Q02 · definición de cada columna (tipo, nulabilidad, valor por defecto) ==
+  esquema  |      tabla       | n  |    columna     |           tipo           | admite_nulo |    por_defecto    
+-----------+------------------+----+----------------+--------------------------+-------------+-------------------
+ historico | evento_2025      |  1 | event_id       | text                     | NO          | (nulo)
+ historico | evento_2025      |  2 | updated        | timestamp with time zone | NO          | (nulo)
+ historico | evento_2025      |  3 | ocurrencia     | timestamp with time zone | NO          | (nulo)
+ historico | evento_2025      |  4 | magnitud       | double precision         | YES         | (nulo)
+ historico | evento_2025      |  5 | profundidad    | double precision         | YES         | (nulo)
+ historico | evento_2025      |  6 | longitud       | double precision         | NO          | (nulo)
+ historico | evento_2025      |  7 | latitud        | double precision         | NO          | (nulo)
+ historico | evento_2025      |  8 | pais_codigo    | text                     | YES         | (nulo)
+ historico | evento_2025      |  9 | pais_nombre    | text                     | NO          | (nulo)
+ historico | evento_2025      | 10 | cargado_en     | timestamp with time zone | NO          | clock_timestamp()
+ ingesta   | consultas        |  1 | id             | bigint                   | NO          | (nulo)
+ ingesta   | consultas        |  2 | url            | text                     | NO          | (nulo)
+ ingesta   | consultas        |  3 | acabada_en     | timestamp with time zone | NO          | clock_timestamp()
+ ingesta   | consultas        |  4 | http_status    | integer                  | YES         | (nulo)
+ ingesta   | consultas        |  5 | bytes          | integer                  | YES         | (nulo)
+ ingesta   | consultas        |  6 | sha256         | text                     | YES         | (nulo)
+ ingesta   | consultas        |  7 | features       | integer                  | YES         | (nulo)
+ ingesta   | consultas        |  8 | publicados     | integer                  | YES         | (nulo)
+ ingesta   | consultas        |  9 | omitidos       | integer                  | YES         | (nulo)
+ ingesta   | consultas        | 10 | excluidos      | integer                  | YES         | (nulo)
+ ingesta   | consultas        | 11 | copia_nueva    | boolean                  | YES         | (nulo)
+ ingesta   | consultas        | 12 | error          | text                     | YES         | (nulo)
+ ingesta   | cuarentena       |  1 | id             | bigint                   | NO          | (nulo)
+ ingesta   | cuarentena       |  2 | motivo         | text                     | NO          | (nulo)
+ ingesta   | cuarentena       |  3 | detalle        | text                     | YES         | (nulo)
+ ingesta   | cuarentena       |  4 | topic          | text                     | NO          | (nulo)
+ ingesta   | cuarentena       |  5 | particion      | integer                  | NO          | (nulo)
+ ingesta   | cuarentena       |  6 | offset_kafka   | bigint                   | NO          | (nulo)
+ ingesta   | cuarentena       |  7 | clave          | bytea                    | YES         | (nulo)
+ ingesta   | cuarentena       |  8 | original       | bytea                    | YES         | (nulo)
+ ingesta   | cuarentena       |  9 | recibido_en    | timestamp with time zone | NO          | clock_timestamp()
+ ingesta   | exclusiones      |  1 | id             | bigint                   | NO          | (nulo)
+ ingesta   | exclusiones      |  2 | consulta_id    | bigint                   | YES         | (nulo)
+ ingesta   | exclusiones      |  3 | event_id       | text                     | YES         | (nulo)
+ ingesta   | exclusiones      |  4 | tipo           | text                     | YES         | (nulo)
+ ingesta   | exclusiones      |  5 | motivo         | text                     | NO          | (nulo)
+ ingesta   | exclusiones      |  6 | visto_en       | timestamp with time zone | NO          | clock_timestamp()
+ ingesta   | pais             |  1 | codigo         | text                     | NO          | (nulo)
+ ingesta   | pais             |  2 | nombre         | text                     | NO          | (nulo)
+ ingesta   | pais             |  3 | continente     | text                     | YES         | (nulo)
+ ingesta   | pais             |  4 | subregion      | text                     | YES         | (nulo)
+ ingesta   | publicadas       |  1 | event_id       | text                     | NO          | (nulo)
+ ingesta   | publicadas       |  2 | updated_ms     | bigint                   | NO          | (nulo)
+ ingesta   | publicadas       |  3 | publicada_en   | timestamp with time zone | NO          | clock_timestamp()
+ ingesta   | version_esquema  |  1 | version        | integer                  | NO          | (nulo)
+ ingesta   | version_esquema  |  2 | nombre         | text                     | NO          | (nulo)
+ ingesta   | version_esquema  |  3 | aplicada_en    | timestamp with time zone | NO          | clock_timestamp()
+ live      | evento_actual    |  1 | event_id       | text                     | NO          | (nulo)
+ live      | evento_actual    |  2 | updated        | timestamp with time zone | NO          | (nulo)
+ live      | evento_actual    |  3 | ocurrencia     | timestamp with time zone | NO          | (nulo)
+ live      | evento_actual    |  4 | magnitud       | double precision         | YES         | (nulo)
+ live      | evento_actual    |  5 | profundidad    | double precision         | YES         | (nulo)
+ live      | evento_actual    |  6 | longitud       | double precision         | NO          | (nulo)
+ live      | evento_actual    |  7 | latitud        | double precision         | NO          | (nulo)
+ live      | evento_actual    |  8 | pais_codigo    | text                     | YES         | (nulo)
+ live      | evento_actual    |  9 | pais_nombre    | text                     | NO          | (nulo)
+ live      | evento_actual    | 10 | source         | text                     | NO          | (nulo)
+ live      | evento_actual    | 11 | mode           | text                     | NO          | 'live'::text
+ live      | evento_actual    | 12 | sintetico      | boolean                  | NO          | (nulo)
+ live      | evento_actual    | 13 | ingested_at    | timestamp with time zone | NO          | (nulo)
+ live      | evento_actual    | 14 | processed_at   | timestamp with time zone | NO          | clock_timestamp()
+ live      | versiones_evento |  1 | event_id       | text                     | NO          | (nulo)
+ live      | versiones_evento |  2 | updated        | timestamp with time zone | NO          | (nulo)
+ live      | versiones_evento |  3 | schema_version | smallint                 | NO          | (nulo)
+ live      | versiones_evento |  4 | source         | text                     | NO          | (nulo)
+ live      | versiones_evento |  5 | mode           | text                     | NO          | 'live'::text
+ live      | versiones_evento |  6 | sintetico      | boolean                  | NO          | (nulo)
+ live      | versiones_evento |  7 | ingested_at    | timestamp with time zone | NO          | (nulo)
+ live      | versiones_evento |  8 | processed_at   | timestamp with time zone | NO          | clock_timestamp()
+ live      | versiones_evento |  9 | topic          | text                     | NO          | (nulo)
+ live      | versiones_evento | 10 | particion      | integer                  | NO          | (nulo)
+ live      | versiones_evento | 11 | offset_kafka   | bigint                   | NO          | (nulo)
+ live      | versiones_evento | 12 | original       | jsonb                    | NO          | (nulo)
+ replay    | evento_actual    |  1 | event_id       | text                     | NO          | (nulo)
+ replay    | evento_actual    |  2 | updated        | timestamp with time zone | NO          | (nulo)
+ replay    | evento_actual    |  3 | ocurrencia     | timestamp with time zone | NO          | (nulo)
+ replay    | evento_actual    |  4 | magnitud       | double precision         | YES         | (nulo)
+ replay    | evento_actual    |  5 | profundidad    | double precision         | YES         | (nulo)
+ replay    | evento_actual    |  6 | longitud       | double precision         | NO          | (nulo)
+ replay    | evento_actual    |  7 | latitud        | double precision         | NO          | (nulo)
+ replay    | evento_actual    |  8 | pais_codigo    | text                     | YES         | (nulo)
+ replay    | evento_actual    |  9 | pais_nombre    | text                     | NO          | (nulo)
+ replay    | evento_actual    | 10 | source         | text                     | NO          | (nulo)
+ replay    | evento_actual    | 11 | mode           | text                     | NO          | 'replay'::text
+ replay    | evento_actual    | 12 | sintetico      | boolean                  | NO          | (nulo)
+ replay    | evento_actual    | 13 | ingested_at    | timestamp with time zone | NO          | (nulo)
+ replay    | evento_actual    | 14 | processed_at   | timestamp with time zone | NO          | clock_timestamp()
+ replay    | versiones_evento |  1 | event_id       | text                     | NO          | (nulo)
+ replay    | versiones_evento |  2 | updated        | timestamp with time zone | NO          | (nulo)
+ replay    | versiones_evento |  3 | schema_version | smallint                 | NO          | (nulo)
+ replay    | versiones_evento |  4 | source         | text                     | NO          | (nulo)
+ replay    | versiones_evento |  5 | mode           | text                     | NO          | 'replay'::text
+ replay    | versiones_evento |  6 | sintetico      | boolean                  | NO          | (nulo)
+ replay    | versiones_evento |  7 | ingested_at    | timestamp with time zone | NO          | (nulo)
+ replay    | versiones_evento |  8 | processed_at   | timestamp with time zone | NO          | clock_timestamp()
+ replay    | versiones_evento |  9 | topic          | text                     | NO          | (nulo)
+ replay    | versiones_evento | 10 | particion      | integer                  | NO          | (nulo)
+ replay    | versiones_evento | 11 | offset_kafka   | bigint                   | NO          | (nulo)
+ replay    | versiones_evento | 12 | original       | jsonb                    | NO          | (nulo)
+
+
+== Q03 · live y replay tienen las mismas columnas, tipos y nulabilidad (0 y 0 = idénticas) ==
+ columnas_solo_en_live | columnas_solo_en_replay | columnas_en_live 
+-----------------------+-------------------------+------------------
+                     0 |                       0 |               26
+
+
+== Q04a · restricciones (PK, FK, CHECK, UNIQUE) ==
+          tabla          |             restriccion              | tipo |                                                                     definicion                                                                     
+-------------------------+--------------------------------------+------+----------------------------------------------------------------------------------------------------------------------------------------------------
+ historico.evento_2025   | evento_2025_event_id_check           | c    | CHECK ((event_id <> ''::text))
+ historico.evento_2025   | evento_2025_ocurrencia_en_2025       | c    | CHECK (((ocurrencia >= '2025-01-01 00:00:00+00'::timestamp with time zone) AND (ocurrencia < '2026-01-01 00:00:00+00'::timestamp with time zone)))
+ historico.evento_2025   | evento_2025_pais_fk                  | f    | FOREIGN KEY (pais_codigo) REFERENCES ingesta.pais(codigo)
+ historico.evento_2025   | evento_2025_pk                       | p    | PRIMARY KEY (event_id)
+ ingesta.consultas       | consultas_pkey                       | p    | PRIMARY KEY (id)
+ ingesta.cuarentena      | cuarentena_pkey                      | p    | PRIMARY KEY (id)
+ ingesta.cuarentena      | cuarentena_posicion_uk               | u    | UNIQUE (topic, particion, offset_kafka)
+ ingesta.exclusiones     | exclusiones_pkey                     | p    | PRIMARY KEY (id)
+ ingesta.pais            | pais_codigo_check                    | c    | CHECK ((codigo <> ''::text))
+ ingesta.pais            | pais_pkey                            | p    | PRIMARY KEY (codigo)
+ ingesta.publicadas      | publicadas_event_id_check            | c    | CHECK ((event_id <> ''::text))
+ ingesta.publicadas      | publicadas_pkey                      | p    | PRIMARY KEY (event_id, updated_ms)
+ ingesta.publicadas      | publicadas_updated_ms_check          | c    | CHECK ((updated_ms >= 0))
+ ingesta.version_esquema | version_esquema_pkey                 | p    | PRIMARY KEY (version)
+ ingesta.version_esquema | version_esquema_version_check        | c    | CHECK ((version > 0))
+ live.evento_actual      | evento_actual_event_id_check         | c    | CHECK ((event_id <> ''::text))
+ live.evento_actual      | evento_actual_mode_check             | c    | CHECK ((mode = 'live'::text))
+ live.evento_actual      | evento_actual_pais_fk                | f    | FOREIGN KEY (pais_codigo) REFERENCES ingesta.pais(codigo)
+ live.evento_actual      | evento_actual_pk                     | p    | PRIMARY KEY (event_id)
+ live.evento_actual      | evento_actual_sintetico_coherente    | c    | CHECK (((sintetico = (source ~~ 'synthetic-%'::text)) AND (sintetico = (event_id ~~ 'synthetic-%'::text))))
+ live.versiones_evento   | versiones_evento_event_id_check      | c    | CHECK ((event_id <> ''::text))
+ live.versiones_evento   | versiones_evento_mode_check          | c    | CHECK ((mode = 'live'::text))
+ live.versiones_evento   | versiones_evento_pk                  | p    | PRIMARY KEY (event_id, updated)
+ live.versiones_evento   | versiones_evento_sintetico_coherente | c    | CHECK (((sintetico = (source ~~ 'synthetic-%'::text)) AND (sintetico = (event_id ~~ 'synthetic-%'::text))))
+ replay.evento_actual    | evento_actual_event_id_check         | c    | CHECK ((event_id <> ''::text))
+ replay.evento_actual    | evento_actual_mode_check             | c    | CHECK ((mode = 'replay'::text))
+ replay.evento_actual    | evento_replay_pais_fk                | f    | FOREIGN KEY (pais_codigo) REFERENCES ingesta.pais(codigo)
+ replay.evento_actual    | evento_replay_pk                     | p    | PRIMARY KEY (event_id)
+ replay.evento_actual    | evento_replay_sintetico_coherente    | c    | CHECK (((sintetico = (source ~~ 'synthetic-%'::text)) AND (sintetico = (event_id ~~ 'synthetic-%'::text))))
+ replay.versiones_evento | versiones_evento_event_id_check      | c    | CHECK ((event_id <> ''::text))
+ replay.versiones_evento | versiones_evento_mode_check          | c    | CHECK ((mode = 'replay'::text))
+ replay.versiones_evento | versiones_replay_pk                  | p    | PRIMARY KEY (event_id, updated)
+ replay.versiones_evento | versiones_replay_sintetico_coherente | c    | CHECK (((sintetico = (source ~~ 'synthetic-%'::text)) AND (sintetico = (event_id ~~ 'synthetic-%'::text))))
+
+
+== Q04b · índices ==
+          tabla          |              indice               |                                                  definicion                                                   
+-------------------------+-----------------------------------+---------------------------------------------------------------------------------------------------------------
+ historico.evento_2025   | evento_2025_pk                    | CREATE UNIQUE INDEX evento_2025_pk ON historico.evento_2025 USING btree (event_id)
+ ingesta.consultas       | consultas_pkey                    | CREATE UNIQUE INDEX consultas_pkey ON ingesta.consultas USING btree (id)
+ ingesta.cuarentena      | cuarentena_pkey                   | CREATE UNIQUE INDEX cuarentena_pkey ON ingesta.cuarentena USING btree (id)
+ ingesta.cuarentena      | cuarentena_posicion_uk            | CREATE UNIQUE INDEX cuarentena_posicion_uk ON ingesta.cuarentena USING btree (topic, particion, offset_kafka)
+ ingesta.exclusiones     | exclusiones_pkey                  | CREATE UNIQUE INDEX exclusiones_pkey ON ingesta.exclusiones USING btree (id)
+ ingesta.pais            | pais_pkey                         | CREATE UNIQUE INDEX pais_pkey ON ingesta.pais USING btree (codigo)
+ ingesta.publicadas      | publicadas_pkey                   | CREATE UNIQUE INDEX publicadas_pkey ON ingesta.publicadas USING btree (event_id, updated_ms)
+ ingesta.version_esquema | version_esquema_pkey              | CREATE UNIQUE INDEX version_esquema_pkey ON ingesta.version_esquema USING btree (version)
+ live.evento_actual      | evento_actual_ocurrencia_idx      | CREATE INDEX evento_actual_ocurrencia_idx ON live.evento_actual USING btree (ocurrencia DESC, event_id)
+ live.evento_actual      | evento_actual_pais_ocurrencia_idx | CREATE INDEX evento_actual_pais_ocurrencia_idx ON live.evento_actual USING btree (pais_nombre, ocurrencia)
+ live.evento_actual      | evento_actual_pk                  | CREATE UNIQUE INDEX evento_actual_pk ON live.evento_actual USING btree (event_id)
+ live.versiones_evento   | versiones_evento_pk               | CREATE UNIQUE INDEX versiones_evento_pk ON live.versiones_evento USING btree (event_id, updated)
+ live.versiones_evento   | versiones_evento_processed_at_idx | CREATE INDEX versiones_evento_processed_at_idx ON live.versiones_evento USING btree (processed_at DESC)
+ replay.evento_actual    | evento_replay_pais_ocurrencia_idx | CREATE INDEX evento_replay_pais_ocurrencia_idx ON replay.evento_actual USING btree (pais_nombre, ocurrencia)
+ replay.evento_actual    | evento_replay_pk                  | CREATE UNIQUE INDEX evento_replay_pk ON replay.evento_actual USING btree (event_id)
+ replay.versiones_evento | versiones_replay_pk               | CREATE UNIQUE INDEX versiones_replay_pk ON replay.versiones_evento USING btree (event_id, updated)
+
+
+== Q04c · cuántas veces se ha usado cada índice desde que PostgreSQL acumula estadísticas ==
+          tabla          |              indice               | usos | bytes_indice 
+-------------------------+-----------------------------------+------+--------------
+ historico.evento_2025   | evento_2025_pk                    |   18 |       868352
+ ingesta.consultas       | consultas_pkey                    |   31 |        16384
+ ingesta.cuarentena      | cuarentena_pkey                   |    0 |        16384
+ ingesta.cuarentena      | cuarentena_posicion_uk            |    3 |        16384
+ ingesta.exclusiones     | exclusiones_pkey                  |    0 |         8192
+ ingesta.pais            | pais_pkey                         |  902 |        32768
+ ingesta.publicadas      | publicadas_pkey                   |  240 |        49152
+ ingesta.version_esquema | version_esquema_pkey              |   23 |        16384
+ live.evento_actual      | evento_actual_ocurrencia_idx      |  190 |        49152
+ live.evento_actual      | evento_actual_pais_ocurrencia_idx |    0 |        49152
+ live.evento_actual      | evento_actual_pk                  | 1675 |        40960
+ live.versiones_evento   | versiones_evento_pk               |  390 |        49152
+ live.versiones_evento   | versiones_evento_processed_at_idx |    7 |        40960
+ replay.evento_actual    | evento_replay_pais_ocurrencia_idx |    0 |        16384
+ replay.evento_actual    | evento_replay_pk                  |  123 |        16384
+ replay.versiones_evento | versiones_replay_pk               |    0 |        16384
+
+
+== Q05 · tamaño de cada tabla (pg_total_relation_size) ==
+          tabla          | bytes_tabla | bytes_indices | bytes_total 
+-------------------------+-------------+---------------+-------------
+ historico.evento_2025   |     2383872 |        868352 |     3293184
+ live.versiones_evento   |      630784 |         90112 |      753664
+ live.evento_actual      |       73728 |        139264 |      245760
+ ingesta.pais            |       40960 |         32768 |      114688
+ ingesta.publicadas      |       32768 |         49152 |      114688
+ ingesta.consultas       |       49152 |         16384 |       98304
+ replay.versiones_evento |       49152 |         16384 |       98304
+ ingesta.cuarentena      |        8192 |         32768 |       49152
+ replay.evento_actual    |        8192 |         32768 |       49152
+ ingesta.version_esquema |        8192 |         16384 |       32768
+ ingesta.exclusiones     |           0 |          8192 |       16384
+
+
+== Q05b · tamaño total de la base de datos (tablas, índices, catálogo del sistema y WAL de la base) ==
+ bytes_base | bytes_tablas_de_q05 
+------------+---------------------
+   13113011 |             4866048
+
+
+== Q06 · filas por tabla (en live y replay, separadas reales y sintéticas) ==
+                         tabla                          | filas | reales | sinteticas 
+--------------------------------------------------------+-------+--------+------------
+ live.evento_actual                                     |   484 |    479 |          5
+ live.versiones_evento                                  |   533 |    526 |          7
+ replay.evento_actual                                   |    40 |     40 |          0
+ replay.versiones_evento                                |    41 |     41 |          0
+ historico.evento_2025                                  | 18302 |  18302 |          0
+ ingesta.pais                                           |   242 |    242 |          0
+ ingesta.consultas                                      |   192 |    192 |          0
+ ingesta.publicadas                                     |   526 |    526 |          0
+ ingesta.exclusiones                                    |     0 |      0 |          0
+ ingesta.cuarentena (todas)                             |     8 |      0 |          1
+ ingesta.cuarentena: pruebas dañadas de 001 sin prefijo |     7 |      0 |          0
+ ingesta.version_esquema                                |     5 |      5 |          0
+
+
+== Q07 · resumen de ingesta.consultas (feed USGS all_day) ==
+ consultas |           primera            |            ultima            | http_200 | http_otro | con_error | copias_nuevas | pct_copia_nueva | bytes_recibidos | bytes_medios | features_recibidas | publicados | omitidos | excluidos 
+-----------+------------------------------+------------------------------+----------+-----------+-----------+---------------+-----------------+-----------------+--------------+--------------------+------------+----------+-----------
+       192 | 2026-11-02 14:45:30.49313+00 | 2026-11-08 14:22:32.23737+00 |      192 |         0 |         0 |           187 |            97.4 |        32268356 |       168064 |              45041 |        526 |    44515 |         0
+
+
+== Q08 · consultas por estado HTTP y error ==
+ http_status | error  | consultas 
+-------------+--------+-----------
+         200 | (nulo) |       192
+
+
+== Q09a · huecos entre consultas de más de 10 minutos ==
+ consulta_id |     ultima_consulta_antes     |   primera_consulta_despues    |         hueco          
+-------------+-------------------------------+-------------------------------+------------------------
+         178 | 2026-11-02 17:11:26.842068+00 | 2026-11-08 13:40:45.543645+00 | 5 days 20:29:18.701577
+
+
+== Q09b · cobertura de consultas por día UTC (1.440 esperadas con una por minuto) ==
+    dia     | consultas | pct_de_1440 
+------------+-----------+-------------
+ 2026-11-02 |       148 |        10.3
+ 2026-11-03 |         0 |         0.0
+ 2026-11-04 |         0 |         0.0
+ 2026-11-05 |         0 |         0.0
+ 2026-11-06 |         0 |         0.0
+ 2026-11-07 |         0 |         0.0
+ 2026-11-08 |        44 |         3.1
+
+
+== Q10 · terremotos reales del estado actual por día de ocurrencia (UTC) ==
+    dia     | eventos_reales 
+------------+----------------
+ 2026-11-01 |             78
+ 2026-11-02 |            191
+ 2026-11-03 |              0
+ 2026-11-04 |              0
+ 2026-11-05 |              0
+ 2026-11-06 |              0
+ 2026-11-07 |             87
+ 2026-11-08 |            123
+
+
+== Q10b · saltos de más de una hora entre ocurrencias consecutivas de terremotos reales (el hueco de datos) ==
+ ultima_ocurrencia_antes  | primera_ocurrencia_despues |       salto        
+--------------------------+----------------------------+--------------------
+ 2026-11-02 17:05:05.8+00 | 2026-11-07 14:01:40.58+00  | 4 days 20:56:34.78
+
+
+== Q11 · histórico 2025: filas frente a las 18.302 del manifiesto ==
+ filas | ids_distintos | eventos_en_manifest | coincide |    primera_ocurrencia     |     ultima_ocurrencia      |         cargado_desde         |         cargado_hasta         
+-------+---------------+---------------------+----------+---------------------------+----------------------------+-------------------------------+-------------------------------
+ 18302 |         18302 |               18302 | t        | 2025-01-01 00:13:22.65+00 | 2025-12-31 23:52:11.327+00 | 2026-11-02 15:57:43.076669+00 | 2026-11-02 15:57:45.419804+00
+
+
+== Q12 · cada versión con acuse (ingesta.publicadas) tiene su versión persistida y al revés ==
+ publicadas_reales | versiones_reales | publicadas_sin_persistir | persistidas_sin_acuse 
+-------------------+------------------+--------------------------+-----------------------
+               526 |              526 |                        0 |                     0
+
+
+== Q13 · frecuencia del feed: intervalo entre consultas y fracción con copia nueva ==
+ intervalos | mediana_s | p95_s | maximo_s 
+------------+-----------+-------+----------
+        190 |      60.2 |  60.2 |    105.0
+
+
+== Q14 · replay: eventos reproducidos y sus tiempos original y de reproducción ==
+ eventos | versiones |    ocurrencia_primera     |     ocurrencia_ultima      |     reproducido_desde      |     reproducido_hasta      
+---------+-----------+---------------------------+----------------------------+----------------------------+----------------------------
+      40 |        41 | 2025-01-01 00:13:22.65+00 | 2025-01-01 15:08:00.601+00 | 2026-11-02 15:22:27.349+00 | 2026-11-02 15:22:35.432+00
+
+
+== Q15 · COMPLETITUD, antes: disponibilidad de cada campo en el GeoJSON original (versiones reales) ==
+                 campo                 | con_valor | total | pct_disponible 
+---------------------------------------+-----------+-------+----------------
+ code                                  |       526 |   526 |         100.00
+ detail                                |       526 |   526 |         100.00
+ dmin                                  |       526 |   526 |         100.00
+ gap                                   |       526 |   526 |         100.00
+ geometry.coordinates[2] (profundidad) |       526 |   526 |         100.00
+ ids                                   |       526 |   526 |         100.00
+ mag                                   |       526 |   526 |         100.00
+ magType                               |       526 |   526 |         100.00
+ net                                   |       526 |   526 |         100.00
+ nst                                   |       526 |   526 |         100.00
+ place                                 |       526 |   526 |         100.00
+ rms                                   |       526 |   526 |         100.00
+ sig                                   |       526 |   526 |         100.00
+ sources                               |       526 |   526 |         100.00
+ status                                |       526 |   526 |         100.00
+ time                                  |       526 |   526 |         100.00
+ title                                 |       526 |   526 |         100.00
+ tsunami                               |       526 |   526 |         100.00
+ type                                  |       526 |   526 |         100.00
+ types                                 |       526 |   526 |         100.00
+ updated                               |       526 |   526 |         100.00
+ url                                   |       526 |   526 |         100.00
+ cdi                                   |        41 |   526 |           7.79
+ felt                                  |        41 |   526 |           7.79
+ mmi                                   |        12 |   526 |           2.28
+ alert                                 |         2 |   526 |           0.38
+ tz                                    |         0 |   526 |           0.00
+
+
+== Q15b · COMPLETITUD: ejemplos de eventos reales con campos opcionales presentes (solo viven en `original`) ==
+  event_id  |          updated           | mag |  felt  |  cdi   | mmi | alert 
+------------+----------------------------+-----+--------+--------+-----+-------
+ us7000twt0 | 2026-11-08 11:51:01.383+00 | 5.5 | 71     | 5.6    | 6.2 | green
+ us7000twun | 2026-11-08 06:08:04.072+00 | 5.8 | (nulo) | (nulo) | 0   | green
+
+
+== Q16 · COMPLETITUD, después: nulos de magnitud, profundidad y país en las tablas de estado ==
+             tabla             | filas | magnitud_nula | profundidad_nula | sin_pais | pct_sin_pais 
+-------------------------------+-------+---------------+------------------+----------+--------------
+ live.evento_actual (reales)   |   479 |             0 |                0 |       97 |        20.25
+ replay.evento_actual (reales) |    40 |             0 |                0 |       26 |        65.00
+ historico.evento_2025         | 18302 |             0 |                0 |    14338 |        78.34
+
+
+== Q17a · UNICIDAD: versiones y eventos duplicados en las tablas de destino (esperado: iguales) ==
+ versiones | versiones_distintas | eventos_con_version | eventos_en_estado_actual | eventos_distintos | historico_filas | historico_ids_distintos 
+-----------+---------------------+---------------------+--------------------------+-------------------+-----------------+-------------------------
+       526 |                 526 |                 479 |                      479 |               479 |           18302 |                   18302
+
+
+== Q17b · UNICIDAD, antes: repetición del feed (cada respuesta trae toda la ventana de 24 h) ==
+ features_recibidas | publicadas | omitidas_ya_publicadas | versiones_persistidas | features_por_version_publicada 
+--------------------+------------+------------------------+-----------------------+--------------------------------
+              45041 |        526 |                  44515 |                   526 |                           85.6
+
+
+== Q18a · revisiones: eventos por número de versiones guardadas (reales) ==
+ n_versiones | eventos 
+-------------+---------
+           1 |     453
+           2 |      15
+           3 |       5
+           4 |       3
+           5 |       2
+           6 |       1
+
+
+== Q18b · revisiones: ejemplo de un evento con varias versiones (qué cambió) ==
+  event_id  |          updated           | magnitud | mag_type |  estado   |                       coordenadas                       
+------------+----------------------------+----------+----------+-----------+---------------------------------------------------------
+ ci41570848 | 2026-11-01 15:50:12.85+00  | 1.82     | ml       | automatic | [-116.4605, 33.5033333333333, 5.59]
+ ci41570848 | 2026-11-02 14:46:20.062+00 | 1.82     | ml       | reviewed  | [-116.4605, 33.5033333333333, 5.59]
+ ci41570848 | 2026-11-02 14:47:40.76+00  | 1.82     | ml       | reviewed  | [-116.4605, 33.5033333333333, 5.59]
+ ci41570848 | 2026-11-02 14:49:11.081+00 | 1.82     | ml       | reviewed  | [-116.4605, 33.5033333333333, 5.59]
+ ci41570848 | 2026-11-02 14:49:46.4+00   | 1.82     | ml       | reviewed  | [-116.4605, 33.5033333333333, 5.59]
+ nc75461397 | 2026-11-02 15:16:26.005+00 | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+ nc75461397 | 2026-11-02 15:19:32.655+00 | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+ nc75461397 | 2026-11-02 15:21:28.53+00  | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+ nc75461397 | 2026-11-02 15:27:20.148+00 | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+ nc75461397 | 2026-11-02 15:34:59.679+00 | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+ nc75461397 | 2026-11-02 15:37:22.204+00 | 2.71     | md       | automatic | [-122.810333251953, 38.8219985961914, 2.78999996185303]
+
+
+== Q19a · VALIDEZ, antes: forma del original (geometría, tipos de fecha y tipo de evento) ==
+ versiones | geometria_no_point | time_no_numerico | updated_no_numerico | tipo_no_terremoto 
+-----------+--------------------+------------------+---------------------+-------------------
+       526 |                  0 |                0 |                   0 |                 0
+
+
+== Q19b · VALIDEZ, después: coordenadas, fechas y rangos en el estado actual ==
+            tabla            | filas | coordenadas_fuera_de_rango | coordenadas_no_finitas | ocurrencia_futura | updated_anterior_a_ocurrencia | magnitud_negativa | profundidad_negativa 
+-----------------------------+-------+----------------------------+------------------------+-------------------+-------------------------------+-------------------+----------------------
+ live.evento_actual (reales) |   479 |                          0 |                      0 |                 0 |                             0 |                 1 |                    6
+ historico.evento_2025       | 18302 |                          0 |                      0 |                 0 |                             0 |                 0 |                    0
+
+
+== Q19c · VALIDEZ: ejemplos de valores negativos que se conservan (no son error) ==
+         caso         |  event_id  | magnitud |    profundidad     |           place            
+----------------------+------------+----------+--------------------+----------------------------
+ profundidad negativa | ci41571064 |     0.97 |               -0.9 | 1 km WNW of Mentone, CA
+ profundidad negativa | hv75068467 |     2.89 | -0.829999983310699 | 22 km W of Volcano, Hawaii
+ magnitud negativa    | ci41571072 |    -0.03 |               6.34 | 4 km WSW of Anza, CA
+
+
+== Q20 · VALIDEZ, antes: ingesta.cuarentena por motivo y por origen ==
+                            origen                             |            motivo            | registros |   desde    |   hasta    
+---------------------------------------------------------------+------------------------------+-----------+------------+------------
+ caso sintético 007 (prefijo synthetic-)                       | coordenadas_fuera_de_rango   |         1 | 2026-11-08 | 2026-11-08
+ prueba dañada de 001 (claves k1, otra, us2, us3; sin prefijo) | clave_distinta_de_id         |         2 | 2026-11-02 | 2026-11-02
+ prueba dañada de 001 (claves k1, otra, us2, us3; sin prefijo) | json_ilegible                |         2 | 2026-11-02 | 2026-11-02
+ prueba dañada de 001 (claves k1, otra, us2, us3; sin prefijo) | mode_no_corresponde_al_topic |         2 | 2026-11-02 | 2026-11-02
+ prueba dañada de 001 (claves k1, otra, us2, us3; sin prefijo) | schema_version_no_soportada  |         1 | 2026-11-02 | 2026-11-02
+
+
+== Q21 · CONSISTENCIA: claves geográficas y nombres frente al catálogo (esperado 0) ==
+            tabla            | filas | codigo_y_nombre_incoherentes | codigo_sin_catalogo | nombre_distinto_del_catalogo 
+-----------------------------+-------+------------------------------+---------------------+------------------------------
+ live.evento_actual (reales) |   479 |                            0 |                   0 |                            0
+ historico.evento_2025       | 18302 |                            0 |                   0 |                            0
+
+
+== Q22 · CONSISTENCIA: el estado actual es la última versión de cada evento (esperado 0) ==
+ eventos | actual_no_es_la_ultima_version | updated_anterior_a_ocurrencia | eventos_con_revisiones 
+---------+--------------------------------+-------------------------------+------------------------
+     479 |                              0 |                             0 |                     26
+
+
+== Q23 · ACTUALIDAD: retrasos de la primera versión de cada evento real (segundos) ==
+                         grupo                          | eventos | usgs_updated_menos_ocurrencia_mediana_s | usgs_updated_menos_ocurrencia_p95_s | ingesta_menos_updated_mediana_s | ingesta_menos_updated_p95_s | pipeline_mediana_s | pipeline_p95_s | pipeline_maximo_s 
+--------------------------------------------------------+---------+-----------------------------------------+-------------------------------------+---------------------------------+-----------------------------+--------------------+----------------+-------------------
+ ciclos posteriores (sistema en marcha)                 |      43 |                                     163 |                               63487 |                            47.3 |                        76.7 |              0.178 |          0.232 |             0.338
+ primer ciclo de cada sesión (arrastra el feed de 24 h) |     436 |                                     213 |                               35059 |                         32498.9 |                     77928.7 |              3.014 |          5.954 |             6.142
+ todas                                                  |     479 |                                     212 |                               37401 |                         28289.6 |                     77279.7 |              2.767 |          5.934 |             6.142
+
+
+== Q24 · ACTUALIDAD: antigüedad de la última consulta correcta y del último evento persistido ==
+         ahora_utc          |      ultima_consulta_ok      | edad_ultima_consulta |    ultimo_evento_real     |   ultima_persistencia_real    
+----------------------------+------------------------------+----------------------+---------------------------+-------------------------------
+ 2026-11-08 14:23:23.268767 | 2026-11-08 14:22:32.23737+00 | 00:00:51.031397      | 2026-11-08 14:17:34.83+00 | 2026-11-08 14:21:32.101229+00
+
+
+== Q25a · EXACTITUD: terremotos sin país asignado, en directo frente a histórico ==
+           fuente            | eventos | sin_pais | pct_sin_pais 
+-----------------------------+---------+----------+--------------
+ live.evento_actual (reales) |     479 |       97 |        20.25
+ historico.evento_2025       |   18302 |    14338 |        78.34
+
+
+== Q25b · EXACTITUD: sin país por intervalo de magnitud en el histórico ==
+ magnitud | eventos | sin_pais | pct_sin_pais 
+----------+---------+----------+--------------
+ >= 6     |     145 |      121 |         83.4
+ [4, 5)   |   16173 |    12540 |         77.5
+ [5, 6)   |    1984 |     1677 |         84.5
+
+
+== Q25b2 · EXACTITUD: muestras equivalentes (magnitud >= 4): sin país en directo frente a histórico ==
+                   fuente                   | eventos | sin_pais | pct_sin_pais 
+--------------------------------------------+---------+----------+--------------
+ live.evento_actual (reales), magnitud >= 4 |      55 |       42 |        76.36
+ historico.evento_2025, magnitud >= 4       |   18302 |    14338 |        78.34
+
+
+== Q25c · EXACTITUD: ejemplos reales sin país y la descripción original (`place`) ==
+   event_id    | magnitud |     longitud      |     latitud      |                        place                        
+---------------+----------+-------------------+------------------+-----------------------------------------------------
+ hv75068517    |      1.9 | -155.341506958008 | 18.9651660919189 | 27 km ESE of Naalehu, Hawaii
+ aka2026wdkwpw |      1.5 |          -152.298 |            60.29 | 43 km NW of Ninilchik, Alaska
+ hv75068487    |      1.9 | -155.491333007812 | 19.1158332824707 | 9 km S of Pāhala, Hawaii
+ pr71538818    |      3.4 | -65.1911666666667 |          19.4585 | 126 km NNW of Charlotte Amalie, U.S. Virgin Islands
+ us7000twxn    |      4.7 |            64.443 |         -27.6901 | Southwest Indian Ridge
+
+
+== Q25d · EXACTITUD: tipos de magnitud (magType) en los eventos reales en directo ==
+ mag_type | eventos | pct  
+----------+---------+------
+ ml       |     261 | 54.5
+ md       |     163 | 34.0
+ mb       |      51 | 10.6
+ mww      |       2 |  0.4
+ mlr      |       1 |  0.2
+ mwr      |       1 |  0.2
+
+
+== Q26 · transformaciones y registros afectados (datos reales) ==
+ n  |                              transformacion                              |      donde       | registros 
+----+--------------------------------------------------------------------------+------------------+-----------
+  1 | ms epoch → timestamptz UTC (ocurrencia y updated)                        | consumidor       |       526
+  2 | país asignado por punto en polígono (ADM0_A3)                            | consumidor       |       382
+  3 | «Sin país asignado» conservado (ni error ni país más cercano)            | consumidor       |        97
+  4 | magnitud nula conservada como NULL (no se rellena con 0)                 | consumidor       |         0
+  5 | profundidad nula conservada como NULL                                    | consumidor       |         0
+  6 | excluido por type distinto de earthquake (motivo en ingesta.exclusiones) | productor        |         0
+  7 | versión ya publicada omitida (misma (id, updated))                       | productor        |     44515
+  8 | versión anterior conservada en el historial sin ser el estado actual     | consumidor       |        47
+  9 | registro a cuarentena con motivo (solo feed real)                        | consumidor       |         0
+ 10 | histórico: filas cargadas (rechazadas = 18.302 − filas)                  | historico_cargar |     18302
+
+
+== Q27 · lista paginada del estado actual en directo (usa evento_actual_ocurrencia_idx si compensa) ==
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.27..12.35 rows=100 width=78) (actual time=0.015..0.044 rows=100 loops=1)
+   Buffers: shared hit=71
+   ->  Index Scan using evento_actual_ocurrencia_idx on evento_actual  (cost=0.27..57.77 rows=476 width=78) (actual time=0.014..0.039 rows=100 loops=1)
+         Filter: (NOT sintetico)
+         Rows Removed by Filter: 5
+         Buffers: shared hit=71
+ Planning Time: 0.032 ms
+ Execution Time: 0.059 ms
+
+
+== Q28 · la misma consulta sin poder usar el índice (enable_indexscan y enable_bitmapscan = off, solo esta sesión) ==
+SET
+SET
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=31.97..32.22 rows=100 width=78) (actual time=0.219..0.227 rows=100 loops=1)
+   Buffers: shared hit=9
+   ->  Sort  (cost=31.97..33.16 rows=476 width=78) (actual time=0.219..0.222 rows=100 loops=1)
+         Sort Key: ocurrencia DESC, event_id
+         Sort Method: top-N heapsort  Memory: 51kB
+         Buffers: shared hit=9
+         ->  Seq Scan on evento_actual  (cost=0.00..13.78 rows=476 width=78) (actual time=0.006..0.074 rows=479 loops=1)
+               Filter: (NOT sintetico)
+               Rows Removed by Filter: 5
+               Buffers: shared hit=9
+ Planning Time: 0.052 ms
+ Execution Time: 0.245 ms
+
+RESET
+RESET
+
+== Q29 · búsqueda por clave primaria (event_id) en el estado actual y en el histórico ==
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using evento_actual_pk on evento_actual  (cost=0.27..8.29 rows=1 width=105) (actual time=0.006..0.006 rows=1 loops=1)
+   Index Cond: (event_id = 'aka2026vqqvkp'::text)
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.071 ms
+ Execution Time: 0.013 ms
+
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Index Scan using evento_2025_pk on evento_2025  (cost=0.29..8.30 rows=1 width=87) (actual time=0.020..0.021 rows=1 loops=1)
+   Index Cond: (event_id = 'us6000pjr6'::text)
+   Buffers: shared hit=3
+ Planning Time: 0.026 ms
+ Execution Time: 0.034 ms
+
+
+== Q30 · recuento por país y ventana en directo (índice (pais_nombre, ocurrencia)) y comparación histórica ==
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=19.17..19.29 rows=48 width=27) (actual time=0.129..0.130 rows=13 loops=1)
+   Sort Key: (count(*)) DESC, pais_nombre
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=9
+   ->  HashAggregate  (cost=17.35..17.83 rows=48 width=27) (actual time=0.115..0.117 rows=13 loops=1)
+         Group Key: pais_codigo, pais_nombre
+         Batches: 1  Memory Usage: 24kB
+         Buffers: shared hit=9
+         ->  Seq Scan on evento_actual  (cost=0.00..13.78 rows=476 width=19) (actual time=0.005..0.045 rows=479 loops=1)
+               Filter: (NOT sintetico)
+               Rows Removed by Filter: 5
+               Buffers: shared hit=9
+ Planning:
+   Buffers: shared hit=2
+ Planning Time: 0.080 ms
+ Execution Time: 0.150 ms
+
+                                                   QUERY PLAN                                                    
+-----------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=566.41..566.42 rows=1 width=8) (actual time=1.610..1.611 rows=1 loops=1)
+   Buffers: shared hit=291
+   ->  Seq Scan on evento_2025  (cost=0.00..565.53 rows=354 width=0) (actual time=0.008..1.593 rows=354 loops=1)
+         Filter: ((magnitud >= '4'::double precision) AND (pais_nombre = 'Chile'::text))
+         Rows Removed by Filter: 17948
+         Buffers: shared hit=291
+ Planning Time: 0.072 ms
+ Execution Time: 1.621 ms
+
+
+== Q30b · plan de «último evento procesado» de /status y de la lista filtrada por país ==
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=16.17..16.17 rows=1 width=33) (actual time=0.095..0.096 rows=1 loops=1)
+   Buffers: shared hit=9
+   ->  Sort  (cost=16.17..17.37 rows=478 width=33) (actual time=0.095..0.095 rows=1 loops=1)
+         Sort Key: processed_at DESC
+         Sort Method: top-N heapsort  Memory: 25kB
+         Buffers: shared hit=9
+         ->  Seq Scan on evento_actual  (cost=0.00..13.78 rows=478 width=33) (actual time=0.003..0.049 rows=484 loops=1)
+               Buffers: shared hit=9
+ Planning Time: 0.023 ms
+ Execution Time: 0.105 ms
+
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.27..16.99 rows=100 width=27) (actual time=0.016..0.052 rows=100 loops=1)
+   Buffers: shared hit=96
+   ->  Index Scan using evento_actual_ocurrencia_idx on evento_actual  (cost=0.27..58.97 rows=351 width=27) (actual time=0.016..0.047 rows=100 loops=1)
+         Filter: ((NOT sintetico) AND (pais_codigo = 'USA'::text))
+         Rows Removed by Filter: 44
+         Buffers: shared hit=96
+ Planning Time: 0.032 ms
+ Execution Time: 0.066 ms
+
+
+== Q31 · esquemas de la base: tras las mediciones no debe quedar `medicion` ==
+        List of schemas
+   Name    |       Owner       
+-----------+-------------------
+ historico | observatorio
+ ingesta   | observatorio
+ live      | observatorio
+ public    | pg_database_owner
+ replay    | observatorio
+
+
+== fin ==

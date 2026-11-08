@@ -81,11 +81,23 @@ def comparar(eventos_24h: int, eventos_2025: int | None, cargado: bool) -> tuple
     }, cociente
 
 
-def geojson_mapa(filas: Sequence[tuple], total: int, limite: int, generado: datetime) -> dict:
+def reproducido_en(ingested_at: datetime | None, modo: str) -> str | None:
+    """Tiempo de reproducción: `ingested_at` solo en replay; en live es la ingesta y se informa `None`."""
+    if modo != "replay" or ingested_at is None:
+        return None
+    return iso_utc(ingested_at)
+
+
+def geojson_mapa(
+    filas: Sequence[tuple], total: int, limite: int, generado: datetime, modo: str = "live"
+) -> dict:
     """`FeatureCollection` para Leaflet; `[lon, lat]`; `truncado` si hay más eventos que el tope.
 
-    `filas` = `(event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_nombre, sintetico)`.
+    `filas` = `(event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_nombre,
+    sintetico, ingested_at)`.
     """
+    if modo not in ("live", "replay"):
+        raise ValueError("modo")
     features = [
         {
             "type": "Feature",
@@ -98,16 +110,19 @@ def geojson_mapa(filas: Sequence[tuple], total: int, limite: int, generado: date
                 "profundidad": profundidad,
                 "pais_nombre": pais_nombre,
                 "sintetico": bool(sintetico),
+                "reproducido_en": reproducido_en(ingested_at, modo),
             },
         }
-        for event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_nombre, sintetico in filas[
-            :limite
-        ]
+        for (
+            event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud,
+            pais_nombre, sintetico, ingested_at,
+        ) in filas[:limite]
     ]
     # Dos consultas no son atómicas: el total nunca puede quedar por debajo de lo devuelto.
     total = max(total, len(features))
     return {
         "type": "FeatureCollection",
+        "modo": modo,
         "features": features,
         "total": total,
         "devueltos": len(features),

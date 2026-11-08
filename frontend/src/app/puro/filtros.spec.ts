@@ -3,8 +3,11 @@ import {
   FiltrosAplicados,
   FiltrosEditados,
   SIN_PAIS,
+  VISTA_VIVO,
+  VistaDatos,
   aQuery,
   acotarVentanaHora,
+  notaOrigenDatos,
   validarFiltros,
 } from './filtros';
 
@@ -156,6 +159,87 @@ describe('aQuery', () => {
     );
     expect(q.get('hasta')).toBe('2026-10-30T00:00:00.000Z');
     expect(q.get('desde')).toBe('2026-09-29T00:00:00.000Z');
+  });
+});
+
+describe('aQuery con vista (modo y sintéticos, 007)', () => {
+  const ahora = Date.parse('2026-11-02T12:00:00.000Z');
+  const replay: VistaDatos = { modo: 'replay', sinteticos: false };
+  const sinteticos: VistaDatos = { modo: 'live', sinteticos: true };
+  const ambos: VistaDatos = { modo: 'replay', sinteticos: true };
+  const f: FiltrosAplicados = { magnitudMin: 4, pais: 'CHL' };
+
+  it('la vista por defecto es en directo y sin sintéticos', () => {
+    expect(VISTA_VIVO).toEqual({ modo: 'live', sinteticos: false });
+  });
+
+  it('por defecto la query no cambia: ni `modo` ni `incluir_sinteticos`', () => {
+    for (const modo of ['completo', 'hora', 'comparacion'] as const) {
+      const sin = aQuery(f, modo, {}, ahora);
+      expect(aQuery(f, modo, {}, ahora, VISTA_VIVO)).toBe(sin);
+      expect(sin).not.toContain('modo');
+      expect(sin).not.toContain('sinteticos');
+    }
+    expect(aQuery({}, 'completo')).toBe('');
+  });
+
+  it('replay añade `modo=replay`', () => {
+    const q = new URLSearchParams(aQuery(f, 'completo', {}, ahora, replay));
+    expect(q.get('modo')).toBe('replay');
+    expect(q.has('incluir_sinteticos')).toBe(false);
+    expect(q.get('magnitud_min')).toBe('4');
+  });
+
+  it('sintéticos añade `incluir_sinteticos=true` y no `modo`', () => {
+    const q = new URLSearchParams(aQuery(f, 'completo', {}, ahora, sinteticos));
+    expect(q.get('incluir_sinteticos')).toBe('true');
+    expect(q.has('modo')).toBe(false);
+  });
+
+  it('también llega a la ventana horaria, con su acotado', () => {
+    const q = new URLSearchParams(
+      aQuery({ desde: '2026-08-01T00:00:00.000Z' }, 'hora', {}, ahora, ambos),
+    );
+    expect(q.get('modo')).toBe('replay');
+    expect(q.get('incluir_sinteticos')).toBe('true');
+    expect(q.get('desde')).toBe('2026-10-02T12:00:00.000Z');
+  });
+
+  it('la comparación no lleva ni `modo` ni `incluir_sinteticos`, sea cual sea la vista', () => {
+    for (const vista of [replay, sinteticos, ambos]) {
+      const q = new URLSearchParams(aQuery({ ...f, desde: '2026-11-01T00:00:00.000Z' }, 'comparacion', {}, ahora, vista));
+      expect([...q.keys()].sort()).toEqual(['magnitud_min', 'pais']);
+    }
+  });
+
+  it('la vista va antes de `extra` (la paginación sigue al final)', () => {
+    const q = aQuery({ magnitudMin: 2 }, 'completo', { limite: 50, desplazamiento: 0 }, ahora, ambos);
+    expect(q).toBe('magnitud_min=2&modo=replay&incluir_sinteticos=true&limite=50&desplazamiento=0');
+  });
+});
+
+describe('notaOrigenDatos', () => {
+  it('en directo sin sintéticos: solo eventos reales', () => {
+    expect(notaOrigenDatos(VISTA_VIVO)).toBe('Solo se muestran eventos reales.');
+  });
+
+  it('con sintéticos: lo dice y los marca', () => {
+    const t = notaOrigenDatos({ modo: 'live', sinteticos: true });
+    expect(t).toContain('casos de prueba sintéticos');
+    expect(t).not.toContain('Solo se muestran eventos reales');
+  });
+
+  it('en reproducción: no son datos en directo', () => {
+    const t = notaOrigenDatos({ modo: 'replay', sinteticos: false });
+    expect(t).toContain('REPRODUCCIÓN');
+    expect(t).toContain('no son datos en directo');
+    expect(t).not.toContain('sintéticos');
+  });
+
+  it('en reproducción con sintéticos: ambas cosas', () => {
+    const t = notaOrigenDatos({ modo: 'replay', sinteticos: true });
+    expect(t).toContain('REPRODUCCIÓN');
+    expect(t).toContain('sintéticos');
   });
 });
 

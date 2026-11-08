@@ -5,6 +5,7 @@ const estado = (parcial: Partial<EstadoApi> = {}): EstadoApi => ({
   base_de_datos: 'conectada',
   eventos_reales: 254,
   eventos_sinteticos: 0,
+  eventos_replay: 0,
   ultimo_evento: null,
   ultima_ingesta_correcta: '2026-11-02T16:03:28.431Z',
   periodo_consultado: null,

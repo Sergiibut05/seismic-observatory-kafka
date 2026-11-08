@@ -3,6 +3,9 @@
     <h2 id="titulo-mapa" class="bloque__titulo">Mapa de eventos</h2>
     <span class="bloque__nota">
       Usa todos los filtros.
+      @if (esReplay()) {
+        REPRODUCCIÓN: eventos reproducidos, no en directo.
+      }
       @if (respuesta()) {
         {{ devueltos() }} eventos dibujados.
       }
@@ -86,6 +89,12 @@
               <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
               <span>ND (borde discontinuo)</span>
             </li>
+            @if (sinteticos()) {
+              <li class="mapa-leyenda__sintetico">
+                <span class="mapa-leyenda__muestra mapa-leyenda__muestra--sintetico"></span>
+                <span>SINTÉTICO (contorno grueso discontinuo)</span>
+              </li>
+            }
           </ul>
         </div>
       </details>

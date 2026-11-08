@@ -1,0 +1,7 @@
+﻿# Recuentos inicio T18 (SQL)
+live_reales=480
+live_total=485
+live_sinteticos=5
+versiones_evento=537
+replay_evento_actual=40
+cuarentena=8

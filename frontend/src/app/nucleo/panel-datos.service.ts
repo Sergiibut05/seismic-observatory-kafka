@@ -77,44 +77,57 @@ export class PanelDatosService {
     calcularEstado(this.status().datos, this.status().error !== null),
   );
 
-  /** Una ronda: `/status` + 8 bloques de datos (9 GET). Resuelve cuando todos terminan. */
+  /**
+   * Una ronda: `/status` + 8 bloques de datos (9 GET). En REPRODUCCIÓN no se pide
+   * `/comparacion-historica` (solo existe en directo): 8 GET. Resuelve cuando todos terminan.
+   */
   rondaCompleta(): Promise<void> {
     const f = this.store.aplicados();
-    return Promise.all([
+    const vista = this.store.vista();
+    const q = (extra: Record<string, string | number> = {}) =>
+      aQuery(f, 'completo', extra, undefined, vista);
+    const tareas = [
       this.cargar('status', this.status, () => this.api.status()),
-      this.cargar('mapa', this.mapa, () => this.api.eventosMapa(aQuery(f, 'completo'))),
+      this.cargar('mapa', this.mapa, () => this.api.eventosMapa(q())),
       this.cargarTabla(),
-      this.cargar('porPais', this.porPais, () => this.api.recuentosPais(aQuery(f, 'completo'))),
-      this.cargar('porSubregion', this.porSubregion, () =>
-        this.api.recuentosSubregion(aQuery(f, 'completo')),
-      ),
+      this.cargar('porPais', this.porPais, () => this.api.recuentosPais(q())),
+      this.cargar('porSubregion', this.porSubregion, () => this.api.recuentosSubregion(q())),
       this.cargarHora(f),
-      this.cargar('distMagnitud', this.distMagnitud, () =>
-        this.api.distribucionMagnitud(aQuery(f, 'completo')),
-      ),
+      this.cargar('distMagnitud', this.distMagnitud, () => this.api.distribucionMagnitud(q())),
       this.cargar('distProfundidad', this.distProfundidad, () =>
-        this.api.distribucionProfundidad(aQuery(f, 'completo')),
+        this.api.distribucionProfundidad(q()),
       ),
-      this.cargar('comparacion', this.comparacion, () =>
-        this.api.comparacionHistorica(aQuery(f, 'comparacion')),
-      ),
-    ]).then(() => undefined);
+    ];
+    if (vista.modo === 'live') {
+      // La comparación solo usa magnitud y país/subregión; nunca lleva `modo` ni sintéticos.
+      tareas.push(
+        this.cargar('comparacion', this.comparacion, () =>
+          this.api.comparacionHistorica(aQuery(f, 'comparacion')),
+        ),
+      );
+    }
+    return Promise.all(tareas).then(() => undefined);
   }
 
   /** Solo la tabla (cambio de página). Cancela una petición de tabla anterior en vuelo. */
   cargarTabla(): Promise<void> {
     const f = this.store.aplicados();
     const { limite, desplazamiento } = this.store.pagina();
+    const vista = this.store.vista();
     return this.cargar('tabla', this.tabla, () =>
-      this.api.eventos(aQuery(f, 'completo', { limite, desplazamiento })),
+      this.api.eventos(aQuery(f, 'completo', { limite, desplazamiento }, undefined, vista)),
     );
   }
 
-  /** Opciones de país y subregión sin filtros (2 GET, una sola vez al arrancar). */
+  /**
+   * Opciones de país y subregión sin filtros (2 GET): al arrancar y cada vez que cambia la vista,
+   * porque los países con eventos de la reproducción no son los mismos que los de en directo.
+   */
   cargarOpciones(): Promise<void> {
+    const q = aQuery({}, 'completo', {}, undefined, this.store.vista());
     return Promise.all([
-      this.cargar('opcionesPais', this.opcionesPais, () => this.api.recuentosPais('')),
-      this.cargar('opcionesSubregion', this.opcionesSubregion, () => this.api.recuentosSubregion('')),
+      this.cargar('opcionesPais', this.opcionesPais, () => this.api.recuentosPais(q)),
+      this.cargar('opcionesSubregion', this.opcionesSubregion, () => this.api.recuentosSubregion(q)),
     ]).then(() => undefined);
   }
 
@@ -124,8 +137,9 @@ export class PanelDatosService {
     this.horaAcotada.set(
       acotada.acotado ? { desde: acotada.filtros.desde ?? '', hasta: acotada.filtros.hasta ?? '' } : null,
     );
+    const vista = this.store.vista();
     return this.cargar('porHora', this.porHora, () =>
-      this.api.recuentosHora(aQuery(f, 'hora', {}, ahora)),
+      this.api.recuentosHora(aQuery(f, 'hora', {}, ahora, vista)),
     );
   }
 
