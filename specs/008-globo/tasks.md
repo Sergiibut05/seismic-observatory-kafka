@@ -19,3 +19,23 @@
     `us7000twxf` (M 4,7, Chile), lo marca en amarillo y su pulso sale naranja.
   - `01-primer-intento-tierra-clara.png`: primera versión, descartada porque los anillos no se veían.
 - No comprobado en navegador: el aviso sin WebGL y el modo de movimiento reducido (solo por código).
+
+## T5 Optimización (08/11/2026)
+
+Medido en el Chromium del IDE, globo girando con 489 eventos (dev server, `devicePixelRatio` 1):
+
+| | fps | peor fotograma | bloqueado al abrir | llamadas de dibujo |
+|---|---|---|---|---|
+| Antes | 21 | 61 ms | 2644 ms | 4212 |
+| Después | 165 | 6 ms | 177 ms | ~600 |
+
+- El perfil de CPU señalaba `getParameters`/`getProgram` de three.js: un objeto 3D por cada parte de país
+  (tapa, lateral y borde), unas 3600 llamadas de dibujo por fotograma. Quitando solo los polígonos se pasaba
+  a 165 fps; anillos y puntos apenas influían.
+- La tierra y las fronteras se pintan una vez en una textura equirectangular de 4096 × 2048 (canvas 2D) y se
+  aplican al globo: una sola llamada de dibujo.
+- `public/datos/paises-globo.geojson` (241 kB, 16 701 vértices) sustituye al catálogo de 2,3 MB solo para
+  dibujar; se regenera con `npm run fronteras:globo`. La asignación de país no cambia.
+- Además: `pixelRatio` ≤ 1,5, animación en pausa si el globo sale de la vista o la pestaña se oculta, y
+  geometrías de puntos y anillos más ligeras.
+- Evidencia: `evidencias/04-globo-optimizado.png`.

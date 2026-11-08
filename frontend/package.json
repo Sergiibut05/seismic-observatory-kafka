@@ -10,6 +10,7 @@
     "ng": "ng",
     "catalogo:copiar": "node scripts/catalogo.mjs copiar",
     "catalogo:verificar": "node scripts/catalogo.mjs verificar",
+    "fronteras:globo": "node scripts/fronteras-globo.mjs",
     "prestart": "npm run catalogo:verificar",
     "start": "ng serve",
     "prebuild": "npm run catalogo:verificar",
