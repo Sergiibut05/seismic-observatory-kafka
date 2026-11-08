@@ -108,6 +108,6 @@ COMMIT
 - `git ls-files` no contiene `.env`; `git status` no muestra `.env`, `data/` ni `dist/`.
 - `git grep` de authtoken, URL de ngrok y contraseñas: solo la URL ficticia `https://abc-123.ngrok-free.app` de `config.service.spec.ts` y el script del README que pide la contraseña sin guardarla.
 - Panel: Vitest 270 tests pasados; `npm run build` sin errores (único aviso, ya existente: Leaflet no es ESM).
-- Backend: pytest 780 tests pasados en la imagen (bloque A; el código del backend no cambió después).
+- Backend: pytest 779 tests pasados en la imagen, ejecutado de nuevo por el orquestador al cierre sobre el código final.
 
 T24 la hizo el orquestador, no el verifier.
