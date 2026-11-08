@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" role="img" aria-labelledby="t d">
+  <title id="t">Quick start in three commands</title>
+  <desc id="d">A PowerShell terminal types three steps: create the .env file, start the five services with Docker Compose and start the Angular panel. Next to it, a globe shows pulsing earthquakes.</desc>
+  <style>
+    .bg { fill: #0d1b2a; }
+    .term { fill: #08131e; stroke: #2e5577; stroke-width: 1.5; }
+    .bar { fill: #132a40; }
+    .title { font: 700 20px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef3; }
+    .c { font: 400 13px ui-monospace, Consolas, "Cascadia Mono", monospace; fill: #e8eef3; white-space: pre; }
+    .p { fill: #8fbcd4; }
+    .k { fill: #9fb3c4; }
+    .g { fill: #8fd694; }
+    .y { fill: #ffd166; }
+    .line { opacity: 0; animation: type 14s ease-out infinite; }
+    .l2 { animation-name: type2; } .l3 { animation-name: type3; } .l4 { animation-name: type4; }
+    .l5 { animation-name: type5; } .l6 { animation-name: type6; }
+    @keyframes type  { 0% { opacity: 0; } 8%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes type2 { 0%, 14% { opacity: 0; } 24%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes type3 { 0%, 30% { opacity: 0; } 31%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes type4 { 0%, 40% { opacity: 0; } 52%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes type5 { 0%, 58% { opacity: 0; } 59%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes type6 { 0%, 64% { opacity: 0; } 65%, 95% { opacity: 1; } 100% { opacity: 0; } }
+    .ring { fill: none; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 2.4s ease-out infinite; }
+    .d1 { animation-delay: .8s; } .d2 { animation-delay: 1.6s; }
+    @keyframes ring { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+    .spin { animation: spin 30s linear infinite; transform-origin: 845px 190px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .line { animation: none; opacity: 1; } .ring, .spin { animation: none; } }
+  </style>
+  <defs>
+    <clipPath id="globo"><circle cx="845" cy="190" r="100"/></clipPath>
+    <radialGradient id="mar" cx="40%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#1d4766"/><stop offset="1" stop-color="#0a1d2e"/>
+    </radialGradient>
+  </defs>
+
+  <rect class="bg" width="1000" height="330" rx="16"/>
+  <text class="title" x="28" y="42">Run it locally</text>
+
+  <rect class="term" x="28" y="62" width="672" height="244" rx="10"/>
+  <rect class="bar" x="29" y="63" width="670" height="26" rx="9"/>
+  <circle cx="46" cy="76" r="5" fill="#ff6b3d"/><circle cx="62" cy="76" r="5" fill="#ffd166"/><circle cx="78" cy="76" r="5" fill="#8fd694"/>
+  <text class="c k" x="98" y="80" style="font-size:11px">PowerShell · repository root</text>
+
+  <text class="c line" x="44" y="118"><tspan class="p">PS&gt; </tspan>Copy-Item .env.example .env   <tspan class="k"># set POSTGRES_PASSWORD</tspan></text>
+  <text class="c line l2" x="44" y="148"><tspan class="p">PS&gt; </tspan>docker compose up --build -d</text>
+  <text class="c line l3" x="44" y="174"><tspan class="g">  &#10004; kafka  &#10004; postgres  &#10004; producer  &#10004; consumer  &#10004; api</tspan>   <tspan class="k">healthy</tspan></text>
+  <text class="c line l4" x="44" y="210"><tspan class="p">PS&gt; </tspan>cd frontend; npm ci; npm start</text>
+  <text class="c line l5" x="44" y="236"><tspan class="g">  &#10140; </tspan>Local: <tspan class="y">http://localhost:4200</tspan></text>
+  <text class="c line l6" x="44" y="276"><tspan class="k">  Live USGS data every 60 s · switch between 2D map and 3D globe</tspan></text>
+
+  <g>
+    <circle cx="845" cy="190" r="112" fill="#8fbcd4" opacity=".08"/>
+    <circle cx="845" cy="190" r="100" fill="url(#mar)"/>
+    <g clip-path="url(#globo)">
+      <g class="spin" fill="#3a544e" stroke="#7d9a92" stroke-width="1">
+        <path d="M770 130 q30 -25 60 -10 q20 15 5 40 q-25 30 -45 20 q-25 -15 -20 -50z"/>
+        <path d="M820 200 q25 -10 35 15 q10 35 -15 60 q-20 10 -25 -20 q-5 -30 5 -55z"/>
+        <path d="M880 120 q40 -10 55 15 q5 30 -25 35 q-35 5 -40 -20 q-2 -20 10 -30z"/>
+        <path d="M900 200 q25 0 30 20 q0 20 -20 22 q-20 0 -22 -20 q0 -15 12 -22z"/>
+      </g>
+      <g stroke="#8fbcd4" stroke-opacity=".18" fill="none">
+        <ellipse cx="845" cy="190" rx="100" ry="35"/><ellipse cx="845" cy="190" rx="100" ry="70"/>
+        <ellipse cx="845" cy="190" rx="35" ry="100"/><ellipse cx="845" cy="190" rx="70" ry="100"/>
+      </g>
+    </g>
+    <circle class="ring" cx="800" cy="150" r="14" stroke="#ffb347"/>
+    <circle cx="800" cy="150" r="3" fill="#ffffb2"/>
+    <circle class="ring d1" cx="838" cy="245" r="20" stroke="#ff6b3d"/>
+    <circle cx="838" cy="245" r="3.5" fill="#41b6c4"/>
+    <circle class="ring d2" cx="905" cy="160" r="26" stroke="#ff2e4d"/>
+    <circle cx="905" cy="160" r="4" fill="#225ea8"/>
+  </g>
+</svg>

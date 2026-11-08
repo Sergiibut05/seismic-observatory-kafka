@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" role="img" aria-labelledby="t d">
+  <title id="t">Delivery guarantees</title>
+  <desc id="d">Eight steps highlighted one after another: the producer fetches, sends, waits for the Kafka ack and only then marks the event as published; the consumer polls, validates, commits to PostgreSQL and only then commits the Kafka offset. A crash between the last two steps re-delivers the message, which the idempotent write skips.</desc>
+  <style>
+    .bg { fill: #0d1b2a; }
+    .title { font: 700 20px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef3; }
+    .sub { font: 400 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #9fb3c4; }
+    .lane { font: 700 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #8fbcd4; letter-spacing: .08em; }
+    .step { fill: #132a40; stroke: #3c5a74; stroke-width: 1.5; animation: on 8s infinite; }
+    .n { font: 700 12px ui-monospace, Consolas, monospace; fill: #ffd166; }
+    .lbl { font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef3; }
+    .cap { font: 400 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #9fb3c4; }
+    .arrow { stroke: #3c5a74; stroke-width: 2; marker-end: url(#a); }
+    .warn { fill: #2a1d14; stroke: #ff6b3d; stroke-width: 1.5; }
+    .warnt { font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #ffd2c2; }
+    .s2 { animation-delay: 1s; } .s3 { animation-delay: 2s; } .s4 { animation-delay: 3s; }
+    .s5 { animation-delay: 4s; } .s6 { animation-delay: 5s; } .s7 { animation-delay: 6s; } .s8 { animation-delay: 7s; }
+    @keyframes on {
+      0%, 11% { fill: #1f4466; stroke: #ffd166; }
+      14%, 100% { fill: #132a40; stroke: #3c5a74; }
+    }
+    @media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#3c5a74"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1000" height="330" rx="16"/>
+  <text class="title" x="28" y="42">At-least-once delivery, written exactly once</text>
+  <text class="sub" x="28" y="64">Each step only happens after the previous one is confirmed. Nothing is marked done before it is durable.</text>
+
+  <text class="lane" x="28" y="104">PRODUCER</text>
+  <g>
+    <rect class="step" x="28" y="114" width="215" height="62" rx="10"/>
+    <text class="n" x="42" y="138">1</text><text class="lbl" x="58" y="138">Fetch USGS feed</text>
+    <text class="cap" x="42" y="158">keep only new (id, updated)</text>
+    <rect class="step s2" x="268" y="114" width="215" height="62" rx="10"/>
+    <text class="n" x="282" y="138">2</text><text class="lbl" x="298" y="138">Send to Kafka</text>
+    <text class="cap" x="282" y="158">key = id · acks = all</text>
+    <rect class="step s3" x="508" y="114" width="215" height="62" rx="10"/>
+    <text class="n" x="522" y="138">3</text><text class="lbl" x="538" y="138">Wait for the ack</text>
+    <text class="cap" x="522" y="158">no ack &#8594; retry with backoff</text>
+    <rect class="step s4" x="748" y="114" width="224" height="62" rx="10"/>
+    <text class="n" x="762" y="138">4</text><text class="lbl" x="778" y="138">Mark as published</text>
+    <text class="cap" x="762" y="158">result=publicado</text>
+    <line class="arrow" x1="243" y1="145" x2="266" y2="145"/>
+    <line class="arrow" x1="483" y1="145" x2="506" y2="145"/>
+    <line class="arrow" x1="723" y1="145" x2="746" y2="145"/>
+  </g>
+
+  <text class="lane" x="28" y="208">CONSUMER</text>
+  <g>
+    <rect class="step s5" x="28" y="218" width="215" height="62" rx="10"/>
+    <text class="n" x="42" y="242">5</text><text class="lbl" x="58" y="242">Poll the message</text>
+    <text class="cap" x="42" y="262">manual offset commit</text>
+    <rect class="step s6" x="268" y="218" width="215" height="62" rx="10"/>
+    <text class="n" x="282" y="242">6</text><text class="lbl" x="298" y="242">Validate and enrich</text>
+    <text class="cap" x="282" y="262">schema · nulls · country polygon</text>
+    <rect class="step s7" x="508" y="218" width="215" height="62" rx="10"/>
+    <text class="n" x="522" y="242">7</text><text class="lbl" x="538" y="242">COMMIT in PostgreSQL</text>
+    <text class="cap" x="522" y="262">one transaction per message</text>
+    <rect class="step s8" x="748" y="218" width="224" height="62" rx="10"/>
+    <text class="n" x="762" y="242">8</text><text class="lbl" x="778" y="242">Commit Kafka offset</text>
+    <text class="cap" x="762" y="262">result=persistido</text>
+    <line class="arrow" x1="243" y1="249" x2="266" y2="249"/>
+    <line class="arrow" x1="483" y1="249" x2="506" y2="249"/>
+    <line class="arrow" x1="723" y1="249" x2="746" y2="249"/>
+  </g>
+
+  <rect class="warn" x="388" y="290" width="584" height="28" rx="8"/>
+  <text class="warnt" x="402" y="309">Crash between 7 and 8? The message comes back and the same (id, updated) is skipped.</text>
+</svg>

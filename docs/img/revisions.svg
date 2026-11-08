@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 340" width="1000" height="340" role="img" aria-labelledby="t d">
+  <title id="t">Revisions: current state versus version history</title>
+  <desc id="d">Four versions of the same earthquake arrive in order: the first one, a revision with a later updated time, an exact duplicate and an older version that arrives late. The current state only changes for the newer revision; the history keeps every distinct version and skips the duplicate.</desc>
+  <style>
+    .bg { fill: #0d1b2a; }
+    .title { font: 700 20px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef3; }
+    .sub { font: 400 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #9fb3c4; }
+    .head { font: 700 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #8fbcd4; letter-spacing: .08em; }
+    .card { fill: #132a40; stroke: #3c5a74; stroke-width: 1.5; }
+    .t { font: 600 13px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #e8eef3; }
+    .m { font: 400 12px ui-monospace, Consolas, monospace; fill: #cfe0ec; }
+    .ok { font: 700 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #8fd694; }
+    .no { font: 700 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #ff9b7a; }
+    .cur { fill: #1a3a2e; stroke: #8fd694; stroke-width: 2; }
+    .row { opacity: 0; animation: show 12s infinite; }
+    .r2 { animation-delay: 2.5s; } .r3 { animation-delay: 5s; } .r4 { animation-delay: 7.5s; }
+    .state { opacity: 0; animation: state 12s infinite; }
+    .st2 { animation-name: state2; }
+    @keyframes show { 0% { opacity: 0; transform: translateX(-12px); } 4%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes state { 0%, 20% { opacity: 1; } 21%, 100% { opacity: 0; } }
+    @keyframes state2 { 0%, 20% { opacity: 0; } 21%, 92% { opacity: 1; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .row { animation: none; opacity: 1; } .state { animation: none; opacity: 0; } .st2 { opacity: 1; } }
+  </style>
+
+  <rect class="bg" width="1000" height="340" rx="16"/>
+  <text class="title" x="28" y="42">USGS revises earthquakes. We keep the latest and remember the rest.</text>
+  <text class="sub" x="28" y="64">Same event id us7000abcd, four messages arriving in this order.</text>
+
+  <text class="head" x="28" y="100">ARRIVING MESSAGE</text>
+  <text class="head" x="470" y="100">RESULT</text>
+  <text class="head" x="760" y="100">CURRENT STATE</text>
+
+  <g class="row">
+    <rect class="card" x="28" y="112" width="420" height="40" rx="8"/>
+    <text class="t" x="42" y="137">1 · first version</text>
+    <text class="m" x="200" y="137">updated 10:00  M 4.2</text>
+    <text class="ok" x="470" y="137">inserted · history +1</text>
+  </g>
+  <g class="row r2">
+    <rect class="card" x="28" y="160" width="420" height="40" rx="8"/>
+    <text class="t" x="42" y="185">2 · revision</text>
+    <text class="m" x="200" y="185">updated 10:20  M 4.5</text>
+    <text class="ok" x="470" y="185">replaces current · history +1</text>
+  </g>
+  <g class="row r3">
+    <rect class="card" x="28" y="208" width="420" height="40" rx="8"/>
+    <text class="t" x="42" y="233">3 · exact duplicate</text>
+    <text class="m" x="200" y="233">updated 10:20  M 4.5</text>
+    <text class="no" x="470" y="233">skipped (omitido)</text>
+  </g>
+  <g class="row r4">
+    <rect class="card" x="28" y="256" width="420" height="40" rx="8"/>
+    <text class="t" x="42" y="281">4 · older, arrives late</text>
+    <text class="m" x="200" y="281">updated 09:50  M 4.0</text>
+    <text class="no" x="470" y="281">current unchanged · history +1</text>
+  </g>
+
+  <rect class="cur" x="760" y="112" width="212" height="112" rx="12"/>
+  <g class="state">
+    <text class="m" x="778" y="146">updated 10:00</text>
+    <text class="t" x="778" y="176" style="font-size:22px">M 4.2</text>
+  </g>
+  <g class="state st2">
+    <text class="m" x="778" y="146">updated 10:20</text>
+    <text class="t" x="778" y="176" style="font-size:22px">M 4.5</text>
+  </g>
+  <text class="sub" x="778" y="206" style="font-size:11px">only the newest «updated» wins</text>
+  <text class="sub" x="760" y="258" style="font-size:12px">History key: (event_id, updated)</text>
+  <text class="sub" x="760" y="278" style="font-size:12px">never overwritten · 3 rows here</text>
+  <text class="sub" x="760" y="304" style="font-size:12px">Counts use the current state,</text>
+  <text class="sub" x="760" y="322" style="font-size:12px">never the number of messages.</text>
+</svg>
