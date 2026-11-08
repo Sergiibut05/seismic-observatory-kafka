@@ -92,6 +92,10 @@ Rutas en `backend/observatorio/`, tests en `backend/tests/unit/` (pytest en la i
   - Hecho cuando: 0 filas sintéticas en `live.*` y en cuarentena, recuento de reales igual que antes de empezar, `git status` sin `.env` ni `data/`, y AC-1 a AC-20 con evidencia o motivo
   - Evidencia (la hizo el orquestador, no el verifier): [cierre.md](evidencias/cierre.md). La limpieza borra 5/14/4 filas sintéticas (estado actual, versiones, cuarentena) y una segunda ejecución borra 0. Quedan 481 reales, 40 de replay y 18.302 del histórico. No hay secretos en Git. Además, tras T19 se revisaron los tres fallos del verifier: el aviso tardío venía de la pestaña oculta; el desajuste 480/204 es la ventana de 24 h del gráfico horario, que ahora lo explica; y «Aplicar» sin cambios ahora refresca (ver `specs/006-panel/evidencias/verificacion.md`)
 
+- [x] T25 (añadida el 2026-11-08 a petición del alumno, la hizo el orquestador) Pruebas 9 y 10 con el túnel real de ngrok y redacción de §15 (cambia FR-016). Ficheros: `docs/MEMORIA.md` (§13, §14, §15, §16), `specs/007-memoria/evidencias/t25-*`, `README.md`
+  - Hecho cuando: el panel funciona por el túnel, muestra el corte sin tocar nada y se recupera solo al reabrirlo; `config.json` vuelve a `http://127.0.0.1:8000`; ni authtoken ni URL pública en Git; §15 sin huecos y declarada en §16
+  - Evidencia T25: [t25-tunel-ngrok.md](evidencias/t25-tunel-ngrok.md) y capturas `t25-tunel-abierto.png`, `t25-tunel-cerrado.png` y `t25-tunel-recuperado.png` (corte a las 16:42:29 UTC, aviso a los 24 s; reapertura a las 16:43:32 UTC con la misma URL, recuperación a las 16:44:11 UTC). Netlify sigue «PENDIENTE (alumno)»
+
 ## Dependencias
 
 ```

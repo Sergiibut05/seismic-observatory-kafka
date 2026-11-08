@@ -30,9 +30,12 @@ export function crearTraductor(idioma: Idioma): Traductor {
   const traducir = (clave: Clave, parametros?: ParametrosTraduccion): string => {
     const texto = diccionario[clave];
     if (!parametros) return texto;
-    return texto.replace(/\{(\w+)\}/g, (marcador, nombre: string) =>
-      nombre in parametros ? String(parametros[nombre]) : marcador,
-    );
+    return texto.replace(/\{(\w+)\}/g, (marcador, nombre: string) => {
+      if (!(nombre in parametros)) return marcador;
+      const valor = String(parametros[nombre]);
+      // Un motivo es una frase completa con su punto; dentro de «(…).» el punto sobra.
+      return nombre === 'motivo' ? valor.replace(/\.$/, '') : valor;
+    });
   };
   return Object.assign(traducir, { idioma });
 }

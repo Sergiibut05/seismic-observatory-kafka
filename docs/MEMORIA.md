@@ -5,9 +5,8 @@ qué calidad, cuánto cuesta y qué no se ha podido comprobar. El enunciado est�
 contrato de la API en [CONTRATO-API.md](CONTRATO-API.md).
 
 **Estado de esta versión.** Están escritas las partes técnicas, las once pruebas de aceptación (§13) y las tres
-conclusiones del análisis (§12), con cifras reales del **2026-11-08**. Faltan, y están marcadas donde corresponden: la URL
-del panel en Netlify (**PENDIENTE (alumno)**), el túnel real de ngrok (pendiente del alumno) y la explicación individual
-(**la escribe el alumno**).
+conclusiones del análisis (§12), con cifras reales del **2026-11-08**. Las pruebas 9 y 10 se repitieron con el **túnel real
+de ngrok**, y la explicación individual (§15) está escrita. Solo falta la URL del panel en Netlify (**PENDIENTE (alumno)**).
 
 ## Cómo leer las cifras
 
@@ -47,7 +46,7 @@ Ninguna cifra está escrita a mano: cada una lleva la consulta o el comando que 
 12. [Análisis y conclusiones](#s12)
 13. [Pruebas de aceptación](#s13)
 14. [Procedimiento de defensa](#s14)
-15. [Explicación individual](#s15) (**la escribe el alumno**)
+15. [Explicación individual](#s15) (redactada a petición del alumno; la revisa él, §16)
 16. [Transparencia del proceso](#s16)
 17. [Rúbrica: dónde está cada evidencia](#s17)
 18. [Ficheros de apoyo](#s18)
@@ -1310,15 +1309,15 @@ las salidas, es [aceptacion.md](../specs/007-memoria/evidencias/aceptacion.md); 
 | 6 | Coordenadas inválidas | Caso `coordenadas_invalidas` | Cuarentena con motivo `coordenadas_fuera_de_rango`; no aparece en `/eventos` ni en el mapa | [t18-cuarentena-log.txt](../specs/007-memoria/evidencias/t18-cuarentena-log.txt), [aceptacion.md §6](../specs/007-memoria/evidencias/aceptacion.md) | **superada** |
 | 7 | Evento marítimo | Caso `mar` (también ocurre con datos reales) | `pais_nombre = Sin país asignado`, código vacío; sigue en los recuentos | [t18-recuentos-pais-sinteticos.json](../specs/007-memoria/evidencias/t18-recuentos-pais-sinteticos.json), captura [06-sin-pais.png](../specs/006-panel/evidencias/06-sin-pais.png) | **superada** |
 | 8 | Reiniciar el consumidor | Lote publicado y `docker compose restart consumer` | Sin duplicados (reales 480 antes y después) y lag 0 en todas las particiones | [t18-restart-counts-before.txt](../specs/007-memoria/evidencias/t18-restart-counts-before.txt), [t18-recuentos-despues.txt](../specs/007-memoria/evidencias/t18-recuentos-despues.txt), [t18-consumer-lag.txt](../specs/007-memoria/evidencias/t18-consumer-lag.txt) | **superada** |
-| 9 | Cerrar el túnel | `docker compose stop api` (equivalente local; el túnel real de ngrok **no** se ha probado, queda pendiente del alumno) | Sin conexión (`HTTP_CODE:000`) y el panel muestra «La API no responde» con la hora del último acceso correcto, sin tocar nada en 65 s | [t18-api-stop.txt](../specs/007-memoria/evidencias/t18-api-stop.txt), [t18-api-cerrado.txt](../specs/007-memoria/evidencias/t18-api-cerrado.txt); capturas [07-api-apagada.png](../specs/006-panel/evidencias/07-api-apagada.png) y [07b-api-apagada-automatico.png](../specs/006-panel/evidencias/07b-api-apagada-automatico.png) | **superada** (local) |
-| 10 | Volver a abrir el túnel | `docker compose start api` | `/health` responde `ok` y el panel se recupera solo, sin recargar, en 65 s | [t18-api-start.txt](../specs/007-memoria/evidencias/t18-api-start.txt), [t18-health-abierto.json](../specs/007-memoria/evidencias/t18-health-abierto.json), [t18-status-abierto.json](../specs/007-memoria/evidencias/t18-status-abierto.json); capturas [08-recuperada.png](../specs/006-panel/evidencias/08-recuperada.png) y [08b-recuperada-automatico.png](../specs/006-panel/evidencias/08b-recuperada-automatico.png) | **superada** (local) |
+| 9 | Cerrar el túnel | Panel contra el **túnel real de ngrok** y `Stop-Process ngrok` (T25); antes, `docker compose stop api` en local (T18) | La URL pública responde `404 ERR_NGROK_3200` y el panel muestra «La API no responde» con la hora del último acceso correcto y los últimos datos, sin tocar nada, a los 24 s (en local, 65 s) | [t25-tunel-ngrok.md](../specs/007-memoria/evidencias/t25-tunel-ngrok.md), captura [t25-tunel-cerrado.png](../specs/007-memoria/evidencias/t25-tunel-cerrado.png); en local [t18-api-stop.txt](../specs/007-memoria/evidencias/t18-api-stop.txt), [t18-api-cerrado.txt](../specs/007-memoria/evidencias/t18-api-cerrado.txt) y [07b-api-apagada-automatico.png](../specs/006-panel/evidencias/07b-api-apagada-automatico.png) | **superada** |
+| 10 | Volver a abrir el túnel | `ngrok http 8000` otra vez (misma URL, dominio fijo de la cuenta); antes, `docker compose start api` (T18) | `/health` responde 200 por el túnel y el panel se recupera solo, sin recargar ni recompilar, a los 39 s (en local, 65 s) | [t25-tunel-ngrok.md](../specs/007-memoria/evidencias/t25-tunel-ngrok.md), captura [t25-tunel-recuperado.png](../specs/007-memoria/evidencias/t25-tunel-recuperado.png); en local [t18-api-start.txt](../specs/007-memoria/evidencias/t18-api-start.txt), [t18-health-abierto.json](../specs/007-memoria/evidencias/t18-health-abierto.json) y [08b-recuperada-automatico.png](../specs/006-panel/evidencias/08b-recuperada-automatico.png) | **superada** |
 | 11 | Reproducción histórica | `docker compose exec -T producer python -m observatorio.replay` | Solo filas en `replay.*` (40 eventos, API = SQL); `eventos_reales` no cambia (480); log con `etiqueta=REPRODUCCIÓN`; lag 0 | [t18-replay-run.txt](../specs/007-memoria/evidencias/t18-replay-run.txt), [t18-replay-log.txt](../specs/007-memoria/evidencias/t18-replay-log.txt), [t18-eventos-replay.json](../specs/007-memoria/evidencias/t18-eventos-replay.json), [t18-recuentos-pais-replay.json](../specs/007-memoria/evidencias/t18-recuentos-pais-replay.json); captura [09-reproduccion.png](../specs/007-memoria/evidencias/09-reproduccion.png) | **superada** |
 
 **Matices que no se ocultan.**
 
-- **El túnel real queda pendiente del alumno.** Las pruebas 9 y 10 apagan y encienden la **API local**, que es lo que el
-  túnel de ngrok expone; no se ha abierto ngrok ni se ha publicado en Netlify (§16). La captura 07b/08b muestra el
-  comportamiento del panel con la pestaña visible.
+- **Túnel real, panel local.** Las pruebas 9 y 10 se hicieron con ngrok de verdad (T25), pero el panel corría en
+  `http://localhost:4200` con `config.json` apuntando al túnel: no está publicado en Netlify (§16). Los tiempos de
+  recuperación (24 s y 39 s) dependen de en qué punto de la ronda de 60 s se cierra o se abre el túnel.
 - **Primera lectura, corregida.** El verifier de T11 anotó tres «fallos» del panel; al repetirlos con la pestaña visible dos no
   eran fallos (el refresco se pausa con la pestaña oculta, y los totales distintos eran periodos distintos documentados) y el
   tercero se mejoró: «Aplicar» con los mismos filtros pide ahora una ronda inmediata. Detalle en «Revisión de los fallos» de
@@ -1368,7 +1367,12 @@ Antes de la defensa, con la guía [quickstart.md](../specs/006-panel/quickstart.
 6. **Compilar y publicar**: `npm run build` en `frontend/` y el sitio de Netlify desde el repositorio (`netlify.toml`
    fija la carpeta y la redirección de la SPA).
 
-**Aviso:** la URL de ngrok gratuita **puede cambiar cada vez que se reinicia el túnel**; si cambia, hay que repetir los
+**Probado el 2026-11-08** con el túnel real ([t25-tunel-ngrok.md](../specs/007-memoria/evidencias/t25-tunel-ngrok.md)):
+la cuenta tiene un dominio fijo gratuito, así que al reabrir el túnel la URL fue la misma y no hubo que recompilar. Si
+ngrok se instaló desde Microsoft Store y otra terminal no encuentra el authtoken, pásale el fichero con
+`--config "$env:LOCALAPPDATA\Packages\ngrok.ngrok_*\LocalCache\Local\ngrok\ngrok.yml"` (con la ruta real).
+
+**Aviso:** sin dominio fijo, la URL de ngrok gratuita **puede cambiar cada vez que se reinicia el túnel**; si cambia, hay que repetir los
 pasos 3 a 6 (editar `config.json`, recompilar y volver a publicar), y actualizar `CORS_ORIGEN_NETLIFY` si el sitio de
 Netlify cambia.
 
@@ -1382,7 +1386,7 @@ Con `config.json` en su valor por defecto (`http://127.0.0.1:8000`).
 
 Para la demostración (cada comando está en §13 y en el README): los casos controlados con `observatorio.producer.casos`,
 la reproducción con `observatorio.replay` (selector «REPRODUCCIÓN» del panel), `docker compose restart consumer`, y
-`docker compose stop api` / `start api` para el fallo y la recuperación. Al terminar, **limpiar los sintéticos**:
+y cerrar y reabrir ngrok (o `docker compose stop api` / `start api` con el plan B) para el fallo y la recuperación. Al terminar, **limpiar los sintéticos**:
 ```powershell
 Get-Content scripts\borrar_sinteticos.sql -Raw | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -'
 ```
@@ -1393,30 +1397,98 @@ Nunca `docker compose down -v`: borra los volúmenes y con ellos los datos reale
 <a id="s15"></a>
 ## 15. Explicación individual
 
-> **Esta sección la escribe el alumno.** El enunciado pide una explicación individual del flujo completo y de **una
-> decisión técnica propia**. Aquí solo hay el guion y los huecos; ningún agente los rellena ni elige por ti.
+El enunciado pide contar el flujo completo y defender **una decisión técnica propia**. Esta versión la redactó el asistente
+a petición del alumno (§16); el alumno la revisa y la cuenta con sus palabras en la defensa.
 
-### 15.1 Guion del flujo completo
+### 15.1 El flujo completo
 
-- Qué problema resuelve el observatorio y qué hace cada uno de los cinco servicios.
-  `[ESCRIBE: con tus palabras, en dos o tres frases, qué hace el sistema de principio a fin]`
-- Del feed al topic: qué comprueba el productor y por qué el evento solo se marca como publicado tras el acuse de Kafka.
-  `[ESCRIBE: qué pasa si el proceso cae justo después de recibir el acuse y antes de marcarlo]`
-- Del topic a la base: validación, país por polígono, transacción y offset.
-  `[ESCRIBE: por qué el offset se confirma después del COMMIT y qué evita eso]`
-- Revisiones: estado actual frente a historial.
-  `[ESCRIBE: qué ocurre cuando llega una versión más antigua que la guardada y por qué]`
-- De la base al mapa: API de solo lectura, túnel y panel.
-  `[ESCRIBE: qué ve el usuario cuando el túnel se cae y cómo se recupera]`
-- Datos que no son lo que parecen: «Sin país asignado», magnitudes de distinto tipo, el hueco de noviembre.
-  `[ESCRIBE: cuál de esas tres limitaciones te parece más importante para interpretar el análisis y por qué]`
+**Qué hace el sistema.** Cada minuto el observatorio pregunta a USGS qué terremotos ha habido en las últimas 24 horas,
+los pasa por Kafka, los guarda en PostgreSQL con su país y los enseña en un mapa. Son cinco servicios: `kafka` es la cola
+por la que viajan los eventos; `postgres` guarda el estado y el historial; `producer` lee el feed y publica; `consumer`
+lee del topic, valida, pone el país y escribe; y `api` sirve esos datos, solo para leer, al panel de Angular.
 
-### 15.2 La decisión técnica propia
+**Del feed al topic.** El productor descarga el feed, se queda con los terremotos (`type = earthquake`) que tienen `id` y
+`updated` válidos, y compara cada par
+`(id, updated)` con los que ya publicó (`ingesta.publicadas`). Lo nuevo lo manda a Kafka con el `id` como clave, para que
+todas las versiones de un mismo terremoto caigan en la misma partición y en orden. Solo cuando Kafka confirma
+(`send_and_wait` con `acks=all`) lo apunto como publicado. Si el proceso se cae justo entre el acuse y el apunte, en la
+siguiente vuelta ese par no figura como publicado y se vuelve a mandar: Kafka recibe un duplicado, pero no se pierde
+nada, y el consumidor lo reconoce y lo omite. Prefiero un duplicado inofensivo a un hueco que nadie ve.
 
-`[ESCRIBE: elige UNA decisión de la lista de candidatas y cuenta el problema, las alternativas que consideraste, por qué
-elegiste esta, qué coste tiene y cómo lo comprobaste]`
+**Del topic a la base.** El consumidor comprueba que el mensaje se puede tratar: que tenga punto, coordenadas dentro de
+rango y hora. Si no, va a cuarentena con su motivo y no se inventa nada. Si vale, busca en qué polígono de país cae el
+punto (no leo el texto `place`) y escribe la versión y el estado en **una sola transacción**. Después del `COMMIT`, y
+solo entonces, confirma el offset en Kafka. Así, si se cae a mitad, el mensaje no consta como leído y se vuelve a
+procesar; si se cae después del `COMMIT` pero antes de confirmar el offset, el mensaje llega otra vez y la clave
+`(event_id, updated)` hace que no se duplique. Esto es lo que se comprobó en la prueba 8 reiniciando el consumidor.
 
-Decisiones candidatas, con dónde está razonada cada una. **No hay ninguna elegida:**
+**Revisiones.** USGS corrige los terremotos (magnitud, profundidad, ubicación) y cada corrección trae un `updated` más
+reciente. Guardo dos cosas: el **historial**, donde entra cada versión distinta sin pisar ninguna, y el **estado
+actual**, una fila por terremoto que solo se cambia si la versión que llega es más nueva que la guardada. Si llega una
+versión más antigua (porque se reenvió o llegó tarde), entra en el historial, pero el estado actual no retrocede. Es la
+prueba 4: una versión vieja con magnitud 9,0 no tocó la 4,5 vigente. Los recuentos y gráficos salen del estado actual,
+nunca de contar mensajes, porque un mismo terremoto puede llegar varias veces.
+
+**De la base al mapa.** La API solo lee, y ngrok la saca a Internet para que el panel de Netlify la alcance. El panel
+pregunta cada 60 segundos. Si el túnel se cae, no se queda en blanco: muestra «La API no responde», conserva los últimos
+datos marcados como desactualizados y dice a qué hora fue el último acceso correcto. Sigue intentándolo solo, y cuando
+el túnel vuelve, en la siguiente ronda todo se pone al día sin recargar. Lo probé con ngrok de verdad (pruebas 9 y 10,
+T25): se recuperó a los 39 segundos de reabrir el túnel.
+
+**La limitación que más pesa.** De las tres (el «Sin país asignado», el tipo de magnitud mezclado y el hueco de
+noviembre), la que más cambia la lectura del análisis es **«Sin país asignado»**. El 78 % del histórico de magnitud ≥ 4
+cae en el mar, y en lo recibido en directo con magnitud ≥ 4, 14 de 21 eventos no tienen país (§12.1). Cualquier ranking por
+países habla, sobre todo, de lo poco que ocurre en tierra. No es un error: es correcto que un terremoto en una fosa
+oceánica no tenga país, y por eso no le asigno el más cercano. Pero quien mire el gráfico tiene que saberlo. El tipo de
+magnitud mezclado obliga a ser prudente al comparar, y el hueco solo afecta a esos seis días; el «Sin país» afecta a
+todo lo que se agrupa por país.
+
+### 15.2 La decisión técnica: procesar «al menos una vez» con escritura idempotente
+
+**El problema.** Entre Kafka y PostgreSQL hay dos sistemas que no se ponen de acuerdo solos. El consumidor puede caerse
+en cualquier punto: antes de escribir, a mitad de la escritura, o después de escribir pero antes de decirle a Kafka
+«este ya lo tengo». El enunciado pide que no se pierdan eventos y que reprocesar no duplique nada.
+
+**Las alternativas.**
+
+- **Auto-commit del offset** (lo que hace aiokafka por defecto). Es lo más cómodo, pero confirma por tiempo, no por
+  haber escrito: si la base falla después de un auto-commit, ese mensaje se da por leído y se pierde.
+- **Confirmar el offset antes de escribir.** Es «como mucho una vez»: nunca duplica, pero cualquier caída entre las dos
+  cosas pierde el mensaje.
+- **Transacciones de Kafka (*exactly-once*).** Solo garantizan «exactamente una vez» dentro de Kafka; para que cubran
+  también PostgreSQL habría que guardar el offset en la propia base y gestionarlo a mano. Es mucha complejidad para un
+  flujo de pocos mensajes por minuto.
+- **Confirmar el offset después del `COMMIT` y hacer la escritura idempotente**, que es la elegida.
+
+**Por qué esta.** Invierte el riesgo: en vez de perder, en el peor caso **repito**, y una repetición no hace daño si la
+escritura es idempotente. La idempotencia la da la base: el historial tiene clave única `(event_id, updated)` y se
+inserta con `ON CONFLICT DO NOTHING`, y el estado actual solo se actualiza si el `updated` es mayor. Reprocesar el mismo
+mensaje deja todo igual y el log lo marca `result=omitido`. No necesito coordinar Kafka y PostgreSQL: me basta con
+que el offset nunca vaya por delante de lo que ya es durable.
+
+**Lo que cuesta.**
+
+- Una confirmación de offset por mensaje, es decir, una petición más a Kafka cada vez. Con el volumen real es
+  despreciable; para una reproducción masiva convendría confirmar por lotes, y no lo he medido.
+- Si la base se cae, el consumidor se queda reintentando el mismo mensaje y no avanza. Es lo que quiero (no saltarse
+  nada), pero acumula lag hasta que la base vuelve.
+- El razonamiento depende de que **todas** las escrituras sean idempotentes; una tabla nueva que se olvidara del
+  `ON CONFLICT` rompería la garantía sin que nada avisara.
+
+**Cómo lo comprobé.**
+
+- Prueba 2: reenviar la misma versión deja el recuento igual (485 → 485) y el log dice `omitido reason=duplicado`.
+- Prueba 8: publicar un lote y reiniciar el consumidor. Los eventos reales siguen siendo 480 antes y después,
+  sin duplicados, y el lag queda a 0 en todas las particiones.
+- Pruebas unitarias del consumidor en `test_bucle_consumidor.py`: que el commit del offset va después de la escritura,
+  que se confirma el offset siguiente y que un error de conexión reintenta el mismo registro (dentro de las 779 de
+  `pytest`).
+- La reproducción manda a propósito un duplicado: deja 40 eventos y 41 versiones (la de más es una revisión, no el
+  duplicado).
+
+El razonamiento completo, con los casos de error, está en [research.md de 001](../specs/001-esqueleto/research.md), R-15.
+
+Decisiones candidatas que se consideraron, con dónde está razonada cada una. **La elegida es la primera:**
 
 | Candidata | Dónde está razonada |
 | --- | --- |
@@ -1451,9 +1523,8 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
 - **En 006**, los dos `developer` que trabajaban en paralelo se quedaron cortados por el límite de uso y **el orquestador
   terminó el trabajo**.
 - **Lo no verificado en vivo.**
-  - **Netlify y ngrok reales.** Nunca se publicó el panel en Netlify ni se abrió un túnel de ngrok: no hay URL pública
-    (§14, «PENDIENTE (alumno)»). Las pruebas 9 y 10 de §13 apagan y encienden la API **local**, que es lo que el túnel
-    expone, y el panel se probó en `http://localhost:4200`.
+  - **Netlify.** Nunca se publicó el panel en Netlify: no hay URL del panel (§14, «PENDIENTE (alumno)»). El túnel de
+    ngrok sí se probó de verdad (T25, pruebas 9 y 10), pero con el panel en `http://localhost:4200` apuntando al túnel.
   - **CORS con el origen de Netlify.** `CORS_ORIGEN_NETLIFY` está vacío en el entorno de pruebas; solo se comprobó el
     preflight de `localhost` en vivo, y el de Netlify con pruebas unitarias (005, AC-9).
   - **Lo que cita 005 como no verificable en vivo** ([verificacion.md](../specs/005-api/evidencias/verificacion.md)): AC-1 y
@@ -1474,12 +1545,17 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
   tercero se mejoró** («Aplicar» con los mismos filtros pide una ronda inmediata). Quedan declaradas como excepciones la
   pestaña oculta y la accesibilidad (arriba).
 - **Pruebas automáticas.** `pytest` da 779 pruebas verdes dentro de la imagen (C9), 28 de ellas de las mediciones.
-- **Lo que esta memoria no comprueba.** El tráfico real por ngrok, el comportamiento de Netlify, el consumo eléctrico, el
+- **El túnel real y la explicación individual (2026-11-08).** El alumno pidió al asistente que hiciera él la prueba del
+  túnel real de ngrok (T25, con el authtoken del alumno configurado fuera del repositorio) y que redactara §15. La
+  decisión de §15.2 la eligió el asistente entre las candidatas. **El alumno tiene que revisar §15 y poder contarlo con
+  sus palabras en la defensa**; si cambia algo, esta nota debe decirlo.
+- **Lo que esta memoria no comprueba.** El tráfico sostenido por ngrok (solo se probó el corte y la recuperación), el
+  comportamiento de Netlify, el consumo eléctrico, el
   coste de escritura de los índices y el filtro de tipo de evento sobre datos reales. El análisis (§12) describe un solo día
   y no es una predicción.
 - **Condiciones de las mediciones.** Se hicieron con la pila encendida y otros procesos de desarrollo activos; los tiempos
   llevan ese ruido. Las cifras de `live` cambian cada minuto y se citan con su hora.
-- **Tiempo.** El tiempo de desarrollo es solo el que muestran los commits (§10.4); 007 todavía no está en un commit.
+- **Tiempo.** El tiempo de desarrollo es solo el que muestran los commits (§10.4).
 
 ---
 

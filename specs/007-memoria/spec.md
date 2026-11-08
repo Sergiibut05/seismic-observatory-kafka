@@ -98,6 +98,8 @@ Nada se inventa ni se redondea a mano.
   técnica propia» la escribe el alumno, no el agente. La memoria trae una sección con el
   guion y huecos (`[ESCRIBE: …]`) y la lista de decisiones candidatas con su `research.md`, sin
   elegir ni redactar ninguna. El agente no rellena esos huecos.
+  **Cambio del 2026-11-08 (T25):** el alumno pidió expresamente al asistente que redactara §15 y
+  eligiera la decisión. Queda declarado en §16 de la memoria y el alumno la revisa antes de la defensa.
 - **FR-017** (Enunciado §13; Constitución VIII): sección breve y veraz de transparencia del
   proceso. 001, 005 y 006: subagentes `analyst`, `architect`, `developer` y `verifier`. 002, 003 y
   004: specs compactas escritas directamente por el orquestador, sin subagentes ni

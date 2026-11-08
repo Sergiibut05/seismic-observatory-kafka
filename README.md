@@ -343,8 +343,9 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 008-globo | Vista de globo 3D con pulsos (ampliación) |
 | 009-i18n | Panel en español e inglés (ampliación) |
 
-**Pendiente de hacer a mano por el alumno:** publicar el panel en Netlify, probar el túnel real de ngrok y escribir la
-explicación individual ([memoria, §15](docs/MEMORIA.md#s15)).
+**Pendiente de hacer a mano por el alumno:** publicar el panel en Netlify. El túnel real de ngrok ya está probado
+([memoria, §13](docs/MEMORIA.md#s13)) y la explicación individual está redactada para que el alumno la revise
+([memoria, §15](docs/MEMORIA.md#s15)).
 
 ### Datos y licencias
 

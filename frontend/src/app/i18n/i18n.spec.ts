@@ -46,6 +46,12 @@ describe('crearTraductor', () => {
     expect(T_EN('tabla.pagina', { pagina: 2 })).toBe('Page 2 of {paginas}');
   });
 
+  it('quita el punto final del motivo para no escribir «(…).).»', () => {
+    expect(T_ES('tabla.error_actualizar', { motivo: 'La API no responde (red).' })).toBe(
+      'No se pudo actualizar la tabla (La API no responde (red)).',
+    );
+  });
+
   it('cada traductor conoce su idioma y su configuración regional', () => {
     expect(T_ES.idioma).toBe('es');
     expect(T_EN.idioma).toBe('en');
