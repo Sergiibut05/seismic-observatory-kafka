@@ -7,6 +7,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Panel de solo lectura de la actividad sísmica reciente (USGS), con mapa, recuentos y comparación histórica.">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- 011: tema guardado antes del primer pintado (sin destello de papel en modo noche). -->
+  <script>
+    try {
+      document.documentElement.dataset.tema =
+        localStorage.getItem('observatorio.tema') === 'noche' ? 'noche' : 'papel';
+    } catch (e) {
+      document.documentElement.dataset.tema = 'papel';
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>

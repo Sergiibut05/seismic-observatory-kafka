@@ -33,9 +33,17 @@ const PROFUNDIDAD: Distribucion = {
   ],
 };
 
-async function montar(mag: Bloque<Distribucion> = bloque(MAGNITUD), prof: Bloque<Distribucion> = bloque(PROFUNDIDAD)) {
+async function montar(
+  mag: Bloque<Distribucion> = bloque(MAGNITUD),
+  prof: Bloque<Distribucion> = bloque(PROFUNDIDAD),
+) {
   TestBed.configureTestingModule({
-    providers: [{ provide: PanelDatosService, useValue: { distMagnitud: signal(mag), distProfundidad: signal(prof) } }],
+    providers: [
+      {
+        provide: PanelDatosService,
+        useValue: { distMagnitud: signal(mag), distProfundidad: signal(prof) },
+      },
+    ],
   });
   const fixture = TestBed.createComponent(Distribuciones);
   await fixture.whenStable();
@@ -72,12 +80,40 @@ describe('Distribuciones', () => {
     expect(parte.textContent).toContain('0–10 km');
   });
 
+  it('datos clave: total e intervalo más frecuente con su parte del total', async () => {
+    const el = await montar();
+    const mag = el.querySelector('section[aria-labelledby="titulo-dist-magnitud"] .datos-clave')!;
+    expect(mag.textContent).toContain('12');
+    expect(mag.textContent).toContain('1–2');
+    expect(mag.textContent).toContain('50,0 %');
+    const prof = el.querySelector(
+      'section[aria-labelledby="titulo-dist-profundidad"] .datos-clave',
+    )!;
+    expect(prof.textContent).toContain('0–10 km');
+    expect(prof.textContent).toContain('80,0 %');
+  });
+
+  it('la profundidad lleva bajo el eje los colores del mapa; la magnitud, no', async () => {
+    const el = await montar();
+    const claves = (id: string) =>
+      [...el.querySelectorAll(`section[aria-labelledby="${id}"] path.grafico__clave`)].map((p) =>
+        p.getAttribute('fill'),
+      );
+    expect(claves('titulo-dist-profundidad')).toEqual(['#c2185b', '#ffffb2']);
+    expect(claves('titulo-dist-magnitud')).toEqual([]);
+  });
+
   it('estado vacío y datos antiguos', async () => {
-    const vacio = await montar(bloque<Distribucion>({ ...MAGNITUD, total: 0, sin_valor: 0, intervalos: [] }));
+    const vacio = await montar(
+      bloque<Distribucion>({ ...MAGNITUD, total: 0, sin_valor: 0, intervalos: [] }),
+    );
     expect(vacio.textContent).toContain('No hay eventos que cumplan los filtros actuales.');
     TestBed.resetTestingModule();
     const antiguos = await montar(
-      bloque(MAGNITUD, { estado: 'error', error: { tipo: 'red', motivo: 'Sin conexión con la API', status: 0, parametro: null } }),
+      bloque(MAGNITUD, {
+        estado: 'error',
+        error: { tipo: 'red', motivo: 'Sin conexión con la API', status: 0, parametro: null },
+      }),
     );
     expect(antiguos.textContent).toContain('Datos desactualizados');
     expect(antiguos.querySelectorAll('g[data-tipo="sin-valor"]').length).toBeGreaterThan(0);

@@ -1,3 +1,4 @@
+import { crearTraductor } from '../i18n/traducir';
 import {
   ND,
   formatearDecimal,
@@ -5,10 +6,18 @@ import {
   formatearHoraConUtc,
   formatearInstanteUtc,
   formatearMagnitud,
+  formatearPorcentaje,
   formatearProfundidad,
 } from './formato';
 
 describe('números', () => {
+  it('porcentaje con un decimal fijo, para que una columna de cuotas quede alineada', () => {
+    expect(formatearPorcentaje(74)).toBe('74,0 %');
+    expect(formatearPorcentaje(20.34)).toBe('20,3 %');
+    expect(formatearPorcentaje(0)).toBe('0,0 %');
+    expect(formatearPorcentaje(null)).toBe('ND');
+    expect(formatearPorcentaje(74, crearTraductor('en'))).toBe('74.0%');
+  });
   it('null y no finitos → «ND», nunca 0', () => {
     expect(ND).toBe('ND');
     expect(formatearEntero(null)).toBe('ND');

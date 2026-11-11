@@ -16,7 +16,7 @@
 .vista__controles {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--e-3) var(--e-8);
   max-width: var(--ancho-max);
   margin-inline: auto;
@@ -30,38 +30,27 @@
   padding: 0;
   border: 0;
 }
-.vista__modo legend {
-  padding: 0;
-  font-size: var(--t-sm);
-  font-weight: 600;
-}
-.vista__opciones {
-  display: inline-flex;
-  margin-top: var(--e-1);
-  border: 1px solid var(--linea-fuerte);
-  border-radius: var(--radio);
-  background: var(--superficie);
-  overflow: hidden;
-}
-.vista__opcion {
-  position: relative;
+/* «Datos» a la izquierda del control, en la misma línea. */
+.vista__modo {
   display: flex;
   align-items: center;
-  gap: var(--e-2);
-  min-height: 2.5rem;
-  padding: var(--e-1) var(--e-4);
-  color: var(--acento);
+  gap: var(--e-3);
+}
+.vista__modo legend {
+  float: left;
+  padding: 0;
+  margin-right: var(--e-3);
   font-size: var(--t-sm);
   font-weight: 600;
-  cursor: pointer;
+  color: var(--tinta-suave);
 }
-.vista__opcion + .vista__opcion {
-  border-left: 1px solid var(--linea-fuerte);
+/* El aspecto segmentado es global (styles.css); aquí solo el radio nativo y la etiqueta. */
+.vista__opcion {
+  min-height: 2rem;
 }
-/* El radio nativo se ve y se enfoca como cualquiera: la opción elegida se resalta entera. */
 .vista__opcion input {
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 0.85rem;
+  height: 0.85rem;
   margin: 0;
   accent-color: currentColor;
   cursor: pointer;
@@ -74,18 +63,6 @@
   content: '';
   position: absolute;
   inset: 0;
-}
-.vista__opcion:has(input:checked) {
-  background: var(--acento);
-  color: var(--sobre-acento);
-}
-.vista__opcion--replay:has(input:checked) {
-  background: var(--atencion-texto);
-  color: var(--atencion-fondo);
-}
-.vista__opcion:has(input:focus-visible) {
-  outline: 3px solid var(--foco);
-  outline-offset: -3px;
 }
 /* ── Interruptor de casos sintéticos ──────────────────────────────── */
 .vista__sinteticos {
@@ -100,7 +77,13 @@
   font-size: var(--t-sm);
   font-weight: 600;
 }
+/* 011: la explicación larga queda para lectores de pantalla y como title del interruptor. */
 .vista__ayuda {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   grid-column: 2;
   font-size: var(--t-xs);
   color: var(--tinta-suave);

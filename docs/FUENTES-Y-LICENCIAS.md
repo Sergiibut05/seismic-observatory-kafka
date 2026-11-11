@@ -60,8 +60,10 @@ editorial de facto y no una posición oficial sobre territorios en disputa.
 | PostgreSQL | Almacenamiento | PostgreSQL License |
 | aiokafka, FastAPI, Uvicorn, Shapely | Backend Python | Apache 2.0, MIT, BSD-3, BSD-3 |
 | Angular | Panel | MIT |
-| Leaflet | Mapa | BSD-2-Clause |
-| Teselas de fondo (se decide en la feature 006: OpenStreetMap o CARTO) | Fondo del mapa | OSM: ODbL, atribución «© OpenStreetMap contributors» y política de uso de teselas. CARTO: atribución «© CARTO» y límites de su plan gratuito. |
+| Leaflet | Mapa plano | BSD-2-Clause |
+| globe.gl y three.js | Globo 3D (008, 010) | MIT |
+| IBM Plex Sans, Serif y Mono (`@fontsource/ibm-plex-*`) | Tipografía del panel (011), empaquetada en el bundle, sin CDN | SIL Open Font License 1.1 |
+| Fondo del mapa | Sin teselas desde la feature 010: plano y globo dibujan Natural Earth (dominio público) con la paleta del panel. Atribución «Fronteras: Natural Earth». Hasta la 010 se usaban teselas de OpenStreetMap (ODbL). | — |
 
 ## Skills de agente de terceros (`.cursor/skills/`)
 

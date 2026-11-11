@@ -40,7 +40,8 @@ export const ES = {
   'errores.parametro_generico': 'La API rechazó la consulta por un parámetro no válido.',
   'errores.servicio': 'Servicio no disponible: la base de datos no responde.',
   'errores.interno': 'Error interno de la API.',
-  'errores.respuesta_invalida': 'La API devolvió una respuesta que no es JSON (¿página de aviso de ngrok?).',
+  'errores.respuesta_invalida':
+    'La API devolvió una respuesta que no es JSON (¿página de aviso de ngrok?).',
   'errores.http': 'La API respondió con el estado HTTP {status}.',
   'errores.metodo': 'El panel solo realiza peticiones GET.',
   'errores.configuracion': 'La configuración de la API no es válida.',
@@ -49,7 +50,8 @@ export const ES = {
   // Avisos del estado del sistema
   'avisos.api_sin_respuesta': 'La API no responde: se muestran los últimos datos recibidos.',
   'avisos.base_fallida': 'La base de datos no responde: las cifras no están disponibles.',
-  'avisos.datos_desactualizados': 'Los datos están desactualizados: la última ingesta de USGS es antigua.',
+  'avisos.datos_desactualizados':
+    'Los datos están desactualizados: la última ingesta de USGS es antigua.',
 
   // Estado del sistema
   'estado.aria': 'Estado del sistema',
@@ -97,8 +99,10 @@ export const ES = {
   'filtros.hora_acotada': 'El recuento por hora admite como máximo 31 días: se muestra {ventana}.',
   'filtros.aplicar': 'Aplicar',
   'filtros.restablecer': 'Restablecer',
-  'filtros.estado_errores': 'Corrige los errores para aplicar los filtros; mientras tanto se mantienen los anteriores.',
-  'filtros.estado_pendiente': 'Cambios pendientes: se aplican solos tras una breve pausa o con «Aplicar».',
+  'filtros.estado_errores':
+    'Corrige los errores para aplicar los filtros; mientras tanto se mantienen los anteriores.',
+  'filtros.estado_pendiente':
+    'Cambios pendientes: se aplican solos tras una breve pausa o con «Aplicar».',
   'filtros.estado_aplicados': 'Filtros aplicados.',
   'filtros.err_fecha': 'Fecha no válida (UTC, formato AAAA-MM-DDThh:mm).',
   'filtros.err_fecha_orden': 'La fecha final debe ser posterior a la inicial.',
@@ -138,8 +142,10 @@ export const ES = {
     'Aviso: el mapa muestra {devueltos} de {total} eventos (límite de la API). La tabla y los recuentos incluyen todos; acota los filtros para ver el resto.',
   'mapa.error_antiguo': 'No se pudo actualizar el mapa ({motivo}). Se muestran {datos}.',
   'mapa.error_carga': 'No se pudo cargar el mapa ({motivo}).',
-  'mapa.seleccion_fuera': 'El evento seleccionado no está entre los dibujados en el mapa; consúltalo en la tabla.',
-  'mapa.error_fronteras': 'No se pudieron cargar las fronteras de los países; el mapa sigue con los eventos.',
+  'mapa.seleccion_fuera':
+    'El evento seleccionado no está entre los dibujados en el mapa; consúltalo en la tabla.',
+  'mapa.error_fronteras':
+    'No se pudieron cargar las fronteras de los países; el mapa sigue con los eventos.',
   'mapa.lienzo_aria': 'Mapa de eventos sísmicos',
   'mapa.descripcion':
     'Mapa interactivo: cada evento es un círculo; su tamaño indica la magnitud y su color la profundidad. Con el mapa enfocado, las flechas lo desplazan y + y − cambian el zoom. La tabla de eventos es la alternativa por teclado: el botón «Ver en el mapa» abre la ficha del evento.',
@@ -158,7 +164,8 @@ export const ES = {
   'mapa.acercar': 'Acercar',
   'mapa.alejar': 'Alejar',
   'mapa.cerrar_ficha': 'Cerrar ficha',
-  'mapa.osm': 'colaboradores de OpenStreetMap',
+  'mapa.fuente_fronteras': 'Fronteras: Natural Earth',
+  'globo.leyenda_altura': 'Columna más alta, magnitud mayor',
 
   // Ficha y resumen del evento
   'ficha.aria_real': 'Ficha del terremoto {id}',
@@ -173,15 +180,26 @@ export const ES = {
 
   // Globo 3D
   'globo.aria':
-    'Globo 3D con los eventos del filtro. El tamaño y la altura marcan la magnitud; el color del cuerpo, la profundidad, como en el mapa plano. Los pulsos violeta marcan los 60 terremotos más recientes. Arrastra para girar, rueda para acercar, pulsa un punto para seleccionarlo o un país para filtrarlo. La tabla de eventos es la alternativa accesible.',
+    'Globo 3D con los eventos del filtro. El tamaño y la altura marcan la magnitud; el color del cuerpo, la profundidad, como en el mapa plano. Los pulsos rojos marcan los 60 terremotos más recientes. Arrastra para girar, rueda para acercar, pulsa un punto para seleccionarlo o un país para filtrarlo. La tabla de eventos es la alternativa accesible.',
   'globo.cargando': 'Cargando el globo…',
-  'globo.sin_webgl': 'Este navegador no puede dibujar el globo 3D (necesita WebGL). Usa la vista «Plano».',
+  'globo.sin_webgl':
+    'Este navegador no puede dibujar el globo 3D (necesita WebGL). Usa la vista «Plano».',
   'globo.inactivo': 'Globo 3D no disponible en este entorno.',
   'globo.m2': 'M 2',
   'globo.m5': 'M 5',
   'globo.m7': 'M 7',
   'cinta.aria': 'Recorte local de las últimas 24 horas; no consulta la API',
   'cinta.etiqueta': 'Hasta',
+
+  // Identidad (011): tema
+  'tema.boton': 'Modo noche',
+  'estado.corto_api': 'API',
+  'estado.corto_usgs': 'USGS',
+  'estado.corto_periodo': 'Periodo',
+  'estado.corto_eventos': 'Eventos',
+  'estado.corto_replay': 'Reproducidos',
+  'tema.papel': 'Papel',
+  'tema.noche': 'Noche',
   'escena.cifra_vs': '{hoy} frente a {media}',
   'escena.cifra_rotulo': 'hoy / media 2025',
   'escena.cifra_aviso': 'El último periodo puede estar incompleto.',
@@ -231,9 +249,13 @@ export const ES = {
   'comparacion.eventos_dias': '{eventos} eventos en {dias} días',
   'comparacion.cociente': 'Cociente (24 h ÷ media 2025)',
   'comparacion.cociente_ayuda': '1 = igual que la media diaria',
+  'comparacion.v_debajo': '{pct} % por debajo de la media diaria',
+  'comparacion.v_encima': '{pct} % por encima de la media diaria',
+  'comparacion.v_igual': 'Igual que la media diaria',
   'comparacion.filtro_efectivo': 'Filtro efectivo:',
   'comparacion.no_disponible_ahora': 'Comparación no disponible por ahora.',
-  'comparacion.aviso': 'El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después.',
+  'comparacion.aviso':
+    'El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después.',
   'comparacion.no_disponible': 'no disponible',
   'comparacion.f_sin_limites': 'magnitud: sin límites',
   'comparacion.f_min': 'magnitud ≥ {valor}',
@@ -252,12 +274,21 @@ export const ES = {
   'recuentos.grupo_pais': 'Eventos por país',
   'recuentos.grupo_subregion': 'Eventos por subregión',
   'recuentos.agrupar': 'Agrupar por',
-  'recuentos.total': 'Total:',
+  'recuentos.total': 'Total',
+  'recuentos.repartidos': 'Repartidos en',
   'recuentos.eventos': 'eventos',
+  'recuentos.n_paises': 'países',
+  'recuentos.n_subregiones': 'subregiones',
+  'recuentos.mayor': 'Mayor',
+  'recuentos.pico': 'Hora con más eventos',
+  'recuentos.media_hora': 'Media por hora',
+  'recuentos.media_ref': 'media {valor}',
   'recuentos.eje_eventos': 'Eventos (recuento)',
-  'recuentos.resto_nota': 'El gráfico muestra las {n} mayores categorías y agrupa el resto; la tabla incluye todas.',
+  'recuentos.resto_nota':
+    'El gráfico muestra las {n} mayores categorías y agrupa el resto; la tabla incluye todas.',
   'recuentos.hora_titulo': 'Eventos por hora (UTC)',
-  'recuentos.hora_acotada': 'El rango pedido supera 31 días: se muestran los 31 días hasta {hasta}.',
+  'recuentos.hora_acotada':
+    'El rango pedido supera 31 días: se muestran los 31 días hasta {hasta}.',
   'recuentos.hora_sin_fechas':
     'Sin fechas en los filtros, este gráfico muestra las últimas 24 h; los demás bloques usan todo el periodo disponible.',
   'recuentos.hora_sin_fechas_replay':
@@ -276,14 +307,15 @@ export const ES = {
   'distribuciones.grafico_magnitud': 'Distribución de la magnitud',
   'distribuciones.grafico_profundidad': 'Distribución de la profundidad',
   'distribuciones.eje_magnitud': 'Magnitud (intervalos)',
-  'distribuciones.eje_profundidad': 'Profundidad (km, intervalos)',
+  'distribuciones.eje_profundidad': 'Profundidad (km, intervalos; el color es el del mapa)',
+  'distribuciones.eventos': 'Eventos',
+  'distribuciones.moda': 'Intervalo más frecuente',
 
   // Gráfico de barras
   'grafico.eventos': 'eventos',
   'grafico.sin_valor': 'Sin valor',
   'grafico.resto': 'Resto',
   'grafico.leyenda_aria': 'Cómo leer las barras',
-  'grafico.leyenda_barra': 'Barra: recuento',
   'grafico.leyenda_cero': 'Línea con borde: 0, sin eventos',
   'grafico.leyenda_sin_valor': 'Rayada: eventos sin valor (no son 0)',
   'grafico.leyenda_nd': 'valor desconocido',

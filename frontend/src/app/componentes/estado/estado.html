@@ -1,23 +1,23 @@
 <section class="estado sobre-oscuro" [attr.aria-label]="i18n.tr('estado.aria')">
   <dl class="estado__datos">
-    <div>
+    <div [attr.data-corto]="i18n.tr('estado.corto_api')">
       <dt>{{ i18n.tr('estado.ultimo_acceso') }}</dt>
       <dd>{{ cargando() ? i18n.tr('estado.comprobando') : ultimoAcceso() }}</dd>
     </div>
-    <div>
+    <div [attr.data-corto]="i18n.tr('estado.corto_usgs')" [attr.title]="ultimaIngestaCompleta()">
       <dt>{{ i18n.tr('estado.ultima_ingesta') }}</dt>
       <dd>{{ ultimaIngesta() }}</dd>
     </div>
-    <div>
+    <div [attr.data-corto]="i18n.tr('estado.corto_periodo')" [attr.title]="periodoCompleto()">
       <dt>{{ i18n.tr('estado.periodo') }}</dt>
       <dd>{{ periodo() }}</dd>
     </div>
-    <div>
+    <div [attr.data-corto]="i18n.tr('estado.corto_eventos')">
       <dt>{{ i18n.tr('estado.eventos_reales') }}</dt>
       <dd>{{ eventosReales() }}</dd>
     </div>
     @if (esReplay()) {
-      <div class="estado__replay">
+      <div class="estado__replay" [attr.data-corto]="i18n.tr('estado.corto_replay')">
         <dt>{{ i18n.tr('estado.eventos_replay') }}</dt>
         <dd>{{ eventosReplay() }}</dd>
       </div>

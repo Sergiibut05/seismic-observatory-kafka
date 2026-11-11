@@ -15,6 +15,8 @@ export interface DatoBarra {
   valor: number | null;
   /** Categoría «sin valor» (eventos sin magnitud/profundidad): se dibuja aparte y distinta. */
   sinValor?: boolean;
+  /** Color de la clave bajo el eje (p. ej. el de ese intervalo de profundidad en el mapa). */
+  color?: string;
 }
 
 export interface BarraCalculada {
@@ -30,7 +32,10 @@ export interface BarraCalculada {
 
 /** Máximo «redondo» (1, 2, 2,5, 5 × 10^k) que contiene a todos los valores; mínimo 1. */
 export function escalaMaxima(valores: ReadonlyArray<number | null>): number {
-  const m = Math.max(0, ...valores.filter((v): v is number => typeof v === 'number' && Number.isFinite(v)));
+  const m = Math.max(
+    0,
+    ...valores.filter((v): v is number => typeof v === 'number' && Number.isFinite(v)),
+  );
   if (m <= 1) return 1;
   const exp = Math.pow(10, Math.floor(Math.log10(m)));
   for (const paso of [1, 2, 2.5, 5, 10]) {
@@ -52,7 +57,11 @@ export function tipoDeBarra(d: DatoBarra): TipoBarra {
   return d.valor === 0 ? 'cero' : 'normal';
 }
 
-export function calcularBarras(datos: ReadonlyArray<DatoBarra>, max: number, t: Traductor = T_ES): BarraCalculada[] {
+export function calcularBarras(
+  datos: ReadonlyArray<DatoBarra>,
+  max: number,
+  t: Traductor = T_ES,
+): BarraCalculada[] {
   return datos.map((d) => {
     const tipo = tipoDeBarra(d);
     const conLongitud = tipo === 'normal' && max > 0;
@@ -80,7 +89,9 @@ export function indicesEtiquetasVisibles(n: number, maxEtiquetas: number): numbe
 }
 
 export function acortar(texto: string, maxCaracteres: number): string {
-  return texto.length <= maxCaracteres ? texto : `${texto.slice(0, Math.max(1, maxCaracteres - 1))}…`;
+  return texto.length <= maxCaracteres
+    ? texto
+    : `${texto.slice(0, Math.max(1, maxCaracteres - 1))}…`;
 }
 
 /** `16:00` a partir de un instante ISO UTC (`ND` si no es válido). */
@@ -113,8 +124,12 @@ export function textoAlternativo(
   ];
   const mayor = conValor
     .filter((b) => b.tipo === 'normal')
-    .reduce<BarraCalculada | null>((a, b) => (a === null || (b.valor as number) > (a.valor as number) ? b : a), null);
-  if (mayor) partes.push(t('grafico.alt_mayor', { etiqueta: mayor.etiqueta, valor: mayor.valorTexto }));
+    .reduce<BarraCalculada | null>(
+      (a, b) => (a === null || (b.valor as number) > (a.valor as number) ? b : a),
+      null,
+    );
+  if (mayor)
+    partes.push(t('grafico.alt_mayor', { etiqueta: mayor.etiqueta, valor: mayor.valorTexto }));
   const ceros = barras.filter((b) => b.tipo === 'cero').length;
   if (ceros > 0) partes.push(t('grafico.alt_ceros', { n: ceros }));
   const sin = barras.find((b) => b.tipo === 'sin-valor');

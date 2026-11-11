@@ -1,19 +1,4 @@
-.distribuciones {
-  display: grid;
-  gap: var(--e-6);
-}
-.distribuciones__parte {
-  display: grid;
-  gap: var(--e-3);
-  min-width: 0;
-}
-.distribuciones__parte h3 {
-  font-size: var(--t-base);
-}
-.distribuciones__nota {
-  font-size: var(--t-sm);
-  color: var(--tinta-suave);
-}
-.distribuciones__nota strong {
-  color: var(--tinta);
+/* El aspecto de las partes y de los datos clave es global (styles.css): lo comparte con Recuentos. */
+:host {
+  display: block;
 }

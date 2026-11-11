@@ -1,5 +1,10 @@
-/* Sin encapsulación: etiqueta flotante y magnitud las inserta globe.gl. */
+/*
+ * Escena del globo (010). Sin encapsulación: etiqueta flotante y magnitud las inserta globe.gl.
+ * Todos los paneles comparten `.lamina` (styles.css): mismo fondo, borde, radio y sombra.
+ * Abajo, una sola línea de base: leyenda · cinta · cifra.
+ */
 .globo {
+  --hueco: var(--e-4);
   position: absolute;
   inset: 0;
   z-index: 1001;
@@ -22,91 +27,102 @@
   transform: translate(-50%, -50%);
   max-width: 22rem;
   margin: 0;
-  padding: var(--e-2) var(--e-3);
-  border: 1px solid var(--escena-violeta-bajo);
-  background: var(--escena-fondo);
-  color: var(--escena-tinta);
+  padding: var(--e-2) var(--e-4);
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio);
+  background: var(--lamina-fondo);
+  color: var(--escena-tinta-suave);
+  font-size: var(--t-sm);
   text-align: center;
 }
 .globo__estado--aviso {
+  border-radius: var(--radio-panel);
   border-color: var(--atencion-borde);
   color: var(--atencion-texto);
   background: var(--atencion-fondo);
 }
 
+/* ── Leyenda ──────────────────────────────────────────────────────── */
 .globo__leyenda {
   position: absolute;
-  left: var(--e-2);
-  bottom: 4.25rem;
+  left: var(--hueco);
+  bottom: var(--hueco);
   z-index: 4;
   width: 13.5rem;
-  max-width: calc(100% - 2rem);
-  padding: var(--e-2);
-  border: 1px solid rgb(139 124 255 / 0.35);
-  background: rgb(7 11 18 / 0.82);
-  color: var(--escena-tinta);
+  padding: var(--e-3);
   font-size: var(--t-xs);
   pointer-events: none;
 }
-.globo__radios,
-.globo__escala {
+.globo__leyenda-titulo {
+  margin: 0 0 var(--e-1);
+  color: var(--escena-tinta-suave);
+  font-size: 0.7rem;
+}
+.globo__leyenda-titulo + .globo__escala {
+  margin-top: 0;
+}
+.globo__columnas {
   display: flex;
   align-items: flex-end;
-  gap: var(--e-3);
-  margin: 0;
+  gap: var(--e-4);
+  margin: 0 0 var(--e-3);
   padding: 0;
   list-style: none;
 }
-.globo__radios li {
+.globo__columnas li {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
 }
-.globo__circulo {
-  display: inline-block;
-  border: 1px solid var(--escena-tinta);
-  border-radius: 50%;
-  background: rgb(232 238 243 / 0.15);
+.globo__columna {
+  display: block;
+  width: 5px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, var(--prof-3), var(--prof-1));
 }
 .globo__escala {
-  gap: 0;
-  margin-top: var(--e-2);
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--radio);
+  overflow: hidden;
 }
 .globo__escala li {
   flex: 1 1 0;
 }
 .globo__tramo {
   display: block;
-  height: 0.45rem;
+  height: 0.4rem;
 }
 .globo__extremos {
   display: flex;
   justify-content: space-between;
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   color: var(--escena-tinta-suave);
   font-size: 0.65rem;
 }
 
+/* ── Cifra de comparación ─────────────────────────────────────────── */
 .globo__cifra {
   position: absolute;
-  right: var(--e-2);
-  bottom: 4.25rem;
+  right: var(--hueco);
+  bottom: var(--hueco);
   z-index: 4;
-  max-width: 11rem;
-  padding: var(--e-2);
-  border: 1px solid rgb(139 124 255 / 0.35);
-  background: rgb(7 11 18 / 0.82);
-  color: var(--escena-tinta);
+  width: 13.5rem;
+  padding: var(--e-3);
   pointer-events: none;
 }
 .globo__cifra-valor {
   margin: 0;
   max-width: none;
-  color: var(--escena-violeta-alto);
+  color: var(--escena-tinta);
   font-size: var(--t-lg);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
+  letter-spacing: -0.01em;
   line-height: 1.15;
 }
 .globo__cifra-rotulo,
@@ -117,99 +133,140 @@
   font-size: 0.7rem;
 }
 
+/* ── Gráfica de la escena ─────────────────────────────────────────── */
 .globo__grafica {
   position: absolute;
-  left: var(--e-2);
-  top: 3.25rem;
+  left: var(--hueco);
+  top: 3.5rem;
   z-index: 4;
-  width: min(22rem, calc(100% - 2rem));
-  padding: var(--e-2);
-  border: 1px solid rgb(139 124 255 / 0.35);
-  background: rgb(7 11 18 / 0.88);
-  color: var(--escena-tinta);
+  width: min(22rem, calc(100% - 2 * var(--hueco)));
+  padding: var(--e-2) var(--e-3) var(--e-3);
   --tinta: var(--escena-tinta);
   --tinta-suave: var(--escena-tinta-suave);
-  --linea: rgb(139 124 255 / 0.35);
-  --linea-fuerte: rgb(139 124 255 / 0.5);
-  --barra: var(--escena-violeta);
+  --linea: color-mix(in srgb, var(--tinta) 10%, transparent);
+  --linea-fuerte: color-mix(in srgb, var(--tinta) 30%, transparent);
   --superficie: transparent;
 }
+.globo__grafica:not([open]) {
+  width: auto;
+}
 .globo__grafica .grafico__svg {
-  max-height: 9rem;
+  max-height: 8.5rem;
 }
 .globo__grafica summary {
   cursor: pointer;
+  color: var(--escena-tinta-suave);
   font-size: var(--t-xs);
-  font-weight: 650;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .globo__series {
-  display: flex;
   margin: var(--e-2) 0;
-  border: 1px solid rgb(139 124 255 / 0.4);
-  overflow: hidden;
-}
-.globo__serie {
-  flex: 1;
-  padding: 2px var(--e-2);
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--t-xs);
-  cursor: pointer;
-}
-.globo__serie[aria-pressed='true'] {
-  background: var(--escena-violeta);
-  color: #fff;
 }
 
+/* ── Cinta de 24 h ────────────────────────────────────────────────── */
 .globo__cinta {
   position: absolute;
-  right: var(--e-2);
-  bottom: var(--e-2);
-  left: var(--e-2);
+  bottom: var(--hueco);
+  left: calc(13.5rem + 2 * var(--hueco));
+  right: calc(13.5rem + 2 * var(--hueco));
   z-index: 4;
-  padding: var(--e-1) var(--e-2) var(--e-2);
-  border: 1px solid rgb(139 124 255 / 0.35);
-  background: rgb(7 11 18 / 0.82);
+  padding: var(--e-2) var(--e-4) var(--e-3);
   color: var(--escena-tinta);
 }
 .globo__cinta-etiqueta {
   display: flex;
   justify-content: space-between;
+  gap: var(--e-3);
   font-size: 0.7rem;
   color: var(--escena-tinta-suave);
 }
+.globo__cinta-hora {
+  color: var(--escena-tinta);
+  font-variant-numeric: tabular-nums;
+}
 .globo__cinta-pista {
+  --pos: 100%;
   position: relative;
-  margin-top: 2px;
+  height: 1.25rem;
+  margin-top: var(--e-1);
+}
+/* Raíl fino; el tramo hasta el corte en tinta y la pluma en rojo. */
+.globo__cinta-pista::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: var(--radio);
+  background: linear-gradient(
+    to right,
+    var(--escena-tinta) 0 var(--pos),
+    var(--linea) var(--pos) 100%
+  );
+  pointer-events: none;
 }
 .globo__cinta-marcas {
   position: absolute;
-  inset: 0.35rem 0.4rem auto;
-  height: 0.55rem;
+  inset: 0;
   pointer-events: none;
 }
 .globo__cinta-marca {
   position: absolute;
-  top: 0;
+  top: 15%;
   width: 1px;
-  height: 100%;
-  background: var(--escena-violeta-bajo);
+  height: 22%;
+  background: var(--escena-tinta);
+  opacity: 0.35;
 }
 .globo__cinta-rango {
+  position: relative;
   width: 100%;
+  height: 100%;
   margin: 0;
-  accent-color: var(--escena-violeta);
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+.globo__cinta-rango::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+.globo__cinta-rango::-moz-range-track {
+  background: transparent;
+}
+.globo__cinta-rango::-webkit-slider-thumb {
+  appearance: none;
+  width: 4px;
+  height: 20px;
+  margin-top: 0;
+  border: 0;
+  border-radius: 1px;
+  background: var(--escena-acento);
+}
+.globo__cinta-rango::-moz-range-thumb {
+  width: 4px;
+  height: 20px;
+  border: 0;
+  border-radius: 1px;
+  background: var(--escena-acento);
+}
+.globo__cinta-rango:focus-visible {
+  outline: 2px solid var(--foco-sobre-oscuro);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
+/* ── Etiqueta flotante y magnitud (las crea globe.gl) ─────────────── */
 .globo-etiqueta {
   display: grid;
   gap: 2px;
-  padding: var(--e-1) var(--e-2);
-  background: rgb(16 24 32 / 0.96);
+  padding: var(--e-2) var(--e-3);
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  box-shadow: var(--lamina-sombra);
   color: var(--escena-tinta);
-  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 40%, transparent);
   font-family: var(--fuente);
   font-size: var(--t-xs);
 }
@@ -219,34 +276,66 @@
 .globo-etiqueta__marca {
   padding: 0 var(--e-1);
   border: 1px dashed var(--atencion-borde);
+  border-radius: 3px;
   background: var(--atencion-fondo);
   color: var(--atencion-texto);
   font-size: 0.7rem;
 }
 
 .globo-magnitud {
-  color: var(--escena-violeta-alto);
-  font-family: var(--fuente);
-  font-size: 1.6rem;
+  color: var(--acento);
+  font-family: var(--fuente-serif);
+  font-style: italic;
+  font-size: 1.5rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
-  text-shadow: 0 1px 8px rgb(7 11 18 / 0.85);
+  text-shadow:
+    0 0 3px var(--escena-fondo),
+    0 0 8px var(--escena-fondo);
   pointer-events: none;
-  transform: translateY(-1.2rem);
+  transform: translateY(-1.1rem);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .globo__cinta-rango {
-    transition: none;
+/* ── Pantallas medianas y estrechas ───────────────────────────────── */
+@media (max-width: 64rem) {
+  .globo {
+    --hueco: var(--e-2);
+  }
+  .globo__cinta {
+    left: var(--hueco);
+    right: var(--hueco);
+  }
+  .globo__leyenda,
+  .globo__cifra {
+    bottom: calc(var(--hueco) + 4.5rem);
   }
 }
 
 @media (max-width: 40rem) {
   .globo__leyenda {
     width: 9.5rem;
+    padding: var(--e-2);
+  }
+  .globo__leyenda-titulo {
+    display: none;
+  }
+  .globo__columnas {
+    gap: var(--e-3);
+    margin-bottom: var(--e-2);
+  }
+  .globo__cifra {
+    width: auto;
+    max-width: 10rem;
+    padding: var(--e-2);
+  }
+  .globo__cifra-valor {
+    font-size: var(--t-md);
+  }
+  .globo__cifra-aviso {
+    display: none;
   }
   .globo__grafica {
-    width: min(16rem, calc(100% - 1rem));
+    top: 3rem;
   }
 }

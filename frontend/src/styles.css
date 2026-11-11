@@ -1,41 +1,103 @@
 /*
- * Instrumento nocturno (010): el globo marca el tono; el plano deja de parecer un
- * formulario institucional. El color de los terremotos sigue --prof-* (escalas.ts).
+ * Papel de sismógrafo (011). El panel es una hoja de registro: papel, tinta y rojo de pluma.
+ * Dos temas con los mismos tokens: papel (por defecto) y noche (la base de color de 010).
  *
- * 1. Fondo #070B12, paneles apenas más claros, filete violeta suave. El acento de
- *    chrome es violeta eléctrico; el de los datos es la profundidad.
- * 2. Cabecera fina: lo primero es si los datos están frescos, no un bloque de dt/dd.
- * 3. Tipografía del sistema, cifras tabulares, contraste ≥ 4,5:1, avisos con icono.
+ * 1. Estilo de instrumento: filetes de 1 px, esquinas de 2 px, sin desenfoques ni sombras
+ *    difusas. El rojo de pluma solo para acentos, selección y alertas; los datos van por
+ *    profundidad (--prof-*, espejo de escalas.ts).
+ * 2. IBM Plex: Serif para la marca y el titular, Sans para el texto, Mono para las cifras.
+ * 3. Contraste ≥ 4,5:1 en texto y ≥ 3:1 en bordes de control en los dos temas
+ *    (lo comprueba `styles.contraste.spec.ts`: los colores que mide van en hexadecimal).
  *
- * Contacto con los componentes: usar las variables `--*` y las clases globales de abajo
- * (`.bloque`, `.aviso`, `.campo`, `.boton`, `.tabla-datos`, `.cifra`, `.nd`, `.solo-lectores`).
+ * Contacto con los componentes: variables `--*` y clases globales de abajo (`.bloque`, `.lamina`,
+ * `.aviso`, `.campo`, `.boton`, `.tabla-datos`, `.cifra`, `.nd`, `.solo-lectores`).
  */
 
-:root {
+/* ── Tema papel (por defecto) ─────────────────────────────────────── */
+:root,
+:root[data-tema='papel'] {
+  color-scheme: light;
+
+  --fondo: #f4f1ea;
+  --superficie: #fbf9f4;
+  --superficie-2: #ece7dc;
+  --tinta: #1a1a1a;
+  --tinta-suave: #5c574e;
+  --linea: #d9d2c3;
+  --linea-fuerte: #8a8377;
+  --cuadricula: rgb(26 26 26 / 0.035);
+
+  --acento: #c8102e;
+  --acento-hover: #a00d24;
+  --acento-suave: #f6dfe0;
+  --sobre-acento: #ffffff;
+
+  /* Cabecera: en papel es la misma hoja */
+  --oscuro: #f4f1ea;
+  --oscuro-2: #ece7dc;
+  --sobre-oscuro: #1a1a1a;
+  --sobre-oscuro-suave: #5c574e;
+
+  --alerta-fondo: #fbe3e1;
+  --alerta-texto: #8a1414;
+  --alerta-borde: #c8102e;
+  --atencion-fondo: #f8edd0;
+  --atencion-texto: #6b4e00;
+  --atencion-borde: #b8860b;
+  --info-fondo: #e3ebf3;
+  --info-texto: #1d3f63;
+  --info-borde: #4a7ab0;
+  --ok-texto: #256b42;
+
+  --foco: #1a1a1a;
+  --foco-sobre-oscuro: #1a1a1a;
+
+  --borde-circulo: #1a1a1a;
+  --barra: #3f7f86;
+  --barra-activa: #1d4f55;
+  --barra-sin-valor: #a39c8f;
+  --barra-cero: #d9d2c3;
+
+  --escena-fondo: #f4f1ea;
+  --escena-tinta: #1a1a1a;
+  --escena-tinta-suave: #5c574e;
+  --escena-acento: #c8102e;
+
+  --mundo-oceano: #c5d1cf;
+  --mundo-tierra: #f7f3ea;
+
+  --lamina-fondo: rgb(251 249 244 / 0.95);
+  --lamina-borde: rgb(26 26 26 / 0.28);
+  --lamina-sombra: 0 1px 2px rgb(26 26 26 / 0.06), 0 6px 20px rgb(26 26 26 / 0.07);
+  --sombra-bloque: 0 1px 2px rgb(26 26 26 / 0.04);
+  --segmento-pista: #ebe6db;
+  --segmento-activo: #ffffff;
+  --velo: rgb(244 241 234 / 0.78);
+}
+
+/* ── Tema noche (base de color de 010) ────────────────────────────── */
+:root[data-tema='noche'] {
   color-scheme: dark;
 
-  /* Superficies y tinta (tinta sobre fondo ≥ 12:1, tinta-suave ≥ 5,5:1) */
   --fondo: #070b12;
   --superficie: #101820;
   --superficie-2: #17212c;
   --tinta: #e8eef3;
   --tinta-suave: #9aa8b8;
   --linea: #243140;
-  --linea-fuerte: #6d7e90; /* bordes de controles: ≥ 3:1 */
+  --linea-fuerte: #6d7e90;
+  --cuadricula: rgb(232 238 243 / 0.025);
 
-  /* Acento de chrome (el de los datos es la escala de profundidad) */
-  --acento: #9d91ff;
-  --acento-hover: #b3a8ff;
-  --acento-suave: #1a1633;
+  --acento: #ff6b5e;
+  --acento-hover: #ff8f85;
+  --acento-suave: #3a1714;
   --sobre-acento: #070b12;
 
-  /* Barra de estado: mismo vacío que la escena */
   --oscuro: #070b12;
   --oscuro-2: #101820;
   --sobre-oscuro: #e8eef3;
   --sobre-oscuro-suave: #9aa8b8;
 
-  /* Estados sobre fondo oscuro (texto/fondo ≥ 7:1) */
   --alerta-fondo: #3a1514;
   --alerta-texto: #ffc4c0;
   --alerta-borde: #e07068;
@@ -47,32 +109,49 @@
   --info-borde: #4a7ab0;
   --ok-texto: #7dcea0;
 
-  /* Foco: ámbar sobre oscuro (el mismo --foco-sobre-oscuro de siempre) */
   --foco: #ffd166;
   --foco-sobre-oscuro: #ffd166;
 
-  /* Profundidad: espejo de INTERVALOS_PROFUNDIDAD en puro/escalas.ts (fuente única). */
-  --prof-neg: #c2185b; /* < 0 */
-  --prof-1: #ffffb2; /* 0–10 */
-  --prof-2: #d9f0a3; /* 10–30 */
-  --prof-3: #addd8e; /* 30–70 */
-  --prof-4: #41b6c4; /* 70–150 */
-  --prof-5: #1d91c0; /* 150–300 */
-  --prof-6: #225ea8; /* 300–500 */
-  --prof-7: #253494; /* 500–700 */
-  --prof-8: #081d58; /* ≥ 700 */
-  --prof-nd: #8d9399; /* ND (borde discontinuo además del gris) */
-  --borde-circulo: #0f1a24; /* contorno de los círculos del mapa */
-
-  /* Series de los gráficos de barras (barra normal, barra «sin valor», barra a cero) */
-  --barra: #8b7cff;
+  --borde-circulo: #0f1a24;
+  --barra: #6fb3b2;
+  --barra-activa: #c4ebe7;
   --barra-sin-valor: #6d7e90;
   --barra-cero: #243140;
 
-  /* Tipografía */
-  --fuente: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --fuente-mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+  --escena-fondo: #070b12;
+  --escena-tinta: #e8eef3;
+  --escena-tinta-suave: #9aa8b8;
+  --escena-acento: #ff6b5e;
+
+  --mundo-oceano: #08141e;
+  --mundo-tierra: #22393c;
+
+  --lamina-fondo: rgb(16 24 32 / 0.94);
+  --lamina-borde: rgb(232 238 243 / 0.22);
+  --lamina-sombra: 0 10px 30px rgb(0 0 0 / 0.35);
+  --sombra-bloque: none;
+  --segmento-pista: #0b121a;
+  --segmento-activo: #22303d;
+  --velo: rgb(7 11 18 / 0.78);
+}
+
+/* ── Tokens comunes ───────────────────────────────────────────────── */
+:root {
+  /* Profundidad: espejo de INTERVALOS_PROFUNDIDAD en puro/escalas.ts (fuente única). */
+  --prof-neg: #c2185b;
+  --prof-1: #ffffb2;
+  --prof-2: #d9f0a3;
+  --prof-3: #addd8e;
+  --prof-4: #41b6c4;
+  --prof-5: #1d91c0;
+  --prof-6: #225ea8;
+  --prof-7: #253494;
+  --prof-8: #081d58;
+  --prof-nd: #8d9399;
+
+  --fuente: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --fuente-serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+  --fuente-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --t-xs: 0.8125rem;
   --t-sm: 0.875rem;
   --t-base: 1rem;
@@ -81,25 +160,17 @@
   --t-cifra: 1.75rem;
   --interlineado: 1.5;
 
-  /* Espacios y formas */
   --e-1: 0.25rem;
   --e-2: 0.5rem;
   --e-3: 0.75rem;
   --e-4: 1rem;
   --e-6: 1.5rem;
   --e-8: 2rem;
-  --radio: 4px;
+  --radio: 8px;
+  --radio-panel: 12px;
   --ancho-max: 92rem;
   --alto-mapa: clamp(24rem, 62vh, 42rem);
   --alto-cabecera: 4.75rem;
-
-  /* Escena del globo (010): el cuerpo del terremoto sigue --prof-*; esto es el acento. */
-  --escena-fondo: #070b12;
-  --escena-tinta: #e8eef3;
-  --escena-tinta-suave: #9aa8b8;
-  --escena-violeta: #5b4dff;
-  --escena-violeta-bajo: #8b7cff;
-  --escena-violeta-alto: #f2f0ff;
 }
 
 *,
@@ -113,9 +184,14 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Papel milimetrado: una cuadrícula de 24 px apenas visible. */
 body {
   margin: 0;
-  background: var(--fondo);
+  background-color: var(--fondo);
+  background-image:
+    linear-gradient(var(--cuadricula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--tinta);
   font-family: var(--fuente);
   font-size: var(--t-base);
@@ -128,7 +204,7 @@ h2,
 h3 {
   margin: 0;
   line-height: 1.25;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 p {
@@ -160,7 +236,7 @@ app-nota-aviso {
 
 /* Foco visible en todo el panel */
 :focus-visible {
-  outline: 3px solid var(--foco);
+  outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 .sobre-oscuro :focus-visible,
@@ -175,8 +251,8 @@ app-nota-aviso {
   top: -4rem;
   z-index: 3000;
   padding: var(--e-2) var(--e-4);
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--tinta);
+  color: var(--fondo);
   border-radius: var(--radio);
   font-weight: 600;
 }
@@ -196,11 +272,12 @@ app-nota-aviso {
   border: 0;
 }
 
-/* ── Panel de contenido ───────────────────────────────────────────── */
+/* ── Hojas del panel ──────────────────────────────────────────────── */
 .bloque {
   background: var(--superficie);
-  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 28%, var(--linea));
-  border-radius: var(--radio);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-panel);
+  box-shadow: var(--sombra-bloque);
   min-width: 0;
 }
 .bloque__cab {
@@ -212,10 +289,13 @@ app-nota-aviso {
   padding: var(--e-3) var(--e-4);
   border-bottom: 1px solid var(--linea);
 }
+/* Título de bloque en la serif de la marca: editorial, sin mayúsculas forzadas. */
 .bloque__titulo {
-  font-size: var(--t-md);
+  font-family: var(--fuente-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
-/* Qué filtros usa el bloque, estado de carga, etc. */
 .bloque__nota {
   font-size: var(--t-xs);
   color: var(--tinta-suave);
@@ -229,11 +309,88 @@ app-nota-aviso {
   font-size: var(--t-sm);
 }
 
+/* Bloques de análisis (Recuentos, Distribuciones): dos partes, lado a lado si caben. */
+.partes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--e-8);
+  align-items: start;
+}
+.parte {
+  display: grid;
+  gap: var(--e-3);
+  align-content: start;
+  min-width: 0;
+}
+.parte__cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-2) var(--e-4);
+  min-height: 2rem;
+}
+.parte__cab h3 {
+  font-family: var(--fuente-serif);
+  font-size: var(--t-base);
+  font-weight: 600;
+}
+.parte__nota {
+  max-width: none;
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.parte__nota strong {
+  color: var(--tinta);
+}
+/* Datos clave sobre cada gráfica: rótulo pequeño y cifra, separados por un filete. */
+.datos-clave {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-6);
+  margin: 0;
+  padding-bottom: var(--e-3);
+  border-bottom: 1px solid var(--linea);
+}
+.datos-clave > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.datos-clave > div + div {
+  padding-left: var(--e-6);
+  border-left: 1px solid var(--linea);
+}
+.datos-clave dt {
+  font-size: var(--t-xs);
+  color: var(--tinta-suave);
+}
+.datos-clave dd {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--tinta-suave);
+}
+.datos-clave strong {
+  color: var(--tinta);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Lámina sobre el mundo (plano o globo): papel opaco con sombra impresa, no vidrio. */
+.lamina {
+  background: var(--lamina-fondo);
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--lamina-sombra);
+  color: var(--tinta);
+}
+
 /* ── Avisos (nunca solo color: llevan texto o icono propio) ───────── */
 .aviso {
-  padding: var(--e-3) var(--e-4);
+  padding: var(--e-2) var(--e-3);
   border: 1px solid var(--info-borde);
-  border-left-width: 6px;
+  border-left-width: 4px;
   border-radius: var(--radio);
   background: var(--info-fondo);
   color: var(--info-texto);
@@ -266,11 +423,24 @@ app-nota-aviso {
   width: 100%;
   min-height: 2.5rem;
   padding: var(--e-1) var(--e-3);
-  border: 1px solid var(--linea-fuerte);
+  border: 1px solid color-mix(in srgb, var(--linea-fuerte) 60%, transparent);
   border-radius: var(--radio);
   background: var(--superficie);
   color: var(--tinta);
   font: inherit;
+  font-size: var(--t-sm);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--tinta);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tinta) 10%, transparent);
+}
+.campo input:hover,
+.campo select:hover {
+  border-color: var(--tinta);
 }
 .campo input[aria-invalid='true'] {
   border-color: var(--alerta-borde);
@@ -289,28 +459,37 @@ app-nota-aviso {
 .boton {
   min-height: 2.5rem;
   padding: var(--e-1) var(--e-4);
-  border: 1px solid var(--acento);
-  border-radius: var(--radio);
-  background: var(--acento);
-  color: var(--sobre-acento);
+  border: 1px solid var(--tinta);
+  border-radius: 999px;
+  background: var(--tinta);
+  color: var(--fondo);
   font: inherit;
+  font-size: var(--t-sm);
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 .boton:hover:not(:disabled) {
-  background: var(--acento-hover);
+  border-color: var(--acento);
+  background: var(--acento);
+  color: var(--sobre-acento);
 }
 .boton:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 .boton--secundario {
-  background: var(--superficie);
-  color: var(--acento);
+  border-color: var(--linea-fuerte);
+  background: transparent;
+  color: var(--tinta);
 }
 .boton--secundario:hover:not(:disabled) {
-  background: var(--acento-suave);
-  color: var(--acento-hover);
+  border-color: var(--tinta);
+  background: transparent;
+  color: var(--tinta);
 }
 
 /* ── Datos ────────────────────────────────────────────────────────── */
@@ -338,12 +517,16 @@ app-nota-aviso {
 .tabla-datos thead th {
   position: sticky;
   top: 0;
-  background: var(--superficie-2);
-  border-bottom: 2px solid var(--linea-fuerte);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--linea-fuerte);
+  color: var(--tinta-suave);
+  font-size: var(--t-xs);
+  font-weight: 600;
   white-space: nowrap;
 }
 .tabla-datos .num {
   text-align: right;
+  font-family: var(--fuente-mono);
 }
 .tabla-datos tbody tr:hover {
   background: var(--superficie-2);
@@ -355,10 +538,12 @@ app-nota-aviso {
   gap: 0;
 }
 .cifra__valor {
+  font-family: var(--fuente-mono);
   font-size: var(--t-cifra);
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 .cifra__rotulo {
   font-size: var(--t-xs);
@@ -374,6 +559,95 @@ app-nota-aviso {
 .cargando {
   color: var(--tinta-suave);
   font-size: var(--t-sm);
+}
+
+/* ── Control segmentado único (011) ─────────────── */
+/* Idioma, Plano / Globo, superficies móviles, origen de datos y series de la escena:
+   una pista hundida con la opción elegida levantada encima. */
+.idioma,
+.mapa-bloque .mapa-vistas,
+.superficies,
+.vista__opciones,
+.recuentos__agrupar,
+.globo__series {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--segmento-pista);
+}
+.superficies,
+.globo__series {
+  display: flex;
+}
+.idioma__boton,
+.mapa-bloque .mapa-vistas__boton,
+.superficies__boton,
+.vista__opcion,
+.recuentos__agrupar-boton,
+.globo__serie {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-2);
+  margin: 0;
+  padding: 0.25rem 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tinta-suave);
+  font-family: var(--fuente);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    box-shadow 0.18s;
+}
+.superficies__boton,
+.globo__serie {
+  flex: 1 1 0;
+}
+.idioma__boton:hover,
+.mapa-bloque .mapa-vistas__boton:hover,
+.superficies__boton:hover,
+.vista__opcion:hover,
+.recuentos__agrupar-boton:hover,
+.globo__serie:hover {
+  color: var(--tinta);
+}
+.idioma__boton[aria-pressed='true'],
+.mapa-bloque .mapa-vistas__boton[aria-pressed='true'],
+.superficies__boton[aria-pressed='true'],
+.vista__opcion:has(input:checked),
+.recuentos__agrupar-boton[aria-pressed='true'],
+.globo__serie[aria-pressed='true'] {
+  background: var(--segmento-activo);
+  color: var(--tinta);
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.12),
+    0 0 0 1px color-mix(in srgb, var(--tinta) 6%, transparent);
+}
+.vista__opcion--replay:has(input:checked) {
+  background: var(--atencion-fondo);
+  color: var(--atencion-texto);
+  box-shadow: inset 0 0 0 1px var(--atencion-borde);
+}
+.idioma__boton:focus-visible,
+.mapa-bloque .mapa-vistas__boton:focus-visible,
+.superficies__boton:focus-visible,
+.recuentos__agrupar-boton:focus-visible,
+.globo__serie:focus-visible,
+.vista__opcion:has(input:focus-visible) {
+  outline: 2px solid var(--foco);
+  outline-offset: 1px;
 }
 
 /* 010: encuadre que cruza componentes (app.css no atraviesa la encapsulación). */
@@ -426,15 +700,7 @@ app-nota-aviso {
 }
 .rejilla--globo .mapa-bloque .mapa-vistas {
   pointer-events: auto;
-  border-color: rgb(139 124 255 / 0.45);
-}
-.rejilla--globo .mapa-bloque .mapa-vistas__boton {
-  background: rgb(7 11 18 / 0.72);
-  color: var(--escena-tinta);
-}
-.rejilla--globo .mapa-bloque .mapa-vistas__boton[aria-pressed='true'] {
-  background: var(--escena-violeta);
-  color: var(--escena-tinta);
+  box-shadow: var(--lamina-sombra);
 }
 .rejilla--globo .mapa-bloque .mapa-marco {
   margin: 0;
@@ -460,7 +726,58 @@ app-nota-aviso {
   }
 }
 
+/* ── Transición plano ↔ globo (011, PanelUiStore.fijarGlobo) ──────── */
+/* Sin fundidos: la página nueva (o la vieja, al salir) se recorta con clip-path desde JS. */
+html.vt-globo-entra::view-transition-old(root),
+html.vt-globo-entra::view-transition-new(root),
+html.vt-globo-sale::view-transition-old(root),
+html.vt-globo-sale::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html.vt-globo-sale::view-transition-old(root) {
+  z-index: 2;
+}
+/* La escena nueva ya nace recortada al marco del mapa (la animación parte del mismo recorte). */
+html.vt-globo-entra::view-transition-new(root) {
+  clip-path: var(--recorte-inicial, none);
+}
+/* Mientras se prepara el globo con la página viva (precarga lenta): se nota que está trabajando. */
+html.preparando-globo,
+html.preparando-globo * {
+  cursor: progress;
+}
+html.vt-globo-entra::view-transition-new(root),
+html.vt-globo-sale::view-transition-old(root) {
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.25);
+}
+
+/* ── Gota de tinta entre temas (011, TemaService.alternar) ────────── */
+/* Todo va en la instantánea raíz. Sin fundidos: una de las dos páginas se recorta con el
+   polígono de puro/tinta.ts, animado desde JS; la otra espera quieta debajo. */
+html.cambiando-tema * {
+  view-transition-name: none !important;
+}
+html.cambiando-tema::view-transition-old(root),
+html.cambiando-tema::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* A noche: la página nueva nace como un punto en el botón (hasta que arranca la animación). */
+html.tema-derrama::view-transition-new(root) {
+  clip-path: circle(0 at var(--tinta-x, 100%) var(--tinta-y, 0%));
+}
+/* A papel: la vieja queda encima y se recoge hacia el botón. */
+html.tema-recoge::view-transition-old(root) {
+  z-index: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
   *,
   *::before,
   *::after {

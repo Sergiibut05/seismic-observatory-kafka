@@ -26,6 +26,14 @@
             ],
             "styles": [
               "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/@fontsource/ibm-plex-sans/latin-400.css",
+              "node_modules/@fontsource/ibm-plex-sans/latin-600.css",
+              "node_modules/@fontsource/ibm-plex-serif/latin-400.css",
+              "node_modules/@fontsource/ibm-plex-serif/latin-400-italic.css",
+              "node_modules/@fontsource/ibm-plex-serif/latin-500-italic.css",
+              "node_modules/@fontsource/ibm-plex-serif/latin-600.css",
+              "node_modules/@fontsource/ibm-plex-mono/latin-400.css",
+              "node_modules/@fontsource/ibm-plex-mono/latin-500.css",
               "src/styles.css"
             ]
           },
@@ -34,7 +42,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "575kB",
+                  "maximumWarning": "625kB",
                   "maximumError": "1MB"
                 },
                 {

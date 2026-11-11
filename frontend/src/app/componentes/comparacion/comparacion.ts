@@ -6,6 +6,7 @@ import {
   AVISO_PERIODO_INCOMPLETO,
   cifrasComparacion,
   describirFiltrosEfectivos,
+  veredictoComparacion,
 } from '../../puro/texto-comparacion';
 import { AvisoBloque } from '../grafico-barras/aviso-bloque';
 
@@ -31,6 +32,21 @@ export class Comparacion {
   protected readonly filtros = computed(() => {
     const d = this.datos();
     return d ? describirFiltrosEfectivos(d.filtros_efectivos, this.i18n.t()) : null;
+  });
+  /** Largo de cada barra (%) sobre una escala común: la mayor de las dos llena la pista. */
+  protected readonly barras = computed(() => {
+    const d = this.datos();
+    const actual = d?.ventana_actual.eventos ?? 0;
+    const h = d?.historico_2025;
+    const media = h && h.estado === 'cargado' && h.media_diaria !== null ? h.media_diaria : null;
+    const max = Math.max(actual, media ?? 0, 1);
+    return { actual: (actual / max) * 100, media: media === null ? null : (media / max) * 100 };
+  });
+  protected readonly veredicto = computed(() => {
+    const d = this.datos();
+    const h = d?.historico_2025;
+    if (!d || !h || h.estado !== 'cargado' || h.media_diaria === null) return null;
+    return veredictoComparacion(d.cociente, this.i18n.t());
   });
   /**
    * El aviso de periodo incompleto se ve siempre. En español, el de la API o, sin respuesta, el de

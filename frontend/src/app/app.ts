@@ -9,6 +9,7 @@ import { NotaAviso } from './componentes/nota-aviso/nota-aviso';
 import { Recuentos } from './componentes/recuentos/recuentos';
 import { Superficies } from './componentes/superficies/superficies';
 import { Tabla } from './componentes/tabla/tabla';
+import { TemaService } from './nucleo/tema.service';
 import { VistaDatos } from './componentes/vista-datos/vista-datos';
 import { I18nService } from './i18n/i18n.service';
 import { Idioma } from './i18n/traducir';
@@ -48,6 +49,13 @@ export class App {
   /** Solo para rotular la cabecera (que es fija) según la vista; los datos los pide `RefrescoService`. */
   protected readonly vista = inject(FiltrosStore).vista;
   protected readonly ui = inject(PanelUiStore);
+  protected readonly tema = inject(TemaService);
+
+  /** La tinta nace en el centro del botón pulsado (con teclado, también). */
+  protected alternarTema(evento: MouseEvent): void {
+    const r = (evento.currentTarget as HTMLElement).getBoundingClientRect();
+    this.tema.alternar({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  }
 
   constructor() {
     // Con la configuración inválida no se hace ninguna petición (FR-012).

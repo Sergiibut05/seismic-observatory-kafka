@@ -1,61 +1,148 @@
-/* Colores: solo variables globales. Contraste de texto ≥ 4,5:1; formas ≥ 3:1 sobre blanco. */
+/*
+ * Barras (011, guía dataviz): marcas finas de un solo tono, extremo libre redondeado y base
+ * recta, rejilla de filete continuo, valor solo donde aporta y tooltip al pasar el ratón.
+ * El lienzo mide lo que su contenedor (1 unidad = 1 px): el texto no se encoge.
+ * Colores: solo variables globales. Contraste de texto ≥ 4,5:1; marcas ≥ 3:1 sobre la superficie.
+ */
 .grafico {
   margin: 0;
   display: grid;
-  gap: var(--e-2);
+  gap: var(--e-3);
+  min-width: 0;
+}
+.grafico__lienzo {
+  position: relative;
+  min-width: 0;
 }
 .grafico__svg {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 34rem;
   overflow: visible;
+  font-family: var(--fuente);
 }
 .grafico__guia {
   stroke: var(--linea);
   stroke-width: 1;
+  shape-rendering: crispEdges;
 }
 .grafico__eje {
-  stroke: var(--tinta-suave);
-  stroke-width: 1.5;
-}
-.grafico__separador {
   stroke: var(--linea-fuerte);
   stroke-width: 1;
-  stroke-dasharray: 3 3;
+  shape-rendering: crispEdges;
+}
+.grafico__separador {
+  stroke: var(--linea);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
 }
 .grafico__marca,
 .grafico__eje-titulo {
   fill: var(--tinta-suave);
   font-size: 11px;
-}
-.grafico__etiqueta,
-.grafico__valor {
-  fill: var(--tinta);
   font-variant-numeric: tabular-nums;
 }
+.grafico__etiqueta {
+  fill: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+  transition: fill 0.15s;
+}
+.grafico--horizontal .grafico__etiqueta {
+  fill: var(--tinta);
+}
+.grafico__barra--activa .grafico__etiqueta {
+  fill: var(--tinta);
+}
 .grafico__valor {
-  font-weight: 600;
+  fill: var(--tinta);
+  font-family: var(--fuente-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  transition: opacity 0.15s;
 }
 .grafico__valor--nd {
   fill: var(--tinta-suave);
   font-style: italic;
   font-weight: 400;
 }
+.grafico__cuota {
+  fill: var(--tinta-suave);
+  font-family: var(--fuente-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* En vertical, el número solo en la barra máxima: el resto lo dan el eje, el tooltip y la tabla. */
+.grafico--vertical .grafico__barra[data-tipo='normal'] .grafico__valor,
+.grafico--vertical .grafico__barra[data-tipo='cero'] .grafico__valor {
+  opacity: 0;
+}
+.grafico--vertical .grafico__barra--max[data-tipo='normal'] .grafico__valor {
+  opacity: 1;
+}
+/* Con una barra señalada el tooltip ya da su valor: el de la máxima se retira para no chocar. */
+.grafico--vertical .grafico__svg:has(.grafico__barra--activa) .grafico__barra--max .grafico__valor {
+  opacity: 0;
+}
+
+/* Zona de puntería; en la lista, además, el fondo de la fila señalada. */
+.grafico__diana {
+  fill: transparent;
+  pointer-events: all;
+  cursor: default;
+  transition: fill 0.15s;
+}
+.grafico--horizontal .grafico__barra--activa .grafico__diana {
+  fill: var(--segmento-pista);
+}
+.grafico--vertical .grafico__barra--activa .grafico__diana {
+  fill: color-mix(in srgb, var(--tinta) 5%, transparent);
+}
 
 .grafico__rect {
   fill: var(--barra);
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both crecer-v;
+  animation-delay: calc(var(--i, 0) * 16ms);
+  transition:
+    fill 0.15s,
+    opacity 0.15s;
 }
+.grafico--horizontal .grafico__rect {
+  transform-origin: 0 50%;
+  animation-name: crecer-h;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+@keyframes crecer-v {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes crecer-h {
+  from {
+    transform: scaleX(0);
+  }
+}
+.grafico__barra--activa .grafico__rect {
+  fill: var(--barra-activa);
+}
+/* Con una barra señalada, el resto se aparta. */
+.grafico__svg:has(.grafico__barra--activa)
+  .grafico__barra:not(.grafico__barra--activa)
+  .grafico__rect {
+  opacity: 0.4;
+}
+
 /* Cero: línea corta con borde (visible, distinta de «sin valor» y de «ND») */
 .grafico__rect--cero {
   fill: var(--barra-cero);
   stroke: var(--linea-fuerte);
-  stroke-width: 1.5;
+  stroke-width: 1;
+  animation: none;
 }
 .grafico__rect--sin-valor {
   stroke: var(--tinta-suave);
-  stroke-width: 1.5;
+  stroke-width: 1;
   stroke-dasharray: 4 2;
+  animation: none;
 }
 .grafico__fondo-rayas {
   fill: var(--superficie);
@@ -63,6 +150,79 @@
 .grafico__rayas {
   stroke: var(--barra-sin-valor);
   stroke-width: 3;
+}
+
+/* Clave de color bajo el eje, con el mismo contorno de tinta que los círculos del mapa. */
+.grafico__clave {
+  stroke: var(--borde-circulo);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+}
+
+/* Referencia (media): discontinua para que no se confunda con la rejilla. */
+.grafico__referencia {
+  pointer-events: none;
+}
+.grafico__referencia line {
+  stroke: var(--tinta);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  opacity: 0.55;
+}
+.grafico__referencia text {
+  fill: var(--tinta);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Tooltip: ficha de tinta anclada a la barra. */
+.grafico__tip {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  max-width: min(18rem, 100%);
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radio);
+  background: var(--tinta);
+  color: var(--fondo);
+  font-size: var(--t-xs);
+  line-height: 1.35;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  animation: 0.14s ease-out both tip-entra;
+}
+.grafico__tip--izquierda {
+  transform: translate(-12px, calc(-100% - 10px));
+}
+.grafico__tip--derecha {
+  transform: translate(calc(-100% + 12px), calc(-100% - 10px));
+}
+@keyframes tip-entra {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+.grafico__tip-rotulo {
+  opacity: 0.72;
+}
+.grafico__tip-valor {
+  font-variant-numeric: tabular-nums;
+}
+.grafico__tip-valor strong {
+  font-family: var(--fuente-mono);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.grafico__tip-cuota {
+  margin-left: 0.4rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid color-mix(in srgb, var(--fondo) 35%, transparent);
+  font-family: var(--fuente-mono);
+  opacity: 0.8;
 }
 
 .grafico__leyenda {
@@ -78,39 +238,70 @@
 .grafico__leyenda li {
   display: inline-flex;
   align-items: center;
-  gap: var(--e-1);
+  gap: 0.4rem;
 }
 .muestra {
   display: inline-block;
-  width: 1.25rem;
-  height: 0.75rem;
+  width: 1rem;
+  height: 0.6rem;
   border: 1px solid transparent;
-}
-.muestra--normal {
-  background: var(--barra);
+  border-radius: 2px;
 }
 .muestra--cero {
-  height: 0.25rem;
+  height: 0.3rem;
   background: var(--barra-cero);
   border-color: var(--linea-fuerte);
 }
 .muestra--sin-valor {
   border: 1px dashed var(--tinta-suave);
-  background: repeating-linear-gradient(135deg, var(--superficie) 0 3px, var(--barra-sin-valor) 3px 5px);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--superficie) 0 3px,
+    var(--barra-sin-valor) 3px 5px
+  );
 }
 
+/* Tabla equivalente: un botón discreto que la despliega. */
 .grafico__tabla summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.25rem 0.7rem 0.25rem 0.55rem;
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  color: var(--tinta-suave);
+  font-size: var(--t-xs);
+  font-weight: 500;
   cursor: pointer;
-  font-size: var(--t-sm);
-  color: var(--acento);
-  font-weight: 600;
-  padding: var(--e-1) 0;
+  list-style: none;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+.grafico__tabla summary::-webkit-details-marker {
+  display: none;
+}
+.grafico__tabla summary svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+.grafico__tabla summary:hover,
+.grafico__tabla[open] summary {
+  border-color: var(--linea-fuerte);
+  color: var(--tinta);
 }
 .grafico__tabla[open] summary {
   margin-bottom: var(--e-2);
+  background: var(--segmento-pista);
 }
 .grafico__tabla .tabla-scroll {
   max-height: 18rem;
   overflow: auto;
   border: 1px solid var(--linea);
+  border-radius: var(--radio);
 }

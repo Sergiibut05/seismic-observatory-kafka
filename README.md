@@ -7,7 +7,7 @@ La pregunta que responde: **¿dónde se está registrando actividad sísmica y c
 equivalente?**
 
 <p align="center">
-  <img src="specs/008-globo/evidencias/03-seleccion-chile.png" alt="Panel con el globo 3D: pulsos en los terremotos recientes y un evento de Chile seleccionado" width="860">
+  <img src="docs/img/panel.jpg" alt="Panel en tema papel: cabecera con el estado del sistema, filtros a la izquierda y el mapa plano con un círculo por terremoto, coloreado por profundidad" width="900">
 </p>
 
 > Proyecto de Sistemas de Big Data (sesiones 1–8, RA1). La memoria técnica, con el análisis y las pruebas de aceptación,
@@ -80,7 +80,7 @@ Los recuentos y las distribuciones salen del estado actual, nunca de contar mens
 
 ## Puesta en marcha
 
-<p align="center"><img src="docs/img/quickstart.svg" alt="Terminal: crear .env, docker compose up y npm start; al lado, un globo con pulsos" width="100%"></p>
+<p align="center"><img src="docs/img/quickstart.svg" alt="Terminal: crear .env, docker compose up y npm start; al lado, el navegador abre el panel con el mapa de terremotos" width="100%"></p>
 
 ### Requisitos
 
@@ -139,12 +139,19 @@ docker compose up -d    # vuelve a arrancar con los mismos datos
 | Bloque | Qué muestra |
 | --- | --- |
 | Estado del sistema | Último acceso correcto a la API, última ingesta del USGS, periodo consultado y eventos reales. Si la API cae, lo avisa y conserva los últimos datos marcados como desactualizados |
+| Tema | Papel (por defecto) o noche. Al pasar a noche, una gota de tinta se derrama desde el botón de la cabecera hasta cubrir la ventana; al volver a papel, se recoge hacia él |
 | Origen de los datos | «En directo» o «REPRODUCCIÓN», y el interruptor de casos de prueba sintéticos (apagado por defecto) |
 | Filtros | Fechas en UTC, magnitud mínima y máxima, país y subregión. Afectan a todos los bloques salvo la comparación histórica, que solo usa magnitud y país o subregión |
-| Mapa | **Plano** (Leaflet): círculo por evento, tamaño = magnitud, color = profundidad. **Globo 3D** (globe.gl): pulsos en los 60 eventos más recientes, más grandes y más rojos cuanto mayor es la magnitud |
+| Mapa | **Plano** (Leaflet): círculo por evento, tamaño = magnitud, color = profundidad. **Globo 3D** (globe.gl), a pantalla completa: columna por evento cuya altura sigue la magnitud y pulsos rojos en los 60 más recientes, con cinta de 24 h. Los dos dibujan el mismo mundo (Natural Earth, sin teselas externas) y al cambiar de uno a otro se conserva la región que se miraba |
 | Eventos | Tabla paginada; «Ver en el mapa» centra el evento en el plano o en el globo |
-| Comparación histórica | Eventos de las últimas 24 h frente a la media diaria de 2025 (magnitud ≥ 4) |
-| Recuentos y distribuciones | Por país o subregión, por hora UTC, por magnitud y por profundidad, con su vista en tabla |
+| Comparación histórica | Eventos de las últimas 24 h frente a la media diaria de 2025 (magnitud ≥ 4): dos barras sobre la misma escala y su cociente, dicho también en palabras («52 % por debajo de la media diaria») |
+| Recuentos | Por país o subregión (lista ordenada con la parte del total de cada uno) y por hora UTC (con la hora punta y la media por hora) |
+| Distribuciones | Por magnitud y por profundidad, con el intervalo más frecuente; la de profundidad lleva bajo el eje los colores del mapa. Cada gráfica tiene tooltip y su tabla equivalente |
+
+<p align="center">
+  <img src="docs/img/panel-graficas.jpg" alt="Recuentos en tema papel: lista de eventos por país con su porcentaje y barras por hora UTC con la línea de la media y un tooltip" width="49%">
+  <img src="docs/img/panel-globo.jpg" alt="Globo 3D en tema noche: columnas por terremoto, pulsos en los recientes, gráfica de la escena y cinta de 24 h" width="49%">
+</p>
 
 El panel se refresca solo cada 60 s y se pausa cuando la pestaña está oculta. Las cifras describen lo que ha publicado el
 USGS: no predicen terremotos ni evalúan el riesgo.
@@ -342,6 +349,8 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 007-memoria | [Memoria](docs/MEMORIA.md), casos sintéticos y pruebas de aceptación |
 | 008-globo | Vista de globo 3D con pulsos (ampliación) |
 | 009-i18n | Panel en español e inglés (ampliación) |
+| 010-escena | Globo a pantalla completa y panel adaptado al móvil (ampliación) |
+| 011-identidad | Identidad «papel y tinta»: temas papel y noche con una gota de tinta como transición, un mismo mundo para plano y globo, estilo suave y bloques de análisis rediseñados (ampliación) |
 
 **Pendiente de hacer a mano por el alumno:** publicar el panel en Netlify. El túnel real de ngrok ya está probado
 ([memoria, §13](docs/MEMORIA.md#s13)) y la explicación individual está redactada para que el alumno la revise

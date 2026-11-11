@@ -4,14 +4,12 @@
   padding: var(--e-4);
 }
 
+/* Como diálogo (globo y móvil): una hoja sobre el velo, con sombra impresa. */
 :host-context(.rejilla--filtros) .bloque {
-  background: color-mix(in srgb, var(--escena-fondo) 88%, var(--superficie));
-  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 45%, transparent);
-  box-shadow: 0 24px 64px rgb(0 0 0 / 0.55);
-}
-
-:host-context(.rejilla--filtros) .bloque__cab {
-  border-bottom-color: color-mix(in srgb, var(--escena-violeta-bajo) 28%, transparent);
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.22);
 }
 
 .filtros__acciones {

@@ -19,29 +19,69 @@
 
       @if (datos(); as d) {
         @if (cifras(); as c) {
+          @let b = barras();
+          <!-- Dos barras sobre la misma escala (24 h y media de 2025) y, al lado, su cociente. -->
           <dl class="comparacion__cifras">
-            <div class="cifra">
+            <div class="cifra cifra--actual">
               <dt class="cifra__rotulo">{{ i18n.tr('comparacion.ultimas_24h') }}</dt>
               <dd class="cifra__valor">{{ c.ultimas24h }}</dd>
-              <dd class="cifra__rotulo">
-                {{ i18n.tr('comparacion.eventos_ventana', { desde: i18n.instante(d.ventana_actual.desde), hasta: i18n.instante(d.ventana_actual.hasta) }) }}
+              <dd class="cifra__barra" aria-hidden="true">
+                <span [style.inline-size.%]="b.actual"></span>
+              </dd>
+              <dd class="cifra__rotulo cifra__nota">
+                {{
+                  i18n.tr('comparacion.eventos_ventana', {
+                    desde: i18n.instante(d.ventana_actual.desde),
+                    hasta: i18n.instante(d.ventana_actual.hasta),
+                  })
+                }}
               </dd>
             </div>
-            <div class="cifra">
+            <div class="cifra cifra--media">
               <dt class="cifra__rotulo">{{ i18n.tr('comparacion.media') }}</dt>
-              <dd class="cifra__valor" [class.nd]="c.historicoNoDisponible">{{ c.mediaDiaria2025 }}</dd>
-              <dd class="cifra__rotulo">
+              <dd class="cifra__valor" [class.nd]="c.historicoNoDisponible">
+                {{ c.mediaDiaria2025 }}
+              </dd>
+              @if (b.media !== null) {
+                <dd class="cifra__barra" aria-hidden="true">
+                  <span [style.inline-size.%]="b.media"></span>
+                </dd>
+              }
+              <dd class="cifra__rotulo cifra__nota">
                 @if (c.historicoNoDisponible) {
                   {{ i18n.tr('comparacion.no_cargado') }}
                 } @else {
-                  {{ i18n.tr('comparacion.eventos_dias', { eventos: c.eventos2025, dias: d.historico_2025.dias }) }}
+                  {{
+                    i18n.tr('comparacion.eventos_dias', {
+                      eventos: c.eventos2025,
+                      dias: d.historico_2025.dias,
+                    })
+                  }}
                 }
               </dd>
             </div>
-            <div class="cifra">
+            <div class="cifra cifra--cociente">
               <dt class="cifra__rotulo">{{ i18n.tr('comparacion.cociente') }}</dt>
               <dd class="cifra__valor" [class.nd]="c.historicoNoDisponible">{{ c.cociente }}</dd>
-              <dd class="cifra__rotulo">{{ i18n.tr('comparacion.cociente_ayuda') }}</dd>
+              @if (veredicto(); as v) {
+                <dd class="cifra__veredicto" [attr.data-sentido]="v.sentido">
+                  <svg viewBox="0 0 12 12" aria-hidden="true">
+                    @switch (v.sentido) {
+                      @case ('debajo') {
+                        <path d="M6 9.5 1.5 3h9z" />
+                      }
+                      @case ('encima') {
+                        <path d="M6 2.5 10.5 9h-9z" />
+                      }
+                      @default {
+                        <path d="M2 4h8v1.6H2zM2 6.8h8v1.6H2z" />
+                      }
+                    }
+                  </svg>
+                  {{ v.texto }}
+                </dd>
+              }
+              <dd class="cifra__rotulo cifra__nota">{{ i18n.tr('comparacion.cociente_ayuda') }}</dd>
             </div>
           </dl>
           <p class="comparacion__filtros">
@@ -52,7 +92,9 @@
         <p class="bloque__vacio">{{ i18n.tr('comparacion.no_disponible_ahora') }}</p>
       }
 
-      <p class="aviso aviso--atencion comparacion__aviso"><span aria-hidden="true">⚠ </span>{{ aviso() }}</p>
+      <p class="aviso aviso--atencion comparacion__aviso">
+        <span aria-hidden="true">⚠ </span>{{ aviso() }}
+      </p>
     }
   </div>
 </section>

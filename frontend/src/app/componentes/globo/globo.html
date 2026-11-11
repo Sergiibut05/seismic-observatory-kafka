@@ -21,15 +21,17 @@
   }
 
   @if (estado() === 'listo') {
-    <div class="globo__leyenda" aria-hidden="true">
-      <ul class="globo__radios">
-        @for (r of radiosLeyenda; track r.etiqueta) {
+    <div class="globo__leyenda lamina" aria-hidden="true">
+      <p class="globo__leyenda-titulo">{{ i18n.tr('globo.leyenda_altura') }}</p>
+      <ul class="globo__columnas">
+        @for (c of columnasLeyenda; track c.etiqueta) {
           <li>
-            <span class="globo__circulo" [style.width.px]="r.radio * 2" [style.height.px]="r.radio * 2"></span>
-            <span>{{ r.etiqueta }}</span>
+            <span class="globo__columna" [style.height.px]="c.alto"></span>
+            <span>{{ c.etiqueta }}</span>
           </li>
         }
       </ul>
+      <p class="globo__leyenda-titulo">{{ i18n.tr('mapa.leyenda_color') }}</p>
       <ul class="globo__escala" [attr.aria-label]="i18n.tr('mapa.leyenda_escala_aria')">
         @for (i of intervalos; track i.etiqueta) {
           <li>
@@ -43,7 +45,7 @@
       </p>
     </div>
 
-    <div class="globo__cifra">
+    <div class="globo__cifra lamina">
       @if (esReplay()) {
         <p class="globo__cifra-valor">{{ i18n.tr('vista.replay') }}</p>
       } @else if (cifras(); as c) {
@@ -53,7 +55,7 @@
       }
     </div>
 
-    <details class="globo__grafica" [open]="graficaAbierta">
+    <details class="globo__grafica lamina" [open]="graficaAbierta">
       <summary>{{ i18n.tr('escena.grafica') }}</summary>
       <div class="globo__series" role="group">
         @for (s of series; track s.id) {
@@ -75,12 +77,12 @@
       />
     </details>
 
-    <div class="globo__cinta">
+    <div class="globo__cinta lamina">
       <label class="globo__cinta-etiqueta" [attr.for]="'cinta-pos'">
         {{ i18n.tr('cinta.etiqueta') }}
-        <span>{{ etiquetaCorte() }}</span>
+        <span class="globo__cinta-hora">{{ etiquetaCorte() }}</span>
       </label>
-      <div class="globo__cinta-pista">
+      <div class="globo__cinta-pista" [style.--pos.%]="posCinta() / 10">
         <div class="globo__cinta-marcas" aria-hidden="true">
           @for (m of marcas(); track m.id) {
             <span class="globo__cinta-marca" [style.left.%]="m.t * 100"></span>

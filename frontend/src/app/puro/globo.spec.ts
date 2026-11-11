@@ -94,12 +94,15 @@ describe('anillosGlobo', () => {
 });
 
 describe('colorPulso', () => {
-  it('sube de violeta a casi blanco con la magnitud y deja ND en gris', () => {
-    expect(colorPulso(2)).toBe('#8B7CFF');
-    expect(colorPulso(4.5)).toBe('#5B4DFF');
-    expect(colorPulso(6.1)).toBe('#F2F0FF');
-    expect(colorPulso(null)).toBe('#c8d0d8');
-    expect(anillosGlobo([evento('a', { magnitud: 6.5 })])[0].color).toBe('#F2F0FF');
+  it('rojo de pluma: en papel se oscurece con la magnitud, en noche se aclara; ND en gris', () => {
+    expect(colorPulso(2)).toBe('#E07A86');
+    expect(colorPulso(4.5)).toBe('#C8102E');
+    expect(colorPulso(6.1)).toBe('#7A0019');
+    expect(colorPulso(null)).toBe('#9A9385');
+    expect(colorPulso(6.1, 'noche')).toBe('#FFE3DF');
+    expect(colorPulso(null, 'noche')).toBe('#C8D0D8');
+    expect(anillosGlobo([evento('a', { magnitud: 6.5 })])[0].color).toBe('#7A0019');
+    expect(anillosGlobo([evento('a', { magnitud: 6.5 })], { tema: 'noche' })[0].color).toBe('#FFE3DF');
   });
 });
 
@@ -114,7 +117,10 @@ describe('colorAnillo', () => {
 describe('alturaColumna', () => {
   it('crece con la magnitud y no trata el nulo como 0', () => {
     expect(alturaColumna(7)).toBeGreaterThan(alturaColumna(2));
-    expect(alturaColumna(5)).toBeGreaterThan(0.3);
+    // Visible pero sin tapar la Tierra: M7 no llega a una quinta parte del radio.
+    expect(alturaColumna(5)).toBeGreaterThan(alturaColumna(2) * 2);
+    expect(alturaColumna(7)).toBeLessThan(0.2);
+    expect(alturaColumna(9.5)).toBe(alturaColumna(9));
     expect(alturaColumna(null)).toBe(ALTURA_COLUMNA_ND);
     expect(alturaColumna(null)).not.toBe(alturaColumna(0));
     expect(alturaColumna(null)).toBeLessThan(alturaColumna(0));

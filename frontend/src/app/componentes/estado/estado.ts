@@ -3,7 +3,7 @@ import { I18nService } from '../../i18n/i18n.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { Aviso, textoAviso } from '../../puro/desactualizado';
-import { textoNd } from '../../puro/formato';
+import { formatearCortoUtc, textoNd } from '../../puro/formato';
 
 /** Barra de estado del sistema (FR-008): frescura de los datos y avisos destacados. */
 @Component({
@@ -22,14 +22,22 @@ export class Estado {
     const t = this.datos.ultimoAccesoOk();
     return t === null ? textoNd(this.i18n.t()) : this.i18n.horaConUtc(new Date(t).toISOString());
   });
-  protected readonly ultimaIngesta = computed(() =>
+  /** 011: formas cortas en la cabecera; el instante completo queda en el `title`. */
+  protected readonly ultimaIngesta = computed(() => {
+    const iso = this.bloque().datos?.ultima_ingesta_correcta;
+    return iso ? `${formatearCortoUtc(iso, this.i18n.t())} UTC` : textoNd(this.i18n.t());
+  });
+  protected readonly ultimaIngestaCompleta = computed(() =>
     this.i18n.instante(this.bloque().datos?.ultima_ingesta_correcta),
   );
   protected readonly periodo = computed(() => {
     const p = this.bloque().datos?.periodo_consultado;
-    return p
-      ? `${this.i18n.instante(p.desde)} → ${this.i18n.instante(p.hasta)}`
-      : textoNd(this.i18n.t());
+    const t = this.i18n.t();
+    return p ? `${formatearCortoUtc(p.desde, t)} → ${formatearCortoUtc(p.hasta, t)} UTC` : textoNd(t);
+  });
+  protected readonly periodoCompleto = computed(() => {
+    const p = this.bloque().datos?.periodo_consultado;
+    return p ? `${this.i18n.instante(p.desde)} → ${this.i18n.instante(p.hasta)}` : '';
   });
   protected readonly eventosReales = computed(() => this.i18n.entero(this.bloque().datos?.eventos_reales));
   protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');

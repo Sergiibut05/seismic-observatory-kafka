@@ -34,6 +34,7 @@
         class="vista__interruptor"
         type="checkbox"
         role="switch"
+        [attr.title]="i18n.tr('vista.sinteticos_ayuda')"
         [checked]="sinteticos()"
         aria-describedby="vista-sinteticos-ayuda"
         (change)="alternarSinteticos($event)"

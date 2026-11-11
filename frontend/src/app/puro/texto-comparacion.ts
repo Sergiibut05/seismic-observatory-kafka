@@ -27,7 +27,12 @@ export function describirFiltrosEfectivos(f: FiltrosEfectivos, t: Traductor = T_
           .filter((x) => x !== null)
           .join(` ${t('comparacion.f_y')} `);
   // El código de país no se traduce; la etiqueta fija «Sin país asignado» sí.
-  const pais = f.pais === null ? t('comparacion.f_todos') : f.pais === SIN_PAIS ? t('dominio.sin_pais') : f.pais;
+  const pais =
+    f.pais === null
+      ? t('comparacion.f_todos')
+      : f.pais === SIN_PAIS
+        ? t('dominio.sin_pais')
+        : f.pais;
   return t('comparacion.f_completo', {
     magnitud: mag,
     pais,
@@ -38,6 +43,31 @@ export function describirFiltrosEfectivos(f: FiltrosEfectivos, t: Traductor = T_
           ? t('dominio.sin_pais')
           : f.subregion,
   });
+}
+
+export interface Veredicto {
+  sentido: 'debajo' | 'encima' | 'igual';
+  texto: string;
+}
+
+/**
+ * «62 % por debajo de la media diaria»: el cociente dicho en palabras. Describe, no valora: estar
+ * por encima o por debajo de la media no es ni bueno ni malo. Nulo si no hay cociente.
+ */
+export function veredictoComparacion(
+  cociente: number | null,
+  t: Traductor = T_ES,
+): Veredicto | null {
+  if (cociente === null || !Number.isFinite(cociente)) return null;
+  const pct = Math.round(Math.abs(cociente - 1) * 100);
+  if (pct === 0) return { sentido: 'igual', texto: t('comparacion.v_igual') };
+  const sentido = cociente < 1 ? 'debajo' : 'encima';
+  return {
+    sentido,
+    texto: t(sentido === 'debajo' ? 'comparacion.v_debajo' : 'comparacion.v_encima', {
+      pct: formatearEntero(pct, t),
+    }),
+  };
 }
 
 export interface CifrasComparacion {
@@ -56,7 +86,8 @@ export function cifrasComparacion(c: ComparacionHistorica, t: Traductor = T_ES):
   return {
     ultimas24h: formatearEntero(c.ventana_actual.eventos, t),
     mediaDiaria2025: noDisp ? noDisponible : formatearDecimal(h.media_diaria, 1, t),
-    eventos2025: h.estado !== 'cargado' || h.eventos === null ? noDisponible : formatearEntero(h.eventos, t),
+    eventos2025:
+      h.estado !== 'cargado' || h.eventos === null ? noDisponible : formatearEntero(h.eventos, t),
     cociente: noDisp || c.cociente === null ? noDisponible : formatearDecimal(c.cociente, 2, t),
     historicoNoDisponible: noDisp,
   };

@@ -1,110 +1,238 @@
 @let g = geometria();
 @let horiz = orientacion() === 'horizontal';
 
-<figure class="grafico">
-  <svg
-    class="grafico__svg"
-    role="img"
-    [attr.aria-label]="textoAlt()"
-    [attr.viewBox]="'0 0 ' + g.W + ' ' + g.H"
-    preserveAspectRatio="xMidYMin meet"
-  >
-    <defs>
-      <pattern [attr.id]="idPatron" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="6" height="6" class="grafico__fondo-rayas" />
-        <line x1="0" y1="0" x2="0" y2="6" class="grafico__rayas" />
-      </pattern>
-    </defs>
+<figure class="grafico" [class.grafico--vertical]="!horiz" [class.grafico--horizontal]="horiz">
+  <div class="grafico__lienzo" #lienzo (mouseleave)="activo.set(null)">
+    <svg
+      class="grafico__svg"
+      role="img"
+      [attr.aria-label]="textoAlt()"
+      [attr.viewBox]="'0 0 ' + g.W + ' ' + g.H"
+      [attr.height]="g.H"
+      preserveAspectRatio="xMinYMin meet"
+    >
+      <defs>
+        <pattern
+          [attr.id]="idPatron"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="6" height="6" class="grafico__fondo-rayas" />
+          <line x1="0" y1="0" x2="0" y2="6" class="grafico__rayas" />
+        </pattern>
+      </defs>
 
-    <!-- Líneas guía y marcas del eje de valores -->
-    @for (m of g.marcas; track m.pos) {
-      @if (horiz) {
-        <line class="grafico__guia" [attr.x1]="m.pos" [attr.x2]="m.pos" [attr.y1]="g.mS" [attr.y2]="g.ejeBase" />
-        <text class="grafico__marca" text-anchor="middle" [attr.x]="m.pos" [attr.y]="g.ejeBase + 16">{{ m.texto }}</text>
-      } @else {
-        <line class="grafico__guia" [attr.x1]="g.mI" [attr.x2]="g.mI + g.plotAncho" [attr.y1]="m.pos" [attr.y2]="m.pos" />
-        <text class="grafico__marca" text-anchor="end" [attr.x]="g.mI - 6" [attr.y]="m.pos + 4">{{ m.texto }}</text>
-      }
-    }
-
-    <!-- Eje base -->
-    @if (horiz) {
-      <line class="grafico__eje" [attr.x1]="g.mI" [attr.x2]="g.mI" [attr.y1]="g.mS" [attr.y2]="g.ejeBase" />
-    } @else {
-      <line class="grafico__eje" [attr.x1]="g.mI" [attr.x2]="g.mI + g.plotAncho" [attr.y1]="g.ejeBase" [attr.y2]="g.ejeBase" />
-    }
-
-    @if (g.separador !== null) {
-      <line class="grafico__separador" [attr.x1]="g.separador" [attr.x2]="g.separador" [attr.y1]="g.mS" [attr.y2]="g.ejeBase + 6" />
-    }
-
-    <!-- Barras -->
-    @for (e of g.elementos; track e.clave) {
-      <g class="grafico__barra" [attr.data-tipo]="e.tipo">
-        <title>{{ e.tooltip }}</title>
-        @switch (e.tipo) {
-          @case ('normal') {
-            <rect class="grafico__rect" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
-          }
-          @case ('cero') {
-            <rect class="grafico__rect grafico__rect--cero" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
-          }
-          @case ('sin-valor') {
-            <rect class="grafico__rect grafico__rect--sin-valor" [attr.fill]="'url(#' + idPatron + ')'" [attr.x]="e.x" [attr.y]="e.y" [attr.width]="e.ancho" [attr.height]="e.alto" />
-          }
+      <!-- Rejilla y marcas del eje de valores (solo en vertical: la lista lleva el valor en la punta) -->
+      @for (m of g.marcas; track m.pos; let primera = $first) {
+        @if (!primera) {
+          <line
+            class="grafico__guia"
+            [attr.x1]="g.mI"
+            [attr.x2]="g.mI + g.plotAncho"
+            [attr.y1]="m.pos"
+            [attr.y2]="m.pos"
+          />
         }
-        <text
-          class="grafico__valor"
-          [class.grafico__valor--nd]="e.tipo === 'nd'"
-          [attr.x]="e.vx"
-          [attr.y]="e.vy"
-          [attr.text-anchor]="e.vAncla"
-          [attr.dominant-baseline]="horiz ? 'central' : 'auto'"
-          [attr.font-size]="g.fuente"
-        >{{ e.valorTexto }}</text>
-        @if (e.etiquetaEje !== null) {
+        <text class="grafico__marca" text-anchor="end" [attr.x]="g.mI - 8" [attr.y]="m.pos + 4">
+          {{ m.texto }}
+        </text>
+      }
+
+      <!-- Línea de origen -->
+      @if (horiz) {
+        <line
+          class="grafico__eje"
+          [attr.x1]="g.mI"
+          [attr.x2]="g.mI"
+          [attr.y1]="g.mS"
+          [attr.y2]="g.ejeBase"
+        />
+      } @else {
+        <line
+          class="grafico__eje"
+          [attr.x1]="g.mI"
+          [attr.x2]="g.mI + g.plotAncho"
+          [attr.y1]="g.ejeBase"
+          [attr.y2]="g.ejeBase"
+        />
+      }
+
+      @if (g.separador !== null) {
+        <line
+          class="grafico__separador"
+          [attr.x1]="g.separador"
+          [attr.x2]="g.separador"
+          [attr.y1]="g.mS"
+          [attr.y2]="g.ejeBase + 8"
+        />
+      }
+
+      <!-- Barras -->
+      @for (e of g.elementos; track e.clave; let i = $index) {
+        <g
+          class="grafico__barra"
+          [attr.data-tipo]="e.tipo"
+          [class.grafico__barra--max]="e.esMax"
+          [class.grafico__barra--activa]="activo() === i"
+          [style.--i]="i"
+          (mouseenter)="activo.set(i)"
+        >
+          <!-- Zona de puntería más grande que la barra (path, no rect: los rect son las marcas de datos) -->
+          <path
+            class="grafico__diana"
+            [attr.d]="'M' + e.hx + ' ' + e.hy + 'h' + e.hw + 'v' + e.hh + 'h' + -e.hw + 'Z'"
+          />
+          @switch (e.tipo) {
+            @case ('normal') {
+              <path class="grafico__rect" [attr.d]="e.d" />
+            }
+            @case ('cero') {
+              <rect
+                class="grafico__rect grafico__rect--cero"
+                rx="2"
+                [attr.x]="e.x"
+                [attr.y]="e.y"
+                [attr.width]="e.ancho"
+                [attr.height]="e.alto"
+              />
+            }
+            @case ('sin-valor') {
+              <rect
+                class="grafico__rect grafico__rect--sin-valor"
+                rx="2"
+                [attr.fill]="'url(#' + idPatron + ')'"
+                [attr.x]="e.x"
+                [attr.y]="e.y"
+                [attr.width]="e.ancho"
+                [attr.height]="e.alto"
+              />
+            }
+          }
           <text
-            class="grafico__etiqueta"
-            [attr.x]="e.ex"
-            [attr.y]="e.ey"
-            [attr.text-anchor]="e.eAncla"
+            class="grafico__valor"
+            [class.grafico__valor--nd]="e.tipo === 'nd'"
+            [attr.x]="e.vx"
+            [attr.y]="e.vy"
+            [attr.text-anchor]="e.vAncla"
             [attr.dominant-baseline]="horiz ? 'central' : 'auto'"
             [attr.font-size]="g.fuente"
-          >{{ e.etiquetaEje }}</text>
-        }
-      </g>
-    }
+          >
+            {{ e.valorTexto }}
+          </text>
+          @if (horiz && e.cuota !== null) {
+            <text
+              class="grafico__cuota"
+              text-anchor="end"
+              dominant-baseline="central"
+              [attr.x]="g.xCuota"
+              [attr.y]="e.vy"
+              [attr.font-size]="g.fuente"
+            >
+              {{ e.cuota }}
+            </text>
+          }
+          @if (e.color !== null) {
+            <!-- Clave de color: el mismo que lleva ese intervalo en el mapa -->
+            <path
+              class="grafico__clave"
+              [attr.fill]="e.color"
+              [attr.d]="'M' + (e.ex - 8) + ' ' + (g.ejeBase + 7) + 'h16v6h-16Z'"
+            />
+          }
+          @if (e.etiquetaEje !== null) {
+            <text
+              class="grafico__etiqueta"
+              [attr.x]="e.ex"
+              [attr.y]="e.ey"
+              [attr.text-anchor]="e.eAncla"
+              [attr.dominant-baseline]="horiz ? 'central' : 'auto'"
+              [attr.font-size]="g.fuente"
+            >
+              {{ e.etiquetaEje }}
+            </text>
+          }
+        </g>
+      }
 
-    @if (ejeTitulo()) {
-      <text
-        class="grafico__eje-titulo"
-        text-anchor="middle"
-        [attr.x]="g.mI + g.plotAncho / 2"
-        [attr.y]="g.H - 6"
-      >{{ ejeTitulo() }}</text>
-    }
-  </svg>
+      @if (g.referencia; as r) {
+        <g class="grafico__referencia" aria-hidden="true">
+          <line [attr.x1]="g.mI" [attr.x2]="g.mI + g.plotAncho" [attr.y1]="r.y" [attr.y2]="r.y" />
+          <text text-anchor="start" [attr.x]="g.mI + g.plotAncho + 8" [attr.y]="r.y + 4">
+            {{ r.etiqueta }}
+          </text>
+        </g>
+      }
 
-  @if (tiposPresentes().has('cero') || tiposPresentes().has('sin-valor') || tiposPresentes().has('nd')) {
+      @if (!horiz && ejeTitulo()) {
+        <text
+          class="grafico__eje-titulo"
+          text-anchor="middle"
+          [attr.x]="g.mI + g.plotAncho / 2"
+          [attr.y]="g.H - 6"
+        >
+          {{ ejeTitulo() }}
+        </text>
+      }
+    </svg>
+
+    @if (tip(); as t) {
+      <div
+        class="grafico__tip"
+        [class.grafico__tip--izquierda]="t.lado === 'izquierda'"
+        [class.grafico__tip--derecha]="t.lado === 'derecha'"
+        [style.left.px]="t.x"
+        [style.top.px]="t.y"
+        aria-hidden="true"
+      >
+        <span class="grafico__tip-rotulo">{{ t.etiqueta }}</span>
+        <span class="grafico__tip-valor">
+          <strong>{{ t.valor }}</strong> {{ unidad() }}
+          @if (t.cuota !== null) {
+            <span class="grafico__tip-cuota">{{ t.cuota }}</span>
+          }
+        </span>
+      </div>
+    }
+  </div>
+
+  @if (
+    tiposPresentes().has('cero') || tiposPresentes().has('sin-valor') || tiposPresentes().has('nd')
+  ) {
     <ul class="grafico__leyenda" [attr.aria-label]="i18n.tr('grafico.leyenda_aria')">
-      <li><span class="muestra muestra--normal"></span> {{ i18n.tr('grafico.leyenda_barra') }}</li>
       @if (tiposPresentes().has('cero')) {
         <li><span class="muestra muestra--cero"></span> {{ i18n.tr('grafico.leyenda_cero') }}</li>
       }
       @if (tiposPresentes().has('sin-valor')) {
-        <li><span class="muestra muestra--sin-valor"></span> {{ i18n.tr('grafico.leyenda_sin_valor') }}</li>
+        <li>
+          <span class="muestra muestra--sin-valor"></span>
+          {{ i18n.tr('grafico.leyenda_sin_valor') }}
+        </li>
       }
       @if (tiposPresentes().has('nd')) {
-        <li><em class="nd">{{ i18n.tr('formato.nd') }}</em>: {{ i18n.tr('grafico.leyenda_nd') }}</li>
+        <li>
+          <em class="nd">{{ i18n.tr('formato.nd') }}</em
+          >: {{ i18n.tr('grafico.leyenda_nd') }}
+        </li>
       }
     </ul>
   }
 
   <details class="grafico__tabla">
-    <summary>{{ i18n.tr('grafico.ver_tabla', { titulo: titulo() }) }}</summary>
+    <summary>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M2 3.5h12v9H2zM2 6.5h12M2 9.5h12M6 3.5v9" />
+      </svg>
+      {{ i18n.tr('grafico.ver_tabla', { titulo: titulo() }) }}
+    </summary>
     <div class="tabla-scroll">
       <table class="tabla-datos">
-        <caption>{{ titulo() }}</caption>
+        <caption>
+          {{
+            titulo()
+          }}
+        </caption>
         <thead>
           <tr>
             <th scope="col">{{ i18n.tr('grafico.col_categoria') }}</th>

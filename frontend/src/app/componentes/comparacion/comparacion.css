@@ -1,25 +1,124 @@
 .comparacion {
   display: grid;
   gap: var(--e-4);
+  container-type: inline-size;
 }
+/* Las dos barras a la izquierda, una sobre otra; el cociente, a su derecha, como resultado. */
 .comparacion__cifras {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--e-4);
+  gap: var(--e-4) var(--e-6);
   margin: 0;
 }
 .comparacion__cifras dd {
   margin: 0;
 }
+.comparacion__cifras .cifra {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.35rem var(--e-3);
+  min-width: 0;
+}
 .comparacion__cifras dt {
+  font-size: var(--t-sm);
   font-weight: 600;
+  color: var(--tinta);
+}
+.comparacion__cifras .cifra__valor {
+  font-family: var(--fuente);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-variant-numeric: normal;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 /* «no disponible»: más pequeño que una cifra, para que no parezca un dato */
 .comparacion__cifras .cifra__valor.nd {
-  font-size: var(--t-md);
+  font-size: var(--t-base);
   font-weight: 400;
+  letter-spacing: 0;
 }
+.cifra__barra,
+.cifra__nota {
+  grid-column: 1 / -1;
+}
+/* Pista del mismo tono que la barra: el hueco también se lee. */
+.cifra__barra {
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--barra) 14%, transparent);
+  overflow: hidden;
+}
+.cifra__barra span {
+  display: block;
+  height: 100%;
+  min-inline-size: 4px;
+  border-radius: 999px;
+  background: var(--barra);
+  transition: inline-size 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both llenar;
+}
+@keyframes llenar {
+  from {
+    inline-size: 0;
+  }
+}
+/* La media de 2025 es la referencia: gris, para que el color sea lo de hoy. */
+.cifra--media .cifra__barra {
+  background: color-mix(in srgb, var(--barra-sin-valor) 18%, transparent);
+}
+.cifra--media .cifra__barra span {
+  background: var(--barra-sin-valor);
+}
+
+.comparacion__cifras .cifra--cociente {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 0.3rem;
+  padding: var(--e-4);
+  border-radius: var(--radio);
+  background: var(--segmento-pista);
+}
+.cifra--cociente dt {
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+.comparacion__cifras .cifra--cociente .cifra__valor {
+  font-size: 3.25rem;
+  letter-spacing: -0.035em;
+}
+.cifra--cociente .cifra__valor:not(.nd)::after {
+  content: '×';
+  margin-left: 0.08em;
+  font-size: 0.55em;
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+.comparacion__cifras .cifra--cociente .cifra__valor.nd {
+  font-size: var(--t-md);
+}
+/* Describe, no valora: tinta neutra y una flecha, nunca verde o rojo. */
+.cifra__veredicto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.2rem 0.65rem 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--tinta);
+  color: var(--fondo);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.cifra__veredicto svg {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  fill: currentColor;
+}
+
 .comparacion__filtros {
+  max-width: none;
   font-size: var(--t-sm);
   color: var(--tinta-suave);
 }
@@ -28,4 +127,24 @@
 }
 .comparacion__aviso {
   max-width: none;
+}
+
+@container (min-width: 40rem) {
+  .comparacion__cifras {
+    grid-template-columns: minmax(0, 1.6fr) minmax(15rem, 1fr);
+    grid-template-areas:
+      'actual cociente'
+      'media cociente';
+    align-items: center;
+  }
+  .cifra--actual {
+    grid-area: actual;
+  }
+  .cifra--media {
+    grid-area: media;
+  }
+  .cifra--cociente {
+    grid-area: cociente;
+    align-self: stretch;
+  }
 }

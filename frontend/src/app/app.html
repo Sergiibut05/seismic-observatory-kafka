@@ -13,20 +13,36 @@
         }
       </div>
       <app-estado />
-      <div class="idioma" role="group" [attr.aria-label]="i18n.tr('selector.idioma')">
-        @for (o of idiomas; track o.codigo) {
-          <button
-            type="button"
-            class="idioma__boton"
-            [attr.lang]="o.codigo"
-            [attr.aria-label]="o.nombre"
-            [attr.title]="o.nombre"
-            [attr.aria-pressed]="i18n.idioma() === o.codigo"
-            (click)="i18n.fijar(o.codigo)"
-          >
-            {{ o.rotulo }}
-          </button>
-        }
+      <div class="cabecera__acciones">
+        <div class="idioma" role="group" [attr.aria-label]="i18n.tr('selector.idioma')">
+          @for (o of idiomas; track o.codigo) {
+            <button
+              type="button"
+              class="idioma__boton"
+              [attr.lang]="o.codigo"
+              [attr.aria-label]="o.nombre"
+              [attr.title]="o.nombre"
+              [attr.aria-pressed]="i18n.idioma() === o.codigo"
+              (click)="i18n.fijar(o.codigo)"
+            >
+              {{ o.rotulo }}
+            </button>
+          }
+        </div>
+        <!-- 011: papel / noche; la tinta nace en este botón -->
+        <button
+          type="button"
+          class="tema-boton"
+          [attr.aria-label]="i18n.tr('tema.boton')"
+          [attr.title]="i18n.tr(tema.tema() === 'noche' ? 'tema.papel' : 'tema.noche')"
+          [attr.aria-pressed]="tema.tema() === 'noche'"
+          (click)="alternarTema($event)"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.3" />
+            <path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
+          </svg>
+        </button>
       </div>
     </div>
   </header>

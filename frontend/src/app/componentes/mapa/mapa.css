@@ -5,33 +5,28 @@
   height: 100%;
 }
 
+/* Cabecera: título · nota · conmutador (a la derecha, el mismo sitio que en la escena). */
+.mapa-bloque > .bloque__cab {
+  align-items: center;
+}
+.mapa-bloque .bloque__nota {
+  order: 1;
+  margin-left: auto;
+}
+/* El aspecto del conmutador es el segmentado global (styles.css). */
 .mapa-bloque .mapa-vistas {
-  display: inline-flex;
-  margin-left: var(--e-3);
-  border: 1px solid var(--linea-fuerte);
-  border-radius: var(--radio);
-  overflow: hidden;
+  order: 2;
 }
-.mapa-bloque .mapa-vistas__boton {
-  padding: 2px var(--e-3);
-  border: 0;
-  background: var(--superficie);
-  color: var(--tinta);
-  font: inherit;
-  font-size: var(--t-sm);
-  cursor: pointer;
-}
-.mapa-bloque .mapa-vistas__boton + .mapa-vistas__boton {
-  border-left: 1px solid var(--linea-fuerte);
-}
-.mapa-bloque .mapa-vistas__boton[aria-pressed='true'] {
-  background: var(--acento);
-  color: var(--sobre-acento);
-  font-weight: 600;
-}
-.mapa-bloque .mapa-vistas__boton:focus-visible {
-  outline: 3px solid var(--foco);
-  outline-offset: -3px;
+@media (max-width: 40rem) {
+  .mapa-bloque .mapa-vistas {
+    order: 1;
+    margin-left: auto;
+  }
+  .mapa-bloque .bloque__nota {
+    order: 2;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }
 
 .mapa-bloque .mapa-avisos {
@@ -52,52 +47,58 @@
 .mapa-bloque .mapa-lienzo {
   position: absolute;
   inset: 0;
-  background: #cfdbe4; /* mar mientras llegan las teselas */
-  border: 1px solid var(--linea-fuerte);
+  overflow: hidden;
+  background: var(--mundo-oceano);
+  border: 1px solid var(--linea);
   border-radius: var(--radio);
 }
 
 .mapa-bloque .mapa-estado {
   position: absolute;
-  top: var(--e-2);
+  top: var(--e-3);
   left: 50%;
   transform: translateX(-50%);
   z-index: 800;
   margin: 0;
-  padding: var(--e-1) var(--e-3);
-  background: var(--superficie);
-  border: 1px solid var(--linea-fuerte);
+  padding: var(--e-1) var(--e-4);
+  background: var(--lamina-fondo);
+  border: 1px solid var(--lamina-borde);
   border-radius: var(--radio);
+  font-family: var(--fuente-mono);
+  font-size: var(--t-xs);
 }
 
 /* ── Leyenda ──────────────────────────────────────────────────────── */
 /* Por debajo del panel de fichas de Leaflet (700): una ficha abierta nunca queda tapada. */
 .mapa-bloque .mapa-leyenda {
   position: absolute;
-  left: var(--e-2);
-  bottom: calc(var(--e-2) + 1.5rem); /* sobre la atribución de Leaflet */
+  left: var(--e-3);
+  bottom: var(--e-3);
   z-index: 650;
-  width: 15.5rem;
-  max-width: calc(100% - 4rem);
-  max-height: calc(100% - 5rem);
+  width: 15rem;
+  max-width: calc(100% - 5rem);
+  max-height: calc(100% - 2rem);
   overflow: auto;
   padding: var(--e-2) var(--e-3);
-  background: rgb(16 24 32 / 0.92);
-  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 40%, transparent);
-  border-radius: var(--radio);
   font-size: var(--t-xs);
   line-height: 1.35;
-  color: var(--tinta);
 }
 .mapa-bloque .mapa-leyenda:not([open]) {
   width: auto;
+  padding: var(--e-1) var(--e-3);
+  border-radius: 999px;
 }
 .mapa-bloque .mapa-leyenda--apartada {
   visibility: hidden;
 }
 .mapa-bloque .mapa-leyenda summary {
   cursor: pointer;
-  font-weight: 650;
+  color: var(--tinta-suave);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+.mapa-bloque .mapa-leyenda[open] summary {
+  color: var(--tinta);
 }
 .mapa-bloque .mapa-leyenda__grupo {
   margin-top: var(--e-2);
@@ -121,9 +122,9 @@
 }
 .mapa-bloque .mapa-leyenda__circulo {
   display: inline-block;
-  border: 1px solid var(--borde-circulo);
+  border: 1px solid var(--tinta);
   border-radius: 50%;
-  background: var(--superficie-2);
+  background: transparent;
 }
 
 /* Escala de profundidad: una barra continua con el límite inferior de cada tramo debajo. */
@@ -145,11 +146,11 @@
 }
 .mapa-bloque .mapa-leyenda__escala li:first-child .mapa-leyenda__tramo {
   border-left: 1px solid var(--borde-circulo);
-  border-radius: 3px 0 0 3px;
+  border-radius: 1px 0 0 1px;
 }
 .mapa-bloque .mapa-leyenda__escala li:last-child .mapa-leyenda__tramo {
   border-right: 1px solid var(--borde-circulo);
-  border-radius: 0 3px 3px 0;
+  border-radius: 0 1px 1px 0;
 }
 .mapa-bloque .mapa-leyenda__marca {
   min-height: 1lh; /* el tramo «< 0» no lleva número y debe medir lo mismo que los demás */
@@ -200,32 +201,67 @@
   outline: 3px solid var(--foco);
   outline-offset: 2px;
 }
+.mapa-bloque .leaflet-container {
+  background: transparent;
+}
+.mapa-bloque .leaflet-bar {
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--lamina-sombra);
+  overflow: hidden;
+}
+.mapa-bloque .leaflet-control-zoom {
+  margin: 0 var(--e-3) var(--e-6) 0;
+}
 .mapa-bloque .leaflet-control-zoom a {
   width: 2.25rem;
   height: 2.25rem;
   line-height: 2.25rem;
-  color: #0f1a24;
+  border-bottom-color: var(--lamina-borde);
+  background: var(--lamina-fondo);
+  color: var(--tinta);
+}
+.mapa-bloque .leaflet-control-zoom a:hover {
+  background: var(--tinta);
+  color: var(--fondo);
+}
+.mapa-bloque .leaflet-control-zoom a.leaflet-disabled {
+  background: var(--lamina-fondo);
+  color: var(--linea-fuerte);
 }
 .mapa-bloque .leaflet-control-attribution {
-  color: #0f1a24;
-  background: rgb(255 255 255 / 0.78);
+  color: var(--tinta-suave);
+  background: var(--lamina-fondo);
+  font-family: var(--fuente-mono);
+  font-size: 0.65rem;
+  border-top-left-radius: var(--radio);
 }
 .mapa-bloque .leaflet-control-attribution a {
-  color: #00596b;
+  color: var(--tinta-suave);
 }
 .mapa-bloque .leaflet-popup-close-button {
   width: 2rem;
   height: 2rem;
   line-height: 2rem;
 }
+.mapa-bloque .leaflet-container a.leaflet-popup-close-button {
+  color: var(--tinta-suave);
+}
 
 /* ── Resumen al pasar el ratón ────────────────────────────────────── */
 .mapa-bloque .mapa-resumen {
-  padding: 2px var(--e-2);
-  border-color: var(--linea-fuerte);
+  padding: 3px var(--e-2);
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  box-shadow: var(--lamina-sombra);
+  font-family: var(--fuente-mono);
   font-size: var(--t-xs);
   font-weight: 600;
   color: var(--tinta);
+}
+.mapa-bloque .mapa-resumen::before {
+  border-top-color: var(--superficie);
 }
 
 /* ── Ficha del terremoto (popup) ──────────────────────────────────── */
@@ -233,7 +269,11 @@
 .mapa-bloque .ficha-popup .leaflet-popup-tip {
   background: var(--superficie);
   color: var(--tinta);
-  border-radius: var(--radio);
+  box-shadow: var(--lamina-sombra);
+}
+.mapa-bloque .ficha-popup .leaflet-popup-content-wrapper {
+  border: 1px solid var(--lamina-borde);
+  border-radius: var(--radio-panel);
 }
 .mapa-bloque .ficha-popup .leaflet-popup-content {
   margin: var(--e-3) var(--e-4) var(--e-3) var(--e-3);
@@ -241,6 +281,7 @@
 }
 .mapa-bloque .ficha__titulo {
   margin: 0 var(--e-6) 0 0;
+  font-family: var(--fuente-serif);
   font-size: var(--t-lg);
   line-height: 1.2;
 }
@@ -288,6 +329,7 @@
 }
 .mapa-bloque .ficha__datos dd {
   margin: 0;
+  font-family: var(--fuente-mono);
   white-space: nowrap;
 }
 .mapa-bloque .ficha__datos dd.ficha__id {

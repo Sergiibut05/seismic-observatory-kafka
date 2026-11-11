@@ -1,50 +1,92 @@
 <section class="bloque" aria-labelledby="titulo-distribuciones">
   <div class="bloque__cab">
-    <h2 id="titulo-distribuciones" class="bloque__titulo">{{ i18n.tr('distribuciones.titulo') }}</h2>
+    <h2 id="titulo-distribuciones" class="bloque__titulo">
+      {{ i18n.tr('distribuciones.titulo') }}
+    </h2>
     <span class="bloque__nota">{{ i18n.tr('bloque.estado_actual') }}</span>
   </div>
 
-  <div class="bloque__cuerpo distribuciones">
-    <section class="distribuciones__parte" aria-labelledby="titulo-dist-magnitud">
-      <h3 id="titulo-dist-magnitud">{{ i18n.tr('distribuciones.magnitud') }}</h3>
+  <div class="bloque__cuerpo partes">
+    <section class="parte" aria-labelledby="titulo-dist-magnitud">
+      <div class="parte__cab">
+        <h3 id="titulo-dist-magnitud">{{ i18n.tr('distribuciones.magnitud') }}</h3>
+      </div>
       <app-aviso-bloque [bloque]="bloqueMagnitud()" />
       @if (bloqueMagnitud().datos; as d) {
         @if (d.total === 0) {
           <p class="bloque__vacio">{{ i18n.tr('bloque.sin_eventos') }}</p>
         } @else {
-          <p class="distribuciones__nota">
-            {{ i18n.tr('distribuciones.nota_a', { n: i18n.entero(d.total) }) }}
-            <strong>{{ i18n.entero(d.sin_valor) }}</strong> {{ i18n.tr('distribuciones.sin_magnitud') }}
-          </p>
+          <dl class="datos-clave">
+            <div>
+              <dt>{{ i18n.tr('distribuciones.eventos') }}</dt>
+              <dd>
+                <strong>{{ i18n.entero(d.total) }}</strong>
+              </dd>
+            </div>
+            @if (modaMagnitud(); as m) {
+              <div>
+                <dt>{{ i18n.tr('distribuciones.moda') }}</dt>
+                <dd>
+                  <strong>{{ m.etiqueta }}</strong> · {{ m.cuota }}
+                </dd>
+              </div>
+            }
+          </dl>
           <app-grafico-barras
             [titulo]="i18n.tr('distribuciones.grafico_magnitud')"
             [datos]="barrasMagnitud()"
             orientacion="vertical"
+            [cuota]="true"
             [unidad]="i18n.tr('grafico.eventos')"
             [ejeTitulo]="i18n.tr('distribuciones.eje_magnitud')"
           />
+          <p class="parte__nota">
+            {{ i18n.tr('distribuciones.nota_a', { n: i18n.entero(d.total) }) }}
+            <strong>{{ i18n.entero(d.sin_valor) }}</strong>
+            {{ i18n.tr('distribuciones.sin_magnitud') }}
+          </p>
         }
       }
     </section>
 
-    <section class="distribuciones__parte" aria-labelledby="titulo-dist-profundidad">
-      <h3 id="titulo-dist-profundidad">{{ i18n.tr('distribuciones.profundidad') }}</h3>
+    <section class="parte" aria-labelledby="titulo-dist-profundidad">
+      <div class="parte__cab">
+        <h3 id="titulo-dist-profundidad">{{ i18n.tr('distribuciones.profundidad') }}</h3>
+      </div>
       <app-aviso-bloque [bloque]="bloqueProfundidad()" />
       @if (bloqueProfundidad().datos; as d) {
         @if (d.total === 0) {
           <p class="bloque__vacio">{{ i18n.tr('bloque.sin_eventos') }}</p>
         } @else {
-          <p class="distribuciones__nota">
-            {{ i18n.tr('distribuciones.nota_a', { n: i18n.entero(d.total) }) }}
-            <strong>{{ i18n.entero(d.sin_valor) }}</strong> {{ i18n.tr('distribuciones.sin_profundidad') }}
-          </p>
+          <dl class="datos-clave">
+            <div>
+              <dt>{{ i18n.tr('distribuciones.eventos') }}</dt>
+              <dd>
+                <strong>{{ i18n.entero(d.total) }}</strong>
+              </dd>
+            </div>
+            @if (modaProfundidad(); as m) {
+              <div>
+                <dt>{{ i18n.tr('distribuciones.moda') }}</dt>
+                <dd>
+                  <strong>{{ m.etiqueta }}</strong> · {{ m.cuota }}
+                </dd>
+              </div>
+            }
+          </dl>
           <app-grafico-barras
             [titulo]="i18n.tr('distribuciones.grafico_profundidad')"
             [datos]="barrasProfundidad()"
             orientacion="vertical"
+            [cuota]="true"
             [unidad]="i18n.tr('grafico.eventos')"
             [ejeTitulo]="i18n.tr('distribuciones.eje_profundidad')"
           />
+          <p class="parte__nota">
+            {{ i18n.tr('distribuciones.nota_a', { n: i18n.entero(d.total) }) }}
+            <strong>{{ i18n.entero(d.sin_valor) }}</strong>
+            {{ i18n.tr('distribuciones.sin_profundidad') }}
+          </p>
         }
       }
     </section>

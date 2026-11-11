@@ -1,34 +1,70 @@
+/* Frase de filtros (010) con aspecto de píldoras de papel (011). */
 .frase {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: 0;
   max-width: none;
-  font-size: var(--t-sm);
   line-height: 1.3;
 }
 
 .frase__trozo {
+  display: inline-flex;
+  align-items: center;
   margin: 0;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 45%, transparent);
-  border-left: 3px solid var(--escena-violeta-bajo);
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--escena-fondo) 72%, transparent);
-  color: var(--escena-tinta);
-  font: inherit;
-  font-size: var(--t-sm);
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--lamina-borde);
+  border-radius: 999px;
+  background: var(--lamina-fondo);
+  box-shadow: var(--lamina-sombra);
+  color: var(--tinta);
+  font-size: 0.8rem;
   cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+/*
+ * El primer trozo es el modo de datos. En directo lleva la pluma: una aguja roja que oscila.
+ * En REPRODUCCIÓN, quieta y en ámbar (FR-010).
+ */
+.frase__trozo:first-child::before {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.8rem;
+  margin-right: 0.5rem;
+  border-radius: 1px;
+  background: var(--acento);
+  transform-origin: 50% 100%;
+  animation: 0.9s ease-in-out infinite alternate pluma;
+}
+.frase--replay .frase__trozo:first-child::before {
+  background: var(--atencion-borde);
+  animation: none;
+}
+@keyframes pluma {
+  0% {
+    transform: scaleY(0.35);
+  }
+  40% {
+    transform: scaleY(1);
+  }
+  70% {
+    transform: scaleY(0.55);
+  }
+  100% {
+    transform: scaleY(0.85);
+  }
 }
 
 .frase__trozo:hover {
-  border-color: var(--escena-violeta);
-  background: color-mix(in srgb, var(--escena-violeta) 22%, var(--escena-fondo));
+  border-color: var(--tinta);
+  transform: translateY(-1px);
 }
 
 .frase__trozo:focus-visible {
-  outline: 3px solid var(--foco-sobre-oscuro);
+  outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 
@@ -47,7 +83,7 @@
   }
   .frase__trozo {
     flex: none;
-    padding: 0.25rem 0.55rem;
-    font-size: var(--t-xs);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.68rem;
   }
 }

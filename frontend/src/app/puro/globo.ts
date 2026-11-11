@@ -4,31 +4,40 @@ import { EventoMapa, PropiedadesEventoMapa } from '../modelos/api';
 import { DatoBarra, etiquetaHoraUtc } from './barras';
 import { INTERVALOS_PROFUNDIDAD, estiloCirculo } from './escalas';
 import { formatearInstanteUtc, formatearMagnitud, formatearProfundidad } from './formato';
+import { TEMA_POR_DEFECTO, Tema } from './tema';
 
 export const ANILLOS_MAX = 60;
-export const RADIO_ANILLO_MIN = 2.5;
-export const RADIO_ANILLO_MAX = 14;
+export const RADIO_ANILLO_MIN = 1.5;
+export const RADIO_ANILLO_MAX = 7;
 /** Segundos que tarda un anillo en llegar a su radio máximo. */
 const DURACION_ANILLO_S = 1.8;
 const SIN_PAIS = 'Sin país asignado';
 export const VENTANA_CINTA_MS = 24 * 3600 * 1000;
 /** Stub de columna sin magnitud: no se trata como M = 0. En radios terrestres. */
-export const ALTURA_COLUMNA_ND = 0.04;
-const ALTURA_COLUMNA_BASE = 0.06;
-const ALTURA_COLUMNA_POR_M = 0.055;
+export const ALTURA_COLUMNA_ND = 0.008;
+/**
+ * Crecimiento cuadrático (011): M2 ≈ 0,034, M5 ≈ 0,108, M7 ≈ 0,19 radios. La Tierra sigue
+ * siendo lo que se ve; antes M5 ya medía un tercio del radio y el globo parecía un erizo.
+ */
+const ALTURA_COLUMNA_BASE = 0.02;
+const ALTURA_COLUMNA_POR_M2 = 0.0035;
 
-export const COLOR_PULSO_BAJO = '#8B7CFF';
-export const COLOR_PULSO_MEDIO = '#5B4DFF';
-export const COLOR_PULSO_ALTO = '#F2F0FF';
-export const COLOR_PULSO_ND = '#c8d0d8';
+/**
+ * Pulsos en rojo de pluma (011). En papel, más oscuro cuanto mayor la magnitud; en noche, más
+ * claro. ND en gris (no se trata como 0).
+ */
+export const COLORES_PULSO: Record<Tema, { bajo: string; medio: string; alto: string; nd: string }> = {
+  papel: { bajo: '#E07A86', medio: '#C8102E', alto: '#7A0019', nd: '#9A9385' },
+  noche: { bajo: '#FF9A90', medio: '#FF6B5E', alto: '#FFE3DF', nd: '#C8D0D8' },
+};
 
-/** Color del pulso por magnitud; ND va en gris claro (no se trata como 0). */
-export function colorPulso(magnitud: number | null): string {
+export function colorPulso(magnitud: number | null, tema: Tema = TEMA_POR_DEFECTO): string {
+  const c = COLORES_PULSO[tema];
   const m = magnitudValida(magnitud);
-  if (m === null) return COLOR_PULSO_ND;
-  if (m >= 6) return COLOR_PULSO_ALTO;
-  if (m >= 4) return COLOR_PULSO_MEDIO;
-  return COLOR_PULSO_BAJO;
+  if (m === null) return c.nd;
+  if (m >= 6) return c.alto;
+  if (m >= 4) return c.medio;
+  return c.bajo;
 }
 
 /** Altura de la columna en radios terrestres. Un nulo no usa la escala de M = 0. */
@@ -36,7 +45,7 @@ export function alturaColumna(magnitud: number | null): number {
   const m = magnitudValida(magnitud);
   if (m === null) return ALTURA_COLUMNA_ND;
   const escala = Math.min(Math.max(m, 0), 9);
-  return ALTURA_COLUMNA_BASE + escala * ALTURA_COLUMNA_POR_M;
+  return ALTURA_COLUMNA_BASE + escala * escala * ALTURA_COLUMNA_POR_M2;
 }
 
 export interface PuntoGlobo {
@@ -94,7 +103,7 @@ export function puntosGlobo(features: readonly EventoMapa[]): PuntoGlobo[] {
 
 export function anillosGlobo(
   features: readonly EventoMapa[],
-  opciones: { movimientoReducido?: boolean; max?: number } = {},
+  opciones: { movimientoReducido?: boolean; max?: number; tema?: Tema } = {},
 ): AnilloGlobo[] {
   if (opciones.movimientoReducido) return [];
   const max = opciones.max ?? ANILLOS_MAX;
@@ -113,7 +122,7 @@ export function anillosGlobo(
         id: f.properties.event_id,
         lat,
         lng,
-        color: colorPulso(m),
+        color: colorPulso(m, opciones.tema),
         radioMax,
         velocidad: radioMax / DURACION_ANILLO_S,
         periodo: (DURACION_ANILLO_S * 1000) / 2,

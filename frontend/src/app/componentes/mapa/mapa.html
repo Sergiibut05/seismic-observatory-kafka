@@ -1,11 +1,27 @@
-<section class="bloque mapa-bloque" aria-labelledby="titulo-mapa" [attr.aria-busy]="bloque().estado === 'cargando'">
+<section
+  class="bloque mapa-bloque"
+  aria-labelledby="titulo-mapa"
+  [attr.aria-busy]="bloque().estado === 'cargando'"
+>
   <div class="bloque__cab">
     <h2 id="titulo-mapa" class="bloque__titulo">{{ i18n.tr('mapa.titulo') }}</h2>
     <div class="mapa-vistas" role="group" [attr.aria-label]="i18n.tr('mapa.tipo_aria')">
-      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="!enGlobo()" (click)="ui.fijarGlobo(false)">
+      <button
+        type="button"
+        class="mapa-vistas__boton"
+        [attr.aria-pressed]="!enGlobo()"
+        (click)="ui.fijarGlobo(false)"
+      >
         {{ i18n.tr('mapa.plano') }}
       </button>
-      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="enGlobo()" (click)="ui.fijarGlobo(true)">
+      <button
+        type="button"
+        class="mapa-vistas__boton"
+        [attr.aria-pressed]="enGlobo()"
+        (pointerenter)="precalentarGlobo()"
+        (focus)="precalentarGlobo()"
+        (click)="ui.fijarGlobo(true)"
+      >
         {{ i18n.tr('mapa.globo') }}
       </button>
     </div>
@@ -29,7 +45,9 @@
     @if (bloque().error; as error) {
       <p class="aviso aviso--atencion" role="status">
         @if (antiguos()) {
-          {{ i18n.tr('mapa.error_antiguo', { motivo: i18n.motivo(error), datos: etiquetaAntiguos() }) }}
+          {{
+            i18n.tr('mapa.error_antiguo', { motivo: i18n.motivo(error), datos: etiquetaAntiguos() })
+          }}
         } @else {
           {{ i18n.tr('mapa.error_carga', { motivo: i18n.motivo(error) }) }}
         }
@@ -65,7 +83,11 @@
       @if (enGlobo()) {
         <app-globo />
       }
-      <details class="mapa-leyenda" open [hidden]="enGlobo()" [class.mapa-leyenda--apartada]="fichaVisible()">
+      <details
+        class="mapa-leyenda lamina"
+        [hidden]="enGlobo()"
+        [class.mapa-leyenda--apartada]="fichaVisible()"
+      >
         <summary>{{ i18n.tr('mapa.leyenda_resumen') }}</summary>
         <div class="mapa-leyenda__grupo">
           <p class="mapa-leyenda__titulo">{{ i18n.tr('mapa.leyenda_radio') }}</p>
@@ -93,12 +115,16 @@
             }
           </ul>
           <p class="mapa-leyenda__extremos">
-            <span>{{ i18n.tr('mapa.superficie') }}</span><span>{{ i18n.tr('mapa.mas_profundo') }}</span>
+            <span>{{ i18n.tr('mapa.superficie') }}</span
+            ><span>{{ i18n.tr('mapa.mas_profundo') }}</span>
           </p>
         </div>
         <ul class="mapa-leyenda__notas">
           <li>
-            <span class="mapa-leyenda__muestra mapa-leyenda__muestra--nd" [style.background]="colorNd"></span>
+            <span
+              class="mapa-leyenda__muestra mapa-leyenda__muestra--nd"
+              [style.background]="colorNd"
+            ></span>
             <span>{{ i18n.tr('mapa.leyenda_nd') }}</span>
           </li>
           @if (sinteticos()) {

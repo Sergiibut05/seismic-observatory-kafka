@@ -11,9 +11,25 @@ const esNumero = (v: number | null | undefined): v is number =>
   typeof v === 'number' && Number.isFinite(v);
 
 /** Hasta `maxDecimales` decimales, sin ceros sobrantes. */
-export function formatearDecimal(v: number | null | undefined, maxDecimales: number, t: Traductor = T_ES): string {
+export function formatearDecimal(
+  v: number | null | undefined,
+  maxDecimales: number,
+  t: Traductor = T_ES,
+): string {
   if (!esNumero(v)) return textoNd(t);
-  return new Intl.NumberFormat(localeDe(t.idioma), { maximumFractionDigits: maxDecimales }).format(v);
+  return new Intl.NumberFormat(localeDe(t.idioma), { maximumFractionDigits: maxDecimales }).format(
+    v,
+  );
+}
+
+/** Porcentaje con exactamente 1 decimal («74,0 %»), para que una columna de cuotas quede alineada. */
+export function formatearPorcentaje(v: number | null | undefined, t: Traductor = T_ES): string {
+  if (!esNumero(v)) return textoNd(t);
+  const n = new Intl.NumberFormat(localeDe(t.idioma), {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(v);
+  return t.idioma === 'en' ? `${n}%` : `${n} %`;
 }
 
 export function formatearEntero(v: number | null | undefined, t: Traductor = T_ES): string {
@@ -23,7 +39,10 @@ export function formatearEntero(v: number | null | undefined, t: Traductor = T_E
 /** Magnitud con exactamente 1 decimal (2,1; 0,0). */
 export function formatearMagnitud(v: number | null | undefined, t: Traductor = T_ES): string {
   if (!esNumero(v)) return textoNd(t);
-  return new Intl.NumberFormat(localeDe(t.idioma), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
+  return new Intl.NumberFormat(localeDe(t.idioma), {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(v);
 }
 
 export function formatearProfundidad(v: number | null | undefined, t: Traductor = T_ES): string {
@@ -34,7 +53,20 @@ export function formatearProfundidad(v: number | null | undefined, t: Traductor 
 const dos = (n: number) => String(n).padStart(2, '0');
 
 // Nombres fijos (no `Intl`) para que el texto no cambie según la versión de ICU del navegador.
-const MESES_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MESES_EN = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 /** `02/11` en español, `2 Nov` en inglés (día y mes en UTC). */
 export function diaMesUtc(f: Date, t: Traductor = T_ES): string {
@@ -61,8 +93,19 @@ export function formatearInstanteUtc(iso: string | null | undefined, t: Traducto
   return `${fecha} ${hora} UTC`;
 }
 
+/** `11/11 19:16` en español, `11 Nov 19:16` en inglés (UTC, sin año ni segundos): la forma corta de la cabecera. */
+export function formatearCortoUtc(iso: string | null | undefined, t: Traductor = T_ES): string {
+  const f = parsear(iso);
+  if (!f) return textoNd(t);
+  return `${diaMesUtc(f, t)} ${dos(f.getUTCHours())}:${dos(f.getUTCMinutes())}`;
+}
+
 /** `15:03:28 (13:03 UTC)`: hora local (o de `zona`) y la hora UTC entre paréntesis. */
-export function formatearHoraConUtc(iso: string | null | undefined, zona?: string, t: Traductor = T_ES): string {
+export function formatearHoraConUtc(
+  iso: string | null | undefined,
+  zona?: string,
+  t: Traductor = T_ES,
+): string {
   const f = parsear(iso);
   if (!f) return textoNd(t);
   const local = new Intl.DateTimeFormat(localeDe(t.idioma), {

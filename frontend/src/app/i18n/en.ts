@@ -67,7 +67,8 @@ export const EN: Record<Clave, string> = {
   'vista.directo': 'Live',
   'vista.replay': 'REPLAY',
   'vista.sinteticos': 'Include synthetic test cases',
-  'vista.sinteticos_ayuda': 'Off by default, so only real events are shown. The historical comparison never uses them.',
+  'vista.sinteticos_ayuda':
+    'Off by default, so only real events are shown. The historical comparison never uses them.',
   'vista.franja_replay':
     'This is not live data: it is events already received and published again. “Occurrence” is the original time; “Replayed” is when they were replayed. The historical comparison only exists in live mode.',
   'vista.franja_sinteticos_a': 'Synthetic test cases included:',
@@ -97,8 +98,10 @@ export const EN: Record<Clave, string> = {
   'filtros.hora_acotada': 'The hourly count allows at most 31 days: showing {ventana}.',
   'filtros.aplicar': 'Apply',
   'filtros.restablecer': 'Reset',
-  'filtros.estado_errores': 'Fix the errors to apply the filters; the previous ones stay in use meanwhile.',
-  'filtros.estado_pendiente': 'Pending changes: applied automatically after a short pause or with “Apply”.',
+  'filtros.estado_errores':
+    'Fix the errors to apply the filters; the previous ones stay in use meanwhile.',
+  'filtros.estado_pendiente':
+    'Pending changes: applied automatically after a short pause or with “Apply”.',
   'filtros.estado_aplicados': 'Filters applied.',
   'filtros.err_fecha': 'Invalid date (UTC, format YYYY-MM-DDThh:mm).',
   'filtros.err_fecha_orden': 'The end date must be later than the start date.',
@@ -107,7 +110,8 @@ export const EN: Record<Clave, string> = {
   'filtros.err_pais': 'Invalid country code (three uppercase letters).',
   'filtros.err_subregion': 'Maximum 80 characters.',
   'filtros.origen_sinteticos': 'Synthetic test cases are included, marked “SYNTHETIC”.',
-  'filtros.origen_replay': 'REPLAY data: events already received and published again; not live data.',
+  'filtros.origen_replay':
+    'REPLAY data: events already received and published again; not live data.',
   'filtros.origen_reales': 'Only real events are shown.',
   'filtros.cerrar': 'Close filters',
   'filtros.dialogo_aria': 'Panel filters',
@@ -137,7 +141,8 @@ export const EN: Record<Clave, string> = {
     'Warning: the map shows {devueltos} of {total} events (API limit). The table and counts include all of them; narrow the filters to see the rest.',
   'mapa.error_antiguo': 'Could not update the map ({motivo}). Showing {datos}.',
   'mapa.error_carga': 'Could not load the map ({motivo}).',
-  'mapa.seleccion_fuera': 'The selected event is not among those drawn on the map; look it up in the table.',
+  'mapa.seleccion_fuera':
+    'The selected event is not among those drawn on the map; look it up in the table.',
   'mapa.error_fronteras': 'Could not load the country borders; the map keeps showing the events.',
   'mapa.lienzo_aria': 'Map of seismic events',
   'mapa.descripcion':
@@ -157,7 +162,8 @@ export const EN: Record<Clave, string> = {
   'mapa.acercar': 'Zoom in',
   'mapa.alejar': 'Zoom out',
   'mapa.cerrar_ficha': 'Close card',
-  'mapa.osm': 'OpenStreetMap contributors',
+  'mapa.fuente_fronteras': 'Borders: Natural Earth',
+  'globo.leyenda_altura': 'Taller column, greater magnitude',
 
   // Event card and summary
   'ficha.aria_real': 'Card of earthquake {id}',
@@ -172,7 +178,7 @@ export const EN: Record<Clave, string> = {
 
   // 3D globe
   'globo.aria':
-    '3D globe with the filtered events. Size and height show magnitude; body colour shows depth, as on the flat map. Violet pulses mark the 60 most recent earthquakes. Drag to rotate, scroll to zoom, click a point to select it or a country to filter. The events table is the accessible alternative.',
+    '3D globe with the filtered events. Size and height show magnitude; body colour shows depth, as on the flat map. Red pulses mark the 60 most recent earthquakes. Drag to rotate, scroll to zoom, click a point to select it or a country to filter. The events table is the accessible alternative.',
   'globo.cargando': 'Loading the globe…',
   'globo.sin_webgl': 'This browser cannot draw the 3D globe (it needs WebGL). Use the “Flat” view.',
   'globo.inactivo': '3D globe not available in this environment.',
@@ -181,6 +187,16 @@ export const EN: Record<Clave, string> = {
   'globo.m7': 'M 7',
   'cinta.aria': 'Local clip of the last 24 hours; does not query the API',
   'cinta.etiqueta': 'Until',
+
+  // Identity (011): theme
+  'tema.boton': 'Night mode',
+  'estado.corto_api': 'API',
+  'estado.corto_usgs': 'USGS',
+  'estado.corto_periodo': 'Period',
+  'estado.corto_eventos': 'Events',
+  'estado.corto_replay': 'Replayed',
+  'tema.papel': 'Paper',
+  'tema.noche': 'Night',
   'escena.cifra_vs': '{hoy} vs {media}',
   'escena.cifra_rotulo': 'today / 2025 average',
   'escena.cifra_aviso': 'The latest period may still be incomplete.',
@@ -195,7 +211,8 @@ export const EN: Record<Clave, string> = {
   'tabla.error_actualizar': 'Could not update the table ({motivo}).',
   'tabla.se_muestran': 'Showing {datos}.',
   'tabla.vacio': 'No events match the filters.',
-  'tabla.resumen': '{total} events match the applied filters; showing {primero} to {ultimo}. Times in UTC.',
+  'tabla.resumen':
+    '{total} events match the applied filters; showing {primero} to {ultimo}. Times in UTC.',
   'tabla.col_ocurrencia': 'Occurrence (UTC)',
   'tabla.col_ocurrencia_original': 'Original occurrence (UTC)',
   'tabla.col_magnitud': 'Magnitude',
@@ -229,9 +246,13 @@ export const EN: Record<Clave, string> = {
   'comparacion.eventos_dias': '{eventos} events in {dias} days',
   'comparacion.cociente': 'Ratio (24 h ÷ 2025 average)',
   'comparacion.cociente_ayuda': '1 = same as the daily average',
+  'comparacion.v_debajo': '{pct}% below the daily average',
+  'comparacion.v_encima': '{pct}% above the daily average',
+  'comparacion.v_igual': 'Same as the daily average',
   'comparacion.filtro_efectivo': 'Effective filter:',
   'comparacion.no_disponible_ahora': 'Comparison not available for now.',
-  'comparacion.aviso': 'The latest period may be incomplete: USGS publishes with a delay and revises events afterwards.',
+  'comparacion.aviso':
+    'The latest period may be incomplete: USGS publishes with a delay and revises events afterwards.',
   'comparacion.no_disponible': 'not available',
   'comparacion.f_sin_limites': 'magnitude: no limits',
   'comparacion.f_min': 'magnitude ≥ {valor}',
@@ -250,12 +271,21 @@ export const EN: Record<Clave, string> = {
   'recuentos.grupo_pais': 'Events by country',
   'recuentos.grupo_subregion': 'Events by subregion',
   'recuentos.agrupar': 'Group by',
-  'recuentos.total': 'Total:',
+  'recuentos.total': 'Total',
+  'recuentos.repartidos': 'Spread across',
   'recuentos.eventos': 'events',
+  'recuentos.n_paises': 'countries',
+  'recuentos.n_subregiones': 'subregions',
+  'recuentos.mayor': 'Largest',
+  'recuentos.pico': 'Busiest hour',
+  'recuentos.media_hora': 'Average per hour',
+  'recuentos.media_ref': 'average {valor}',
   'recuentos.eje_eventos': 'Events (count)',
-  'recuentos.resto_nota': 'The chart shows the {n} largest categories and groups the rest; the table includes all of them.',
+  'recuentos.resto_nota':
+    'The chart shows the {n} largest categories and groups the rest; the table includes all of them.',
   'recuentos.hora_titulo': 'Events per hour (UTC)',
-  'recuentos.hora_acotada': 'The requested range exceeds 31 days: showing the 31 days up to {hasta}.',
+  'recuentos.hora_acotada':
+    'The requested range exceeds 31 days: showing the 31 days up to {hasta}.',
   'recuentos.hora_sin_fechas':
     'With no dates in the filters, this chart shows the last 24 h; the other blocks use the whole available period.',
   'recuentos.hora_sin_fechas_replay':
@@ -274,14 +304,15 @@ export const EN: Record<Clave, string> = {
   'distribuciones.grafico_magnitud': 'Magnitude distribution',
   'distribuciones.grafico_profundidad': 'Depth distribution',
   'distribuciones.eje_magnitud': 'Magnitude (ranges)',
-  'distribuciones.eje_profundidad': 'Depth (km, ranges)',
+  'distribuciones.eje_profundidad': 'Depth (km, ranges; same colours as the map)',
+  'distribuciones.eventos': 'Events',
+  'distribuciones.moda': 'Most frequent range',
 
   // Bar chart
   'grafico.eventos': 'events',
   'grafico.sin_valor': 'No value',
   'grafico.resto': 'Others',
   'grafico.leyenda_aria': 'How to read the bars',
-  'grafico.leyenda_barra': 'Bar: count',
   'grafico.leyenda_cero': 'Outlined line: 0, no events',
   'grafico.leyenda_sin_valor': 'Hatched: events with no value (not 0)',
   'grafico.leyenda_nd': 'unknown value',

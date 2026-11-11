@@ -2,24 +2,39 @@
   display: grid;
   gap: var(--e-2);
 }
+/* 011: una línea discreta, «API 20:16 · USGS 11/11 19:16 · …». El rótulo largo (dt) queda
+   para lectores de pantalla; el corto lo pinta CSS y se ignora en la lectura («/ ""»). */
 .estado__datos {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e-1) var(--e-6);
+  align-items: baseline;
+  gap: var(--e-1) var(--e-4);
   margin: 0;
 }
 .estado__datos > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
   min-width: 0;
 }
-.estado__datos dt {
-  font-size: var(--t-xs);
+.estado__datos > div::before {
+  content: attr(data-corto) / '';
+  font-size: 0.72rem;
   color: var(--sobre-oscuro-suave);
+}
+.estado__datos dt {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 .estado__datos dd {
   margin: 0;
-  font-size: var(--t-sm);
-  font-weight: 600;
+  font-family: var(--fuente-mono);
+  font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .estado__avisos:empty {
   display: none;

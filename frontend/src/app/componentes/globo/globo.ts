@@ -18,13 +18,24 @@ import { Clave } from '../../i18n/es';
 import { EventoMapa } from '../../modelos/api';
 import { FiltrosStore } from '../../nucleo/filtros.store';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
-import { INTERVALOS_PROFUNDIDAD, radioPorMagnitud } from '../../puro/escalas';
+import { PanelUiStore } from '../../nucleo/panel-ui.store';
+import { TemaService } from '../../nucleo/tema.service';
+import { INTERVALOS_PROFUNDIDAD } from '../../puro/escalas';
+import {
+  PALETAS_MUNDO,
+  PaletaMundo,
+  altitudDesdeZoom,
+  altitudParaAncho,
+  normalizarLng,
+  zoomDesdeAltitud,
+} from '../../puro/mundo';
 import { formatearInstanteUtc, formatearMagnitud } from '../../puro/formato';
 import {
   AnilloGlobo,
   PaisGlobo,
   PuntoGlobo,
   SerieEscena,
+  alturaColumna,
   anillosGlobo,
   barrasEscena,
   colorAnillo,
@@ -38,23 +49,26 @@ import {
 import { cifrasComparacion } from '../../puro/texto-comparacion';
 import { GraficoBarras } from '../grafico-barras/grafico-barras';
 import type { CapaColumnas } from './mallas';
+import { precargarGlobo, soportaWebgl, texturaTierra } from './precarga';
 
 export const GLOBO_HABILITADO = new InjectionToken<boolean>('GLOBO_HABILITADO', {
   providedIn: 'root',
   factory: () => typeof navigator === 'undefined' || !/jsdom/i.test(navigator.userAgent),
 });
 
-const URL_FRONTERAS = 'datos/paises-globo.geojson';
 const PIXEL_RATIO_MAX = 1.5;
-const COLOR_OCEANO = '#10283d';
-const COLOR_TIERRA = 'rgba(58, 84, 78, 0.95)';
-const COLOR_FRONTERA = '#7d9a92';
-const COLOR_FONDO = '#070B12';
-const COLOR_ATMOSFERA = '#8B7CFF';
+/** Altitud mínima al abrir: aunque el plano estuviera muy cerca, el globo se reconoce como globo. */
+const ALTITUD_APERTURA_MIN = 0.9;
+/** Altura en px de la columna M7 en la leyenda. */
+const LEYENDA_ALTO_PX = 34;
 const SERIES: readonly { id: SerieEscena; clave: Clave; titulo: Clave }[] = [
   { id: 'hora', clave: 'escena.serie_hora', titulo: 'recuentos.hora_titulo' },
   { id: 'magnitud', clave: 'escena.serie_magnitud', titulo: 'distribuciones.grafico_magnitud' },
-  { id: 'profundidad', clave: 'escena.serie_profundidad', titulo: 'distribuciones.grafico_profundidad' },
+  {
+    id: 'profundidad',
+    clave: 'escena.serie_profundidad',
+    titulo: 'distribuciones.grafico_profundidad',
+  },
 ];
 
 @Component({
@@ -67,6 +81,9 @@ const SERIES: readonly { id: SerieEscena; clave: Clave; titulo: Clave }[] = [
 export class Globo {
   private readonly datos = inject(PanelDatosService);
   private readonly store = inject(FiltrosStore);
+  private readonly ui = inject(PanelUiStore);
+  private readonly temas = inject(TemaService);
+  private readonly paleta = computed<PaletaMundo>(() => PALETAS_MUNDO[this.temas.tema()]);
   protected readonly i18n = inject(I18nService);
   private readonly habilitado = inject(GLOBO_HABILITADO);
   private readonly destroyRef = inject(DestroyRef);
@@ -83,11 +100,11 @@ export class Globo {
   protected readonly posCinta = signal(1000);
   protected readonly series = SERIES;
   protected readonly intervalos = INTERVALOS_PROFUNDIDAD;
-  protected readonly radiosLeyenda = [
-    { etiqueta: 'M 2', radio: radioPorMagnitud(2) },
-    { etiqueta: 'M 5', radio: radioPorMagnitud(5) },
-    { etiqueta: 'M 7', radio: radioPorMagnitud(7) },
-  ];
+  /** La leyenda enseña lo que se dibuja: columnas, con la misma proporción que en el globo. */
+  protected readonly columnasLeyenda = [2, 5, 7].map((m) => ({
+    etiqueta: `M${m}`,
+    alto: Math.round((alturaColumna(m) / alturaColumna(7)) * LEYENDA_ALTO_PX),
+  }));
 
   protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');
   protected readonly cifras = computed(() => {
@@ -95,13 +112,15 @@ export class Globo {
     return d ? cifrasComparacion(d, this.i18n.t()) : null;
   });
 
-  private readonly crudos = computed(() => this.datos.mapa().datos?.features ?? []);
-  private readonly corte = computed(() =>
+  protected readonly crudos = computed(() => this.datos.mapa().datos?.features ?? []);
+  protected readonly corte = computed(() =>
     instanteCinta(this.posCinta() / 1000, Date.now(), this.crudos()),
   );
   protected readonly visibles = computed(() => recortarPorHora(this.crudos(), this.corte()));
   protected readonly marcas = computed(() => marcasCinta(this.crudos(), Date.now()));
-  protected readonly etiquetaCorte = computed(() => formatearInstanteUtc(this.corte(), this.i18n.t()));
+  protected readonly etiquetaCorte = computed(() =>
+    formatearInstanteUtc(this.corte(), this.i18n.t()),
+  );
   protected readonly barras = computed(() =>
     barrasEscena(this.visibles(), this.serie(), Date.parse(this.corte()), this.i18n.t()),
   );
@@ -116,11 +135,11 @@ export class Globo {
   private observador: ResizeObserver | null = null;
   private visibilidad: IntersectionObserver | null = null;
   private enPantalla = true;
-  private urlTextura: string | null = null;
   private destruido = false;
 
   constructor() {
-    afterNextRender(() => void this.iniciar());
+    // Pase lo que pase (también sin WebGL), el panel espera a este aviso para revelar la escena.
+    afterNextRender(() => void this.iniciar().finally(() => this.ui.avisarGloboListo()));
 
     effect(() => {
       const visibles = this.visibles();
@@ -140,7 +159,16 @@ export class Globo {
       untracked(() => this.globo?.pointLabel((p: object) => this.etiquetaPunto(p as PuntoGlobo)));
     });
 
+    // Cambio de tema: fondo, atmósfera, textura y pulsos; la cámara y los datos no se tocan.
+    effect(() => {
+      const p = this.paleta();
+      if (this.estado() !== 'listo') return;
+      untracked(() => this.aplicarPaleta(p));
+    });
+
+    this.ui.capturarVista = () => this.guardarVista();
     this.destroyRef.onDestroy(() => {
+      if (this.ui.capturarVista) this.ui.capturarVista = null;
       this.destruido = true;
       this.observador?.disconnect();
       this.visibilidad?.disconnect();
@@ -149,7 +177,6 @@ export class Globo {
       this.globo?._destructor();
       this.globo = null;
       this.capa = null;
-      if (this.urlTextura) URL.revokeObjectURL(this.urlTextura);
     });
   }
 
@@ -166,14 +193,20 @@ export class Globo {
       return;
     }
     try {
-      const [{ default: Globe }, mallas] = await Promise.all([import('globe.gl'), import('./mallas')]);
+      // Normalmente ya está precargado (módulos, fronteras y textura del tema): no se espera nada.
+      const { Globe, mallas, paises } = await precargarGlobo();
+      const p0 = this.paleta();
+      const textura = paises.length ? await texturaTierra(paises, p0) : null;
       if (this.destruido) return;
       this.mallas = mallas;
-      const globo = new Globe(el, { animateIn: !this.movimientoReducido })
-        .backgroundColor(COLOR_FONDO)
-        .showAtmosphere(true)
-        .atmosphereColor(COLOR_ATMOSFERA)
-        .atmosphereAltitude(0.18)
+      this.paises = paises;
+      // Sin animación de entrada propia: la hace la transición de vista desde el plano.
+      const globo = new Globe(el, { animateIn: false })
+        .backgroundColor(p0.fondo)
+        .globeImageUrl(textura ?? '')
+        .showAtmosphere(p0.atmosfera !== null)
+        .atmosphereColor(p0.atmosfera ?? p0.fondo)
+        .atmosphereAltitude(0.12)
         .showGraticules(true)
         .pointLat('lat')
         .pointLng('lng')
@@ -192,9 +225,10 @@ export class Globo {
         .ringRepeatPeriod('periodo')
         .ringAltitude(0.003)
         .ringResolution(32)
-        .polygonCapColor(() => 'rgba(91, 77, 255, 0.32)')
-        .polygonSideColor(() => 'rgba(139, 124, 255, 0.12)')
-        .polygonStrokeColor(() => '#F2F0FF')
+        // País pulsado (011): realce neutro de tinta según el tema; el rojo queda para la selección.
+        .polygonCapColor(() => this.paleta().paisRelleno)
+        .polygonSideColor(() => this.paleta().paisLado)
+        .polygonStrokeColor(() => this.paleta().paisBorde)
         .polygonAltitude(0.006)
         .polygonsTransitionDuration(0)
         .htmlLat('lat')
@@ -202,12 +236,25 @@ export class Globo {
         .htmlAltitude('alt')
         .htmlElement((d: object) => this.nodoMagnitud(d as { texto: string }))
         .htmlTransitionDuration(0)
-        .onGlobeClick((c: { lat: number; lng: number }, ev: MouseEvent) => this.alClicGlobo(c, ev))
-        .pointOfView({ lat: 20, lng: -40, altitude: 2.4 });
+        .onGlobeClick((c: { lat: number; lng: number }, ev: MouseEvent) => this.alClicGlobo(c, ev));
+
+      // Arranca mirando lo que miraba el plano y se asienta con un ligero alejamiento.
+      const v = this.ui.vistaMundo;
+      const altitud = Math.max(
+        v.zoom === null ? altitudDesdeZoom(2) : altitudDesdeZoom(v.zoom),
+        ALTITUD_APERTURA_MIN,
+        altitudParaAncho(el.clientWidth, el.clientHeight),
+      );
+      const destino = { lat: v.lat, lng: normalizarLng(v.lng), altitude: altitud };
+      if (this.movimientoReducido) globo.pointOfView(destino);
+      else {
+        globo.pointOfView({ ...destino, altitude: altitud * 0.82 });
+        globo.pointOfView(destino, 1100);
+      }
 
       globo.renderer().setPixelRatio(Math.min(devicePixelRatio || 1, PIXEL_RATIO_MAX));
       const material = globo.globeMaterial() as unknown as { color?: { set(c: string): void } };
-      material.color?.set(COLOR_OCEANO);
+      material.color?.set(textura ? '#ffffff' : p0.oceano);
 
       const controles = globo.controls() as unknown as {
         autoRotate: boolean;
@@ -215,11 +262,14 @@ export class Globo {
         addEventListener(tipo: string, fn: () => void): void;
       };
       controles.autoRotate = !this.movimientoReducido;
-      controles.autoRotateSpeed = 0.35;
+      controles.autoRotateSpeed = 0.25;
       controles.addEventListener('start', () => (controles.autoRotate = false));
+      // El plano retoma el centro y el zoom que tenga la cámara al volver.
+      controles.addEventListener('end', () => this.guardarVista());
 
       this.globo = globo;
       this.capa = mallas.crearCapaColumnas(globo);
+      mallas.aplicarTemaMallas(this.capa, temaMallas(p0));
       this.ajustarTamano(el);
       this.observador = new ResizeObserver(() => this.ajustarTamano(el));
       this.observador.observe(el);
@@ -230,30 +280,51 @@ export class Globo {
       this.visibilidad.observe(el);
       document.addEventListener('visibilitychange', this.alCambiarPestana);
       this.estado.set('listo');
-      void this.cargarFronteras(globo);
+      // Columnas y pulsos ya puestos antes de avisar: el efecto de `visibles` llegaría un ciclo tarde.
+      this.pintar(this.visibles());
+      if (textura) await this.esperarTextura(globo);
     } catch (e) {
-      console.error(`service=panel result=error bloque=globo motivo="no se pudo iniciar" detalle="${String(e)}"`);
+      console.error(
+        `service=panel result=error bloque=globo motivo="no se pudo iniciar" detalle="${String(e)}"`,
+      );
       this.estado.set('sin-webgl');
     }
   }
 
-  private async cargarFronteras(globo: GlobeInstance): Promise<void> {
-    try {
-      const r = await fetch(URL_FRONTERAS);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const geo = (await r.json()) as { features: PaisGlobo[] };
-      this.paises = geo.features;
-      const url = await texturaTierra(geo.features);
-      if (this.globo !== globo) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      this.urlTextura = url;
-      globo.globeImageUrl(url);
-      (globo.globeMaterial() as unknown as { color?: { set(c: string): void } }).color?.set('#ffffff');
-    } catch (e) {
-      console.warn(`service=panel result=error bloque=globo-fronteras motivo="no se pudo cargar" detalle="${String(e)}"`);
+  /** La textura se aplica al terminar de cargarse (three.js la pone en `map`): se espera sin depender del bucle de dibujo. */
+  private async esperarTextura(globo: GlobeInstance): Promise<void> {
+    const material = globo.globeMaterial() as unknown as { map?: { image?: unknown } | null };
+    const limite = performance.now() + 1500;
+    while (!material.map?.image && performance.now() < limite && !this.destruido) {
+      await new Promise((ok) => setTimeout(ok, 16));
     }
+  }
+
+  /** Textura de la Tierra con la paleta del tema (cacheada: cambiar de tema no la vuelve a dibujar). */
+  private aplicarTextura(globo: GlobeInstance, p: PaletaMundo): void {
+    const material = globo.globeMaterial() as unknown as { color?: { set(c: string): void } };
+    if (!this.paises.length) {
+      material.color?.set(p.oceano);
+      return;
+    }
+    void texturaTierra(this.paises, p).then((url) => {
+      if (!url || this.globo !== globo || this.paleta() !== p) return;
+      globo.globeImageUrl(url);
+      material.color?.set('#ffffff');
+    });
+  }
+
+  private aplicarPaleta(p: PaletaMundo): void {
+    const globo = this.globo;
+    if (!globo) return;
+    globo
+      .backgroundColor(p.fondo)
+      .showAtmosphere(p.atmosfera !== null)
+      .atmosphereColor(p.atmosfera ?? p.fondo);
+    if (this.capa && this.mallas) this.mallas.aplicarTemaMallas(this.capa, temaMallas(p));
+    this.aplicarTextura(globo, p);
+    globo.polygonsData([...globo.polygonsData()]);
+    this.pintar(this.visibles());
   }
 
   private pintar(features: readonly EventoMapa[]): void {
@@ -261,9 +332,19 @@ export class Globo {
     const puntos = puntosGlobo(features);
     this.globo
       .pointsData(puntos)
-      .ringsData(anillosGlobo(features, { movimientoReducido: this.movimientoReducido }));
+      .ringsData(
+        anillosGlobo(features, {
+          movimientoReducido: this.movimientoReducido,
+          tema: this.temas.tema(),
+        }),
+      );
     if (this.capa && this.mallas) {
-      this.mallas.actualizarColumnas(this.capa, this.globo, puntos, this.store.eventoSeleccionado());
+      this.mallas.actualizarColumnas(
+        this.capa,
+        this.globo,
+        puntos,
+        this.store.eventoSeleccionado(),
+      );
     }
     this.pintarMagnitud(puntos);
   }
@@ -274,7 +355,14 @@ export class Globo {
     const p = id ? puntos.find((x) => x.id === id) : undefined;
     this.globo.htmlElementsData(
       p
-        ? [{ lat: p.lat, lng: p.lng, alt: p.altura + 0.02, texto: formatearMagnitud(p.props.magnitud, this.i18n.t()) }]
+        ? [
+            {
+              lat: p.lat,
+              lng: p.lng,
+              alt: p.altura + 0.02,
+              texto: formatearMagnitud(p.props.magnitud, this.i18n.t()),
+            },
+          ]
         : [],
     );
   }
@@ -318,7 +406,21 @@ export class Globo {
     const punto = puntos.find((p) => p.id === id);
     if (!punto) return;
     (globo.controls() as unknown as { autoRotate: boolean }).autoRotate = false;
-    globo.pointOfView({ lat: punto.lat, lng: punto.lng, altitude: 1.4 }, this.movimientoReducido ? 0 : 900);
+    globo.pointOfView(
+      { lat: punto.lat, lng: punto.lng, altitude: 1.4 },
+      this.movimientoReducido ? 0 : 900,
+    );
+  }
+
+  private guardarVista(): void {
+    if (!this.globo || this.estado() !== 'listo') return;
+    const pov = this.globo.pointOfView();
+    if (!Number.isFinite(pov.lat) || !Number.isFinite(pov.lng)) return;
+    this.ui.vistaMundo = {
+      lat: Math.max(-80, Math.min(80, pov.lat)),
+      lng: normalizarLng(pov.lng),
+      zoom: zoomDesdeAltitud(pov.altitude),
+    };
   }
 
   private readonly alCambiarPestana = (): void => this.actualizarAnimacion();
@@ -335,53 +437,8 @@ export class Globo {
   }
 }
 
-const ANCHO_TEXTURA = 4096;
-
-async function texturaTierra(features: readonly PaisGlobo[]): Promise<string> {
-  const lienzo = document.createElement('canvas');
-  lienzo.width = ANCHO_TEXTURA;
-  lienzo.height = ANCHO_TEXTURA / 2;
-  const ctx = lienzo.getContext('2d');
-  if (!ctx) throw new Error('sin contexto 2d');
-  const escala = ANCHO_TEXTURA / 360;
-  ctx.fillStyle = COLOR_OCEANO;
-  ctx.fillRect(0, 0, lienzo.width, lienzo.height);
-
-  const tierra = new Path2D();
-  for (const f of features) {
-    if (!f.geometry) continue;
-    const poligonos = (
-      f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates
-    ) as number[][][][];
-    for (const anillos of poligonos) {
-      for (const anillo of anillos) {
-        anillo.forEach(([lng, lat], k) => {
-          const x = (lng + 180) * escala;
-          const y = (90 - lat) * escala;
-          if (k === 0) tierra.moveTo(x, y);
-          else tierra.lineTo(x, y);
-        });
-        tierra.closePath();
-      }
-    }
-  }
-  ctx.fillStyle = COLOR_TIERRA;
-  ctx.fill(tierra, 'evenodd');
-  ctx.strokeStyle = COLOR_FRONTERA;
-  ctx.lineWidth = 1.5;
-  ctx.lineJoin = 'round';
-  ctx.stroke(tierra);
-
-  const blob = await new Promise<Blob | null>((ok) => lienzo.toBlob(ok, 'image/png'));
-  if (!blob) throw new Error('no se pudo codificar la textura');
-  return URL.createObjectURL(blob);
-}
-
-function soportaWebgl(): boolean {
-  try {
-    const c = document.createElement('canvas');
-    return !!(c.getContext('webgl2') ?? c.getContext('webgl'));
-  } catch {
-    return false;
-  }
+/** Aro, contorno de las columnas y luces según el fondo del tema. */
+function temaMallas(p: PaletaMundo): { aro: string; contorno: string; luz: number } {
+  const claro = p.atmosfera === null;
+  return { aro: p.seleccion, contorno: claro ? '#1a1a1a' : '#070b12', luz: claro ? 0.55 : 1 };
 }

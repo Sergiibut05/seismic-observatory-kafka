@@ -5,13 +5,14 @@
   min-height: 100vh;
 }
 
-/* Cabecera fija: marca + barra de estado (FR-008, siempre visible). */
+/* Cabecera fija (FR-008 de 006): la cabecera de una hoja de registro, con doble filete de tinta. */
 .cabecera {
   position: sticky;
   top: 0;
   z-index: 2000; /* por encima de los paneles de Leaflet (≤ 1000) */
   background: var(--oscuro);
   color: var(--sobre-oscuro);
+  border-bottom: 1px solid var(--linea);
 }
 .cabecera__interior {
   display: grid;
@@ -19,52 +20,63 @@
   align-items: center;
   max-width: var(--ancho-max);
   margin-inline: auto;
-  padding: 0.45rem var(--e-4);
+  padding: 0.5rem var(--e-4);
 }
 .cabecera__marca h1 {
-  font-size: var(--t-md);
-  letter-spacing: 0.01em;
+  font-family: var(--fuente-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
+/* 011: menos texto. El subtítulo de directo pasa al title de la marca; solo se ve en REPRODUCCIÓN. */
 .cabecera__marca p {
   font-size: var(--t-xs);
   color: var(--sobre-oscuro-suave);
 }
+.cabecera__marca p:not(.cabecera__replay) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
 
 /* En REPRODUCCIÓN la cabecera fija lo recuerda aunque la franja ya haya salido de la pantalla. */
 .cabecera__marca .cabecera__replay {
-  color: var(--foco-sobre-oscuro);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-/* Selector «ES / EN»: botones segmentados como «Plano / Globo 3D» del mapa, con los colores de la cabecera oscura. */
-.idioma {
-  display: inline-flex;
-  justify-self: start;
-  border: 1px solid var(--sobre-oscuro-suave);
-  border-radius: var(--radio);
-  overflow: hidden;
-}
-.idioma__boton {
-  padding: 2px var(--e-3);
-  border: 0;
-  background: transparent;
-  color: var(--sobre-oscuro);
-  font: inherit;
-  font-size: var(--t-sm);
-  cursor: pointer;
-}
-.idioma__boton + .idioma__boton {
-  border-left: 1px solid var(--sobre-oscuro-suave);
-}
-.idioma__boton[aria-pressed='true'] {
-  background: var(--sobre-oscuro);
-  color: var(--oscuro);
+  color: var(--atencion-texto);
   font-weight: 600;
 }
-.idioma__boton:focus-visible {
-  outline: 3px solid var(--foco-sobre-oscuro);
-  outline-offset: -3px;
+
+/* Idioma y tema (el aspecto del segmentado es global). */
+.cabecera__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  justify-self: end;
+}
+.tema-boton {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--segmento-pista);
+  color: var(--tinta);
+  cursor: pointer;
+}
+.tema-boton:hover {
+  background: var(--segmento-activo);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+.tema-boton svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.4s ease;
+}
+.tema-boton[aria-pressed='true'] svg {
+  transform: rotate(180deg);
 }
 
 .rejilla {
@@ -116,7 +128,7 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: rgb(7 11 18 / 0.72);
+  background: var(--velo);
   cursor: pointer;
 }
 
@@ -201,7 +213,7 @@
   .cabecera__marca p {
     display: none;
   }
-  .idioma {
+  .cabecera__acciones {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
@@ -257,7 +269,7 @@
   .cabecera__interior {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
-  .idioma {
+  .cabecera__acciones {
     align-self: start;
   }
   .rejilla:not(.rejilla--globo) {
@@ -265,8 +277,9 @@
     grid-template-areas:
       'filtros mapa mapa'
       'filtros tabla tabla'
-      'filtros comparacion recuentos'
-      'filtros distribuciones recuentos';
+      'filtros comparacion comparacion'
+      'filtros recuentos recuentos'
+      'filtros distribuciones distribuciones';
     align-items: start;
   }
   .rejilla:not(.rejilla--globo) .area-filtros {

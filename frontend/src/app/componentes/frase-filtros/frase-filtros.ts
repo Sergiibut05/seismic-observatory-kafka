@@ -25,6 +25,8 @@ export class FraseFiltros {
     return trozosFrase(this.store.vista(), this.store.aplicados(), this.i18n.t(), nombre);
   });
 
+  protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');
+
   protected abrir(trozo: TrozoFrase): void {
     this.ui.abrirFiltro(trozo.campo);
   }

@@ -25,16 +25,22 @@ import {
   leyendaRadio,
 } from '../../puro/escalas';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
+import { PALETAS_MUNDO, PaletaMundo, normalizarLng, zoomParaAncho } from '../../puro/mundo';
 import { PanelUiStore } from '../../nucleo/panel-ui.store';
+import { TemaService } from '../../nucleo/tema.service';
 import { Globo } from '../globo/globo';
+import { precalentarGlobo } from '../globo/precarga';
 import { crearFicha, crearResumen } from './mapa-ficha';
 
-const URL_TESELAS = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const atribucion = (colaboradores: string) =>
-  `© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">${colaboradores}</a>`;
+/**
+ * Sin teselas (011): el plano dibuja el mismo Natural Earth y la misma paleta que el globo,
+ * así los dos modos son el mismo mundo.
+ */
+const atribucion = (texto: string) =>
+  `<a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">${texto}</a>`;
 const URL_FRONTERAS = 'datos/paises.geojson';
-const COLOR_BORDE_CIRCULO = '#0f1a24'; // = --borde-circulo
-const COLOR_SELECCION = '#ffd166';
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 8;
 
 /**
  * jsdom no tiene canvas ni layout: allí Leaflet no se inicia (el dibujo se comprueba en
@@ -70,6 +76,9 @@ export class Mapa {
   private readonly destroyRef = inject(DestroyRef);
   private readonly habilitado = inject(MAPA_HABILITADO);
   protected readonly i18n = inject(I18nService);
+  private readonly temas = inject(TemaService);
+  /** Colores del mundo según el tema (011): misma paleta que el globo. */
+  private readonly paleta = computed<PaletaMundo>(() => PALETAS_MUNDO[this.temas.tema()]);
   private readonly contenedor = viewChild<ElementRef<HTMLElement>>('lienzo');
 
   protected readonly bloque = this.datos.mapa;
@@ -99,13 +108,17 @@ export class Mapa {
   /** La ficha vive dentro del panel de Leaflet (z-index 400): con ella abierta, la leyenda se aparta para no taparla. */
   protected readonly fichaVisible = signal(false);
 
-  protected readonly radiosLeyenda = leyendaRadio().filter((r) => ['2', '4', '6', '8'].includes(r.etiqueta));
+  protected readonly radiosLeyenda = leyendaRadio().filter((r) =>
+    ['2', '4', '6', '8'].includes(r.etiqueta),
+  );
   protected readonly intervalos = INTERVALOS_PROFUNDIDAD;
   protected readonly colorNd = COLOR_ND;
 
   private readonly listo = signal(false);
   private mapa: L.Map | null = null;
   private capa: L.FeatureGroup | null = null;
+  private paises: L.GeoJSON | null = null;
+  private reticula: L.Polyline | null = null;
   private popup: L.Popup | null = null;
   private controlZoom: L.Control.Zoom | null = null;
   /** Texto de atribución puesto en el control, para quitarlo exactamente al cambiar de idioma. */
@@ -142,7 +155,53 @@ export class Mapa {
       untracked(() => this.repintarTextos());
     });
 
-    this.destroyRef.onDestroy(() => this.destruir());
+    // Cambio de tema: se repintan países, retícula y contornos con los datos ya cargados.
+    effect(() => {
+      const p = this.paleta();
+      if (!this.listo()) return;
+      untracked(() => this.aplicarPaleta(p));
+    });
+
+    // Al volver del globo, el plano se centra donde miraba la cámara 3D.
+    let estabaEnGlobo = this.enGlobo();
+    effect(() => {
+      const enGlobo = this.enGlobo();
+      if (!this.listo()) return;
+      if (estabaEnGlobo && !enGlobo) untracked(() => this.irAVistaCompartida());
+      estabaEnGlobo = enGlobo;
+    });
+
+    // El globo se prepara en un momento de calma (módulos, fronteras y textura del tema), o al acercarse
+    // al botón, para que el cambio de vista no espere a nada. Y el plano se reencuadra de forma síncrona
+    // cuando el globo se cierra, antes de que se vea.
+    this.ui.precalentarGlobo = () => this.precalentarGlobo();
+    this.ui.prepararPlano = () => this.irAVistaCompartida();
+    this.destroyRef.onDestroy(() => {
+      this.ui.precalentarGlobo = null;
+      this.ui.prepararPlano = null;
+      this.destruir();
+    });
+  }
+
+  private precalentando: Promise<void> | null = null;
+
+  /** Idempotente: la primera llamada hace el trabajo y las demás reciben la misma promesa. */
+  protected precalentarGlobo(): Promise<void> {
+    if (!this.habilitado) return Promise.resolve();
+    this.precalentando ??= precalentarGlobo(this.paleta()).catch(() => {
+      this.precalentando = null;
+    });
+    return this.precalentando;
+  }
+
+  private precalentarEnCalma(): void {
+    const conexion = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    if (!this.habilitado || conexion?.saveData) return; // con ahorro de datos, solo al acercarse al botón
+    const ocioso = (
+      window as Window & { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => void }
+    ).requestIdleCallback;
+    if (ocioso) ocioso.call(window, () => void this.precalentarGlobo(), { timeout: 5000 });
+    else setTimeout(() => void this.precalentarGlobo(), 2000);
   }
 
   private iniciar(): void {
@@ -152,23 +211,37 @@ export class Mapa {
       const mapa = L.map(el, {
         preferCanvas: true,
         zoomControl: false,
-        worldCopyJump: true,
-        minZoom: 2,
-        center: [20, 0],
-        zoom: 2,
+        minZoom: ZOOM_MIN,
+        maxZoom: ZOOM_MAX,
+        zoomSnap: 0.5,
+        maxBounds: [
+          [-88, -220],
+          [88, 220],
+        ],
+        maxBoundsViscosity: 0.8,
+        center: [this.ui.vistaMundo.lat, this.ui.vistaMundo.lng],
+        zoom: this.ui.vistaMundo.zoom ?? zoomParaAncho(el.clientWidth),
       });
       this.controlZoom = L.control
-        .zoom({ zoomInTitle: this.i18n.tr('mapa.acercar'), zoomOutTitle: this.i18n.tr('mapa.alejar') })
+        .zoom({
+          position: 'bottomright',
+          zoomInTitle: this.i18n.tr('mapa.acercar'),
+          zoomOutTitle: this.i18n.tr('mapa.alejar'),
+        })
         .addTo(mapa);
       mapa.attributionControl.setPrefix(
         '<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>',
       );
-      // La atribución se pone en el control (no en la capa) para poder cambiarla de idioma.
-      L.tileLayer(URL_TESELAS, { maxZoom: 19 }).addTo(mapa);
       this.ponerAtribucion(mapa);
 
-      // Fronteras bajo los círculos: panel propio con su lienzo, sin depender del orden de carga.
+      // Tierra y retícula bajo los círculos: panel propio con su lienzo, sin depender del orden de carga.
       mapa.createPane('fronteras').style.zIndex = '350';
+      this.dibujarReticula(mapa);
+      mapa.on('moveend', () => {
+        if (this.enGlobo()) return;
+        const c = mapa.getCenter();
+        this.ui.vistaMundo = { lat: c.lat, lng: normalizarLng(c.lng), zoom: mapa.getZoom() };
+      });
       this.capa = L.featureGroup().addTo(mapa);
       this.popup = L.popup({
         minWidth: 240,
@@ -194,8 +267,11 @@ export class Mapa {
       this.reajustar();
       void this.cargarFronteras(mapa);
       this.listo.set(true);
+      this.precalentarEnCalma();
     } catch (e) {
-      console.error(`service=panel result=error bloque=mapa motivo="no se pudo iniciar Leaflet" detalle="${String(e)}"`);
+      console.error(
+        `service=panel result=error bloque=mapa motivo="no se pudo iniciar Leaflet" detalle="${String(e)}"`,
+      );
       this.mapaDisponible.set(false);
     }
   }
@@ -203,8 +279,54 @@ export class Mapa {
   private ponerAtribucion(mapa: L.Map): void {
     const control = mapa.attributionControl;
     if (this.atribucionPuesta !== null) control.removeAttribution(this.atribucionPuesta);
-    this.atribucionPuesta = atribucion(this.i18n.tr('mapa.osm'));
+    this.atribucionPuesta = atribucion(this.i18n.tr('mapa.fuente_fronteras'));
     control.addAttribution(this.atribucionPuesta);
+  }
+
+  /** Meridianos y paralelos cada 30°, como la retícula del globo. */
+  private dibujarReticula(mapa: L.Map): void {
+    const renderer = L.canvas({ pane: 'fronteras' });
+    const estilo: L.PolylineOptions = {
+      pane: 'fronteras',
+      renderer,
+      interactive: false,
+      color: this.paleta().reticula,
+      weight: 1,
+    };
+    const lineas: L.LatLngExpression[][] = [];
+    for (let lng = -180; lng <= 180; lng += 30)
+      lineas.push([
+        [-85, lng],
+        [85, lng],
+      ]);
+    for (let lat = -60; lat <= 60; lat += 30)
+      lineas.push([
+        [lat, -180],
+        [lat, 180],
+      ]);
+    this.reticula = L.polyline(lineas, estilo).addTo(mapa);
+  }
+
+  private estiloPaises(p: PaletaMundo): L.PathOptions {
+    return { color: p.frontera, weight: 0.7, fill: true, fillColor: p.tierra, fillOpacity: 1 };
+  }
+
+  private aplicarPaleta(p: PaletaMundo): void {
+    this.paises?.setStyle(this.estiloPaises(p));
+    this.reticula?.setStyle({ color: p.reticula });
+    const seleccion = this.store.eventoSeleccionado();
+    for (const [id, d] of this.dibujados)
+      d.marcador.setStyle(this.estiloDe(d.evento, id === seleccion));
+  }
+
+  private irAVistaCompartida(): void {
+    const mapa = this.mapa;
+    if (!mapa) return;
+    const v = this.ui.vistaMundo;
+    // El contenedor cambia de tamaño al salir de la escena: se recalcula antes de centrar.
+    mapa.invalidateSize({ pan: false });
+    const zoom = v.zoom ?? zoomParaAncho(mapa.getContainer().clientWidth);
+    mapa.setView([v.lat, v.lng], Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom)), { animate: false });
   }
 
   private rotularCierre(popup: HTMLElement | undefined): void {
@@ -258,11 +380,13 @@ export class Mapa {
         pane: 'fronteras',
         renderer: L.canvas({ pane: 'fronteras' }),
         interactive: false,
-        style: { color: '#5b6b78', weight: 0.8, fill: true, fillColor: '#f6f4ee', fillOpacity: 0.35 },
+        style: this.estiloPaises(this.paleta()),
       };
-      L.geoJSON(geo, opciones).addTo(mapa);
+      this.paises = L.geoJSON(geo, opciones).addTo(mapa);
     } catch (e) {
-      console.warn(`service=panel result=error bloque=fronteras motivo="no se pudo cargar" detalle="${String(e)}"`);
+      console.warn(
+        `service=panel result=error bloque=fronteras motivo="no se pudo cargar" detalle="${String(e)}"`,
+      );
       if (!this.destruido) this.errorFronteras.set(true);
     }
   }
@@ -282,8 +406,9 @@ export class Mapa {
       radius: est.radio,
       fillColor: est.color,
       fillOpacity: 0.85,
-      color: seleccionado ? COLOR_SELECCION : COLOR_BORDE_CIRCULO,
-      weight: seleccionado ? 4 : contorno.grosor,
+      color: seleccionado ? this.paleta().seleccion : this.paleta().bordeCirculo,
+      opacity: seleccionado ? 1 : this.paleta().opacidadBorde,
+      weight: seleccionado ? 3 : contorno.grosor,
       dashArray: seleccionado ? undefined : contorno.discontinuo,
     };
   }
@@ -388,6 +513,8 @@ export class Mapa {
     this.mapa?.remove();
     this.mapa = null;
     this.capa = null;
+    this.paises = null;
+    this.reticula = null;
     this.popup = null;
     this.controlZoom = null;
   }

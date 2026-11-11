@@ -4,20 +4,26 @@
     <span class="bloque__nota">{{ i18n.tr('bloque.estado_actual') }}</span>
   </div>
 
-  <div class="bloque__cuerpo recuentos">
-    <section class="recuentos__parte" aria-labelledby="titulo-recuentos-grupo">
-      <div class="recuentos__cab">
+  <div class="bloque__cuerpo partes">
+    <section class="parte" aria-labelledby="titulo-recuentos-grupo">
+      <div class="parte__cab">
         <h3 id="titulo-recuentos-grupo">{{ rotuloGrupo() }}</h3>
-        <div class="campo recuentos__selector">
-          <label for="agrupacion-recuentos">{{ i18n.tr('recuentos.agrupar') }}</label>
-          <select
-            id="agrupacion-recuentos"
-            [value]="agrupacion()"
-            (change)="cambiarAgrupacion($any($event.target).value)"
-          >
-            <option value="pais">{{ i18n.tr('filtros.pais') }}</option>
-            <option value="subregion">{{ i18n.tr('filtros.subregion') }}</option>
-          </select>
+        <div
+          class="recuentos__agrupar"
+          role="group"
+          [attr.aria-label]="i18n.tr('recuentos.agrupar')"
+        >
+          @for (o of agrupaciones; track o.valor) {
+            <button
+              type="button"
+              class="recuentos__agrupar-boton"
+              [attr.data-agrupacion]="o.valor"
+              [attr.aria-pressed]="agrupacion() === o.valor"
+              (click)="cambiarAgrupacion(o.valor)"
+            >
+              {{ i18n.tr(o.clave) }}
+            </button>
+          }
         </div>
       </div>
 
@@ -26,19 +32,35 @@
         @if (categorias().length === 0) {
           <p class="bloque__vacio">{{ i18n.tr('bloque.sin_eventos') }}</p>
         } @else {
-          <p class="recuentos__total">
-            {{ i18n.tr('recuentos.total') }} <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
-          </p>
+          <dl class="datos-clave">
+            <div>
+              <dt>{{ i18n.tr('recuentos.total') }}</dt>
+              <dd>
+                <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ i18n.tr('recuentos.repartidos') }}</dt>
+              <dd>
+                <strong>{{ i18n.entero(asignadas()) }}</strong>
+                {{
+                  i18n.tr(
+                    agrupacion() === 'pais' ? 'recuentos.n_paises' : 'recuentos.n_subregiones'
+                  )
+                }}
+              </dd>
+            </div>
+          </dl>
           <app-grafico-barras
             [titulo]="rotuloGrupo()"
             [datos]="barrasGrupo()"
             [filasTabla]="hayResto() ? categorias() : null"
             orientacion="horizontal"
+            [cuota]="true"
             [unidad]="i18n.tr('grafico.eventos')"
-            [ejeTitulo]="i18n.tr('recuentos.eje_eventos')"
           />
           @if (hayResto()) {
-            <p class="bloque__nota">
+            <p class="parte__nota">
               {{ i18n.tr('recuentos.resto_nota', { n: maxBarras }) }}
             </p>
           }
@@ -46,8 +68,8 @@
       }
     </section>
 
-    <section class="recuentos__parte" aria-labelledby="titulo-recuentos-hora">
-      <div class="recuentos__cab">
+    <section class="parte" aria-labelledby="titulo-recuentos-hora">
+      <div class="parte__cab">
         <h3 id="titulo-recuentos-hora">{{ i18n.tr('recuentos.hora_titulo') }}</h3>
       </div>
 
@@ -61,23 +83,49 @@
         @if (ventanas().length === 0) {
           <p class="bloque__vacio">{{ i18n.tr('recuentos.sin_ventanas') }}</p>
         } @else {
-          @if (horaSinFechas()) {
-            <p class="bloque__nota">
-              {{ i18n.tr(enReproduccion() ? 'recuentos.hora_sin_fechas_replay' : 'recuentos.hora_sin_fechas') }}
-            </p>
-          }
-          <p class="recuentos__total">
-            {{ i18n.tr('recuentos.ventanas', { n: ventanas().length, ceros: ceros() }) }}
-            {{ i18n.tr('recuentos.total') }}
-            <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
-          </p>
+          <dl class="datos-clave">
+            <div>
+              <dt>{{ i18n.tr('recuentos.total') }}</dt>
+              <dd>
+                <strong>{{ i18n.entero(d.total) }}</strong> {{ i18n.tr('recuentos.eventos') }}
+              </dd>
+            </div>
+            @if (pico(); as p) {
+              <div>
+                <dt>{{ i18n.tr('recuentos.pico') }}</dt>
+                <dd>
+                  <strong>{{ p.hora }}</strong> UTC · {{ p.valor }}
+                </dd>
+              </div>
+            }
+            <div>
+              <dt>{{ i18n.tr('recuentos.media_hora') }}</dt>
+              <dd>
+                <strong>{{ mediaHoraTexto() }}</strong>
+              </dd>
+            </div>
+          </dl>
           <app-grafico-barras
             [titulo]="i18n.tr('recuentos.hora_titulo')"
             [datos]="ventanas()"
             orientacion="vertical"
+            [alto]="208"
+            [referencia]="referenciaHora()"
             [unidad]="i18n.tr('grafico.eventos')"
             [ejeTitulo]="i18n.tr('recuentos.eje_hora')"
           />
+          <p class="parte__nota">
+            {{ i18n.tr('recuentos.ventanas', { n: ventanas().length, ceros: ceros() }) }}
+            @if (horaSinFechas()) {
+              {{
+                i18n.tr(
+                  enReproduccion()
+                    ? 'recuentos.hora_sin_fechas_replay'
+                    : 'recuentos.hora_sin_fechas'
+                )
+              }}
+            }
+          </p>
         }
       }
     </section>
