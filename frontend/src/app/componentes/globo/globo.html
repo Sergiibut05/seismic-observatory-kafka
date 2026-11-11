@@ -21,15 +21,82 @@
   }
 
   @if (estado() === 'listo') {
-    <div class="globo__leyenda">
-      <p>
-        @if (movimientoReducido) {
-          {{ i18n.tr('globo.leyenda_reducido') }}
-        } @else {
-          {{ i18n.tr('globo.leyenda_pulsos', { n: anillosMax }) }}
+    <div class="globo__leyenda" aria-hidden="true">
+      <ul class="globo__radios">
+        @for (r of radiosLeyenda; track r.etiqueta) {
+          <li>
+            <span class="globo__circulo" [style.width.px]="r.radio * 2" [style.height.px]="r.radio * 2"></span>
+            <span>{{ r.etiqueta }}</span>
+          </li>
         }
+      </ul>
+      <ul class="globo__escala" [attr.aria-label]="i18n.tr('mapa.leyenda_escala_aria')">
+        @for (i of intervalos; track i.etiqueta) {
+          <li>
+            <span class="globo__tramo" [style.background]="i.color"></span>
+          </li>
+        }
+      </ul>
+      <p class="globo__extremos">
+        <span>{{ i18n.tr('mapa.superficie') }}</span>
+        <span>{{ i18n.tr('mapa.mas_profundo') }}</span>
       </p>
-      <p class="globo__pista">{{ i18n.tr('globo.pista') }}</p>
+    </div>
+
+    <div class="globo__cifra">
+      @if (esReplay()) {
+        <p class="globo__cifra-valor">{{ i18n.tr('vista.replay') }}</p>
+      } @else if (cifras(); as c) {
+        <p class="globo__cifra-valor">{{ i18n.tr('escena.cifra_vs', { hoy: c.ultimas24h, media: c.mediaDiaria2025 }) }}</p>
+        <p class="globo__cifra-rotulo">{{ i18n.tr('escena.cifra_rotulo') }}</p>
+        <p class="globo__cifra-aviso">{{ i18n.tr('escena.cifra_aviso') }}</p>
+      }
+    </div>
+
+    <details class="globo__grafica" [open]="graficaAbierta">
+      <summary>{{ i18n.tr('escena.grafica') }}</summary>
+      <div class="globo__series" role="group">
+        @for (s of series; track s.id) {
+          <button
+            type="button"
+            class="globo__serie"
+            [attr.aria-pressed]="serie() === s.id"
+            (click)="serie.set(s.id)"
+          >
+            {{ i18n.tr(s.clave) }}
+          </button>
+        }
+      </div>
+      <app-grafico-barras
+        [titulo]="i18n.tr(tituloSerie())"
+        [datos]="barras()"
+        orientacion="vertical"
+        [unidad]="i18n.tr('grafico.eventos')"
+      />
+    </details>
+
+    <div class="globo__cinta">
+      <label class="globo__cinta-etiqueta" [attr.for]="'cinta-pos'">
+        {{ i18n.tr('cinta.etiqueta') }}
+        <span>{{ etiquetaCorte() }}</span>
+      </label>
+      <div class="globo__cinta-pista">
+        <div class="globo__cinta-marcas" aria-hidden="true">
+          @for (m of marcas(); track m.id) {
+            <span class="globo__cinta-marca" [style.left.%]="m.t * 100"></span>
+          }
+        </div>
+        <input
+          id="cinta-pos"
+          class="globo__cinta-rango"
+          type="range"
+          min="0"
+          max="1000"
+          [value]="posCinta()"
+          [attr.aria-label]="i18n.tr('cinta.aria')"
+          (input)="moverCinta($event)"
+        />
+      </div>
     </div>
   }
 </div>

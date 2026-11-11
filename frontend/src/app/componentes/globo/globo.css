@@ -1,11 +1,10 @@
-/* Sin encapsulación: la etiqueta flotante la inserta globe.gl. Todo cuelga de .globo o .globo-etiqueta. */
+/* Sin encapsulación: etiqueta flotante y magnitud las inserta globe.gl. */
 .globo {
   position: absolute;
   inset: 0;
-  z-index: 1001; /* por encima de Leaflet y de sus controles (1000), que siguen vivos debajo */
+  z-index: 1001;
   overflow: hidden;
-  background: #0d1b2a;
-  border-radius: var(--radio);
+  background: var(--escena-fondo);
 }
 .globo__lienzo {
   position: absolute;
@@ -24,50 +23,195 @@
   max-width: 22rem;
   margin: 0;
   padding: var(--e-2) var(--e-3);
-  border-radius: var(--radio);
-  background: rgb(255 255 255 / 0.92);
-  color: var(--tinta);
+  border: 1px solid var(--escena-violeta-bajo);
+  background: var(--escena-fondo);
+  color: var(--escena-tinta);
   text-align: center;
 }
 .globo__estado--aviso {
-  border: 1px solid var(--atencion-borde);
-  background: var(--atencion-fondo);
+  border-color: var(--atencion-borde);
   color: var(--atencion-texto);
+  background: var(--atencion-fondo);
 }
 
 .globo__leyenda {
   position: absolute;
   left: var(--e-2);
-  bottom: var(--e-2);
-  max-width: 17rem;
-  padding: var(--e-2) var(--e-3);
-  border: 1px solid rgb(143 188 212 / 0.35);
-  border-radius: var(--radio);
-  background: rgb(13 27 42 / 0.78);
-  color: #e6eef3;
+  bottom: 4.25rem;
+  z-index: 4;
+  width: 13.5rem;
+  max-width: calc(100% - 2rem);
+  padding: var(--e-2);
+  border: 1px solid rgb(139 124 255 / 0.35);
+  background: rgb(7 11 18 / 0.82);
+  color: var(--escena-tinta);
   font-size: var(--t-xs);
-  line-height: 1.4;
   pointer-events: none;
 }
-.globo__leyenda p {
+.globo__radios,
+.globo__escala {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--e-3);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.globo__pista {
-  margin-top: var(--e-1) !important;
-  color: #a9bccb;
+.globo__radios li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.globo__circulo {
+  display: inline-block;
+  border: 1px solid var(--escena-tinta);
+  border-radius: 50%;
+  background: rgb(232 238 243 / 0.15);
+}
+.globo__escala {
+  gap: 0;
+  margin-top: var(--e-2);
+}
+.globo__escala li {
+  flex: 1 1 0;
+}
+.globo__tramo {
+  display: block;
+  height: 0.45rem;
+}
+.globo__extremos {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0 0;
+  color: var(--escena-tinta-suave);
+  font-size: 0.65rem;
 }
 
-/* Etiqueta al pasar el ratón (HTML de etiquetaGlobo, ya escapado). */
+.globo__cifra {
+  position: absolute;
+  right: var(--e-2);
+  bottom: 4.25rem;
+  z-index: 4;
+  max-width: 11rem;
+  padding: var(--e-2);
+  border: 1px solid rgb(139 124 255 / 0.35);
+  background: rgb(7 11 18 / 0.82);
+  color: var(--escena-tinta);
+  pointer-events: none;
+}
+.globo__cifra-valor {
+  margin: 0;
+  max-width: none;
+  color: var(--escena-violeta-alto);
+  font-size: var(--t-lg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1.15;
+}
+.globo__cifra-rotulo,
+.globo__cifra-aviso {
+  margin: 2px 0 0;
+  max-width: none;
+  color: var(--escena-tinta-suave);
+  font-size: 0.7rem;
+}
+
+.globo__grafica {
+  position: absolute;
+  left: var(--e-2);
+  top: 3.25rem;
+  z-index: 4;
+  width: min(22rem, calc(100% - 2rem));
+  padding: var(--e-2);
+  border: 1px solid rgb(139 124 255 / 0.35);
+  background: rgb(7 11 18 / 0.88);
+  color: var(--escena-tinta);
+  --tinta: var(--escena-tinta);
+  --tinta-suave: var(--escena-tinta-suave);
+  --linea: rgb(139 124 255 / 0.35);
+  --linea-fuerte: rgb(139 124 255 / 0.5);
+  --barra: var(--escena-violeta);
+  --superficie: transparent;
+}
+.globo__grafica .grafico__svg {
+  max-height: 9rem;
+}
+.globo__grafica summary {
+  cursor: pointer;
+  font-size: var(--t-xs);
+  font-weight: 650;
+}
+.globo__series {
+  display: flex;
+  margin: var(--e-2) 0;
+  border: 1px solid rgb(139 124 255 / 0.4);
+  overflow: hidden;
+}
+.globo__serie {
+  flex: 1;
+  padding: 2px var(--e-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+.globo__serie[aria-pressed='true'] {
+  background: var(--escena-violeta);
+  color: #fff;
+}
+
+.globo__cinta {
+  position: absolute;
+  right: var(--e-2);
+  bottom: var(--e-2);
+  left: var(--e-2);
+  z-index: 4;
+  padding: var(--e-1) var(--e-2) var(--e-2);
+  border: 1px solid rgb(139 124 255 / 0.35);
+  background: rgb(7 11 18 / 0.82);
+  color: var(--escena-tinta);
+}
+.globo__cinta-etiqueta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--escena-tinta-suave);
+}
+.globo__cinta-pista {
+  position: relative;
+  margin-top: 2px;
+}
+.globo__cinta-marcas {
+  position: absolute;
+  inset: 0.35rem 0.4rem auto;
+  height: 0.55rem;
+  pointer-events: none;
+}
+.globo__cinta-marca {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--escena-violeta-bajo);
+}
+.globo__cinta-rango {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--escena-violeta);
+}
+
 .globo-etiqueta {
   display: grid;
   gap: 2px;
   padding: var(--e-1) var(--e-2);
-  border-radius: var(--radio);
-  background: rgb(255 255 255 / 0.96);
-  color: var(--tinta);
+  background: rgb(16 24 32 / 0.96);
+  color: var(--escena-tinta);
+  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 40%, transparent);
   font-family: var(--fuente);
   font-size: var(--t-xs);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
 }
 .globo-etiqueta strong {
   font-size: var(--t-sm);
@@ -78,4 +222,31 @@
   background: var(--atencion-fondo);
   color: var(--atencion-texto);
   font-size: 0.7rem;
+}
+
+.globo-magnitud {
+  color: var(--escena-violeta-alto);
+  font-family: var(--fuente);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  text-shadow: 0 1px 8px rgb(7 11 18 / 0.85);
+  pointer-events: none;
+  transform: translateY(-1.2rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .globo__cinta-rango {
+    transition: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .globo__leyenda {
+    width: 9.5rem;
+  }
+  .globo__grafica {
+    width: min(16rem, calc(100% - 1rem));
+  }
 }

@@ -2,10 +2,10 @@
   <div class="bloque__cab">
     <h2 id="titulo-mapa" class="bloque__titulo">{{ i18n.tr('mapa.titulo') }}</h2>
     <div class="mapa-vistas" role="group" [attr.aria-label]="i18n.tr('mapa.tipo_aria')">
-      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="!enGlobo()" (click)="enGlobo.set(false)">
+      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="!enGlobo()" (click)="ui.fijarGlobo(false)">
         {{ i18n.tr('mapa.plano') }}
       </button>
-      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="enGlobo()" (click)="enGlobo.set(true)">
+      <button type="button" class="mapa-vistas__boton" [attr.aria-pressed]="enGlobo()" (click)="ui.fijarGlobo(true)">
         {{ i18n.tr('mapa.globo') }}
       </button>
     </div>

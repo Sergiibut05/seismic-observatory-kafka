@@ -1,9 +1,59 @@
-<section class="bloque" aria-labelledby="titulo-filtros">
+<section
+  class="bloque"
+  aria-labelledby="titulo-filtros"
+  [attr.role]="ui.filtrosAbiertos() ? 'dialog' : null"
+  [attr.aria-modal]="ui.filtrosAbiertos() ? 'true' : null"
+  [attr.aria-label]="ui.filtrosAbiertos() ? i18n.tr('filtros.dialogo_aria') : null"
+>
   <div class="bloque__cab">
     <h2 id="titulo-filtros" class="bloque__titulo">{{ i18n.tr('filtros.titulo') }}</h2>
+    @if (ui.filtrosAbiertos()) {
+      <button type="button" class="boton boton--secundario" (click)="ui.cerrarFiltros()">
+        {{ i18n.tr('filtros.cerrar') }}
+      </button>
+    }
   </div>
 
   <form class="filtros" (submit)="aplicar($event)" novalidate>
+    @if (ui.filtrosAbiertos()) {
+      <fieldset class="filtros__modo">
+        <legend>{{ i18n.tr('vista.leyenda') }}</legend>
+        <div class="filtros__opciones">
+          <label>
+            <input
+              id="filtro-modo-live"
+              type="radio"
+              name="filtro-vista-modo"
+              value="live"
+              [checked]="store.vista().modo === 'live'"
+              (change)="elegirModo('live')"
+            />
+            {{ i18n.tr('vista.directo') }}
+          </label>
+          <label>
+            <input
+              id="filtro-modo-replay"
+              type="radio"
+              name="filtro-vista-modo"
+              value="replay"
+              [checked]="store.vista().modo === 'replay'"
+              (change)="elegirModo('replay')"
+            />
+            {{ i18n.tr('vista.replay') }}
+          </label>
+        </div>
+        <label class="filtros__sinteticos">
+          <input
+            type="checkbox"
+            role="switch"
+            [checked]="store.vista().sinteticos"
+            (change)="alternarSinteticos($event)"
+          />
+          {{ i18n.tr('vista.sinteticos') }}
+        </label>
+      </fieldset>
+    }
+
     <p class="bloque__nota">
       {{ i18n.tr('filtros.intro') }} {{ nota() }}
     </p>

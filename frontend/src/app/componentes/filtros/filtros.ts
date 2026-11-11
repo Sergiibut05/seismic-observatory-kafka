@@ -1,11 +1,12 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { I18nService } from '../../i18n/i18n.service';
 import { Clave } from '../../i18n/es';
 import { localeDe } from '../../i18n/traducir';
 import { PanelDatosService } from '../../nucleo/panel-datos.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
+import { PanelUiStore } from '../../nucleo/panel-ui.store';
 import { RefrescoService } from '../../nucleo/refresco.service';
-import { CampoFiltro, SIN_PAIS, nombreVisible, notaOrigenDatos } from '../../puro/filtros';
+import { CampoFiltro, ModoDatos, SIN_PAIS, nombreVisible, notaOrigenDatos } from '../../puro/filtros';
 
 interface CampoTexto {
   clave: CampoFiltro;
@@ -34,9 +35,25 @@ const CAMPOS: readonly CampoTexto[] = [
 })
 export class Filtros {
   protected readonly store = inject(FiltrosStore);
+  protected readonly ui = inject(PanelUiStore);
   protected readonly i18n = inject(I18nService);
   private readonly datos = inject(PanelDatosService);
   private readonly refresco = inject(RefrescoService);
+
+  constructor() {
+    effect(() => {
+      const campo = this.ui.campoFoco();
+      const abiertos = this.ui.filtrosAbiertos();
+      if (!abiertos || !campo) return;
+      const id =
+        campo === 'modo'
+          ? this.store.vista().modo === 'replay'
+            ? 'filtro-modo-replay'
+            : 'filtro-modo-live'
+          : `campo-${campo}`;
+      queueMicrotask(() => document.getElementById(id)?.focus());
+    });
+  }
 
   protected readonly campos = CAMPOS;
   protected readonly editados = this.store.editados;
@@ -98,5 +115,13 @@ export class Filtros {
 
   protected restablecer(): void {
     this.store.restablecer();
+  }
+
+  protected elegirModo(modo: ModoDatos): void {
+    this.store.fijarModo(modo);
+  }
+
+  protected alternarSinteticos(evento: Event): void {
+    this.store.fijarSinteticos((evento.target as HTMLInputElement).checked);
   }
 }

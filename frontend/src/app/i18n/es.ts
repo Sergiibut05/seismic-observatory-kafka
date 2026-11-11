@@ -110,6 +110,21 @@ export const ES = {
   'filtros.origen_replay':
     'Datos de REPRODUCCIÓN: eventos ya recibidos que se vuelven a publicar; no son datos en directo.',
   'filtros.origen_reales': 'Solo se muestran eventos reales.',
+  'filtros.cerrar': 'Cerrar filtros',
+  'filtros.dialogo_aria': 'Filtros del panel',
+
+  // Frase de filtros y superficies (010)
+  'frase.aria': 'Filtros activos; cada trozo abre el formulario',
+  'frase.todos_paises': 'todos los países',
+  'frase.todas_magnitudes': 'todas las magnitudes',
+  'frase.todo_periodo': 'todo el periodo',
+  'frase.mag_min': '≥ {valor}',
+  'frase.mag_max': '≤ {valor}',
+  'frase.mag_rango': '{min}–{max}',
+  'superficie.aria': 'Qué se muestra',
+  'superficie.mapa': 'Mapa',
+  'superficie.tabla': 'Tabla',
+  'superficie.analisis': 'Análisis',
 
   // Mapa
   'mapa.titulo': 'Mapa de eventos',
@@ -157,14 +172,23 @@ export const ES = {
   'ficha.resumen_sin_pais': 'sin país asignado',
 
   // Globo 3D
-  'globo.aria': 'Globo 3D con los eventos del filtro. La tabla de eventos es la alternativa accesible.',
+  'globo.aria':
+    'Globo 3D con los eventos del filtro. El tamaño y la altura marcan la magnitud; el color del cuerpo, la profundidad, como en el mapa plano. Los pulsos violeta marcan los 60 terremotos más recientes. Arrastra para girar, rueda para acercar, pulsa un punto para seleccionarlo o un país para filtrarlo. La tabla de eventos es la alternativa accesible.',
   'globo.cargando': 'Cargando el globo…',
   'globo.sin_webgl': 'Este navegador no puede dibujar el globo 3D (necesita WebGL). Usa la vista «Plano».',
   'globo.inactivo': 'Globo 3D no disponible en este entorno.',
-  'globo.leyenda_reducido': 'Color: profundidad, como en el mapa plano. Altura: magnitud.',
-  'globo.leyenda_pulsos':
-    'Los pulsos marcan los {n} terremotos más recientes del filtro: más anchos y más rojos cuanto mayor es la magnitud (ámbar < 4, naranja 4–6, rojo ≥ 6). Color de los puntos: profundidad, como en el mapa plano.',
-  'globo.pista': 'Arrastra para girar, rueda para acercar, pulsa un punto para seleccionarlo.',
+  'globo.m2': 'M 2',
+  'globo.m5': 'M 5',
+  'globo.m7': 'M 7',
+  'cinta.aria': 'Recorte local de las últimas 24 horas; no consulta la API',
+  'cinta.etiqueta': 'Hasta',
+  'escena.cifra_vs': '{hoy} frente a {media}',
+  'escena.cifra_rotulo': 'hoy / media 2025',
+  'escena.cifra_aviso': 'El último periodo puede estar incompleto.',
+  'escena.grafica': 'Gráfica de la escena',
+  'escena.serie_hora': 'Hora',
+  'escena.serie_magnitud': 'Magnitud',
+  'escena.serie_profundidad': 'Profundidad',
 
   // Tabla de eventos
   'tabla.titulo': 'Eventos',

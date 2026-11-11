@@ -2,6 +2,16 @@
   display: block;
 }
 
+:host-context(.app--globo) .vista__controles {
+  display: none;
+}
+
+@media (max-width: 71.99rem) {
+  :host-context(.app:not(.app--globo)) .vista__controles {
+    display: none;
+  }
+}
+
 /* Barra de controles: mismo ancho y márgenes que la rejilla del panel. */
 .vista__controles {
   display: flex;

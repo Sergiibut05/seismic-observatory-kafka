@@ -1,0 +1,8 @@
+<p class="frase" [attr.aria-label]="i18n.tr('frase.aria')">
+  @for (trozo of trozos(); track trozo.id; let last = $last) {
+    <button type="button" class="frase__trozo" (click)="abrir(trozo)">{{ trozo.texto }}</button>
+    @if (!last) {
+      <span class="frase__sep" aria-hidden="true">·</span>
+    }
+  }
+</p>

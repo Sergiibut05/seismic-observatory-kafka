@@ -1,57 +1,54 @@
 /*
- * Diseño base del panel (cerrado en T4: los componentes NO editan este fichero).
+ * Instrumento nocturno (010): el globo marca el tono; el plano deja de parecer un
+ * formulario institucional. El color de los terremotos sigue --prof-* (escalas.ts).
  *
- * Justificación del diseño:
- * 1. Instrumento de observación, no tarjetas: fondo gris azulado frío, paneles blancos con filete
- *    de 1 px y esquinas casi rectas, sin sombras ni degradados; el color queda para los datos.
- * 2. Un solo acento (azul petróleo) para acciones y foco; la barra de estado es lo único oscuro
- *    y fijo: lo primero que hay que saber de un panel de datos es si los datos son frescos.
- * 3. Tipografía del sistema (sin CDN ni peso), cifras tabulares, escala de 6 pasos y línea de
- *    texto ≤ 70 caracteres; contraste ≥ 4,5:1 y avisos con icono de texto, no solo color.
+ * 1. Fondo #070B12, paneles apenas más claros, filete violeta suave. El acento de
+ *    chrome es violeta eléctrico; el de los datos es la profundidad.
+ * 2. Cabecera fina: lo primero es si los datos están frescos, no un bloque de dt/dd.
+ * 3. Tipografía del sistema, cifras tabulares, contraste ≥ 4,5:1, avisos con icono.
  *
  * Contacto con los componentes: usar las variables `--*` y las clases globales de abajo
  * (`.bloque`, `.aviso`, `.campo`, `.boton`, `.tabla-datos`, `.cifra`, `.nd`, `.solo-lectores`).
- * Si falta algo, pídelo antes de tocar este fichero.
  */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Superficies y tinta (contrastes sobre blanco: tinta 17:1, tinta-suave 7,9:1) */
-  --fondo: #e9edf1;
-  --superficie: #ffffff;
-  --superficie-2: #f3f6f8;
-  --tinta: #0f1a24;
-  --tinta-suave: #44525f;
-  --linea: #c5cdd6;
-  --linea-fuerte: #77858f; /* bordes de controles: ≥ 3:1 */
+  /* Superficies y tinta (tinta sobre fondo ≥ 12:1, tinta-suave ≥ 5,5:1) */
+  --fondo: #070b12;
+  --superficie: #101820;
+  --superficie-2: #17212c;
+  --tinta: #e8eef3;
+  --tinta-suave: #9aa8b8;
+  --linea: #243140;
+  --linea-fuerte: #6d7e90; /* bordes de controles: ≥ 3:1 */
 
-  /* Acento único */
-  --acento: #00596b; /* 8,0:1 sobre blanco */
-  --acento-hover: #00404e;
-  --acento-suave: #d6ebf0;
-  --sobre-acento: #ffffff;
+  /* Acento de chrome (el de los datos es la escala de profundidad) */
+  --acento: #9d91ff;
+  --acento-hover: #b3a8ff;
+  --acento-suave: #1a1633;
+  --sobre-acento: #070b12;
 
-  /* Barra de estado (oscura) */
-  --oscuro: #0e1b26;
-  --oscuro-2: #1a2b3a;
-  --sobre-oscuro: #e8eef3; /* 14:1 sobre --oscuro */
-  --sobre-oscuro-suave: #a9b8c5; /* 8,6:1 sobre --oscuro */
+  /* Barra de estado: mismo vacío que la escena */
+  --oscuro: #070b12;
+  --oscuro-2: #101820;
+  --sobre-oscuro: #e8eef3;
+  --sobre-oscuro-suave: #9aa8b8;
 
-  /* Estados (texto/fondo ≥ 7:1) */
-  --alerta-fondo: #fde8e6;
-  --alerta-texto: #7a1410;
-  --alerta-borde: #b3261e;
-  --atencion-fondo: #fff1cc;
-  --atencion-texto: #5c3b00;
-  --atencion-borde: #a86a00;
-  --info-fondo: #e3eef9;
-  --info-texto: #0f3a63;
-  --info-borde: #2a6aa8;
-  --ok-texto: #0b5a2a;
+  /* Estados sobre fondo oscuro (texto/fondo ≥ 7:1) */
+  --alerta-fondo: #3a1514;
+  --alerta-texto: #ffc4c0;
+  --alerta-borde: #e07068;
+  --atencion-fondo: #2e2410;
+  --atencion-texto: #f0d48a;
+  --atencion-borde: #c9a227;
+  --info-fondo: #142436;
+  --info-texto: #c5d9f0;
+  --info-borde: #4a7ab0;
+  --ok-texto: #7dcea0;
 
-  /* Foco visible: doble anillo para fondos claros y oscuros */
-  --foco: #0b5fc4;
+  /* Foco: ámbar sobre oscuro (el mismo --foco-sobre-oscuro de siempre) */
+  --foco: #ffd166;
   --foco-sobre-oscuro: #ffd166;
 
   /* Profundidad: espejo de INTERVALOS_PROFUNDIDAD en puro/escalas.ts (fuente única). */
@@ -68,9 +65,9 @@
   --borde-circulo: #0f1a24; /* contorno de los círculos del mapa */
 
   /* Series de los gráficos de barras (barra normal, barra «sin valor», barra a cero) */
-  --barra: #00596b;
-  --barra-sin-valor: #8d9399;
-  --barra-cero: #c5cdd6;
+  --barra: #8b7cff;
+  --barra-sin-valor: #6d7e90;
+  --barra-cero: #243140;
 
   /* Tipografía */
   --fuente: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue',
@@ -94,6 +91,15 @@
   --radio: 4px;
   --ancho-max: 92rem;
   --alto-mapa: clamp(24rem, 62vh, 42rem);
+  --alto-cabecera: 4.75rem;
+
+  /* Escena del globo (010): el cuerpo del terremoto sigue --prof-*; esto es el acento. */
+  --escena-fondo: #070b12;
+  --escena-tinta: #e8eef3;
+  --escena-tinta-suave: #9aa8b8;
+  --escena-violeta: #5b4dff;
+  --escena-violeta-bajo: #8b7cff;
+  --escena-violeta-alto: #f2f0ff;
 }
 
 *,
@@ -193,7 +199,7 @@ app-nota-aviso {
 /* ── Panel de contenido ───────────────────────────────────────────── */
 .bloque {
   background: var(--superficie);
-  border: 1px solid var(--linea);
+  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 28%, var(--linea));
   border-radius: var(--radio);
   min-width: 0;
 }
@@ -368,6 +374,90 @@ app-nota-aviso {
 .cargando {
   color: var(--tinta-suave);
   font-size: var(--t-sm);
+}
+
+/* 010: encuadre que cruza componentes (app.css no atraviesa la encapsulación). */
+.app--globo .vista__controles,
+.app--globo .pie {
+  display: none;
+}
+.rejilla--globo .frase__trozo {
+  color: var(--escena-tinta);
+}
+.rejilla--globo .frase__trozo:focus-visible {
+  outline-color: var(--foco-sobre-oscuro);
+}
+.rejilla--globo app-mapa {
+  min-height: 0;
+}
+.rejilla--globo .mapa-bloque {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.rejilla--globo .mapa-bloque .bloque__cab {
+  position: absolute;
+  top: var(--e-2);
+  right: var(--e-2);
+  z-index: 1010;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+.rejilla--globo .mapa-bloque .bloque__titulo,
+.rejilla--globo .mapa-bloque .bloque__nota {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.rejilla--globo .mapa-bloque .mapa-avisos {
+  position: absolute;
+  top: 2.8rem;
+  right: var(--e-2);
+  left: auto;
+  z-index: 1011;
+  max-width: 16rem;
+}
+.rejilla--globo .mapa-bloque .mapa-vistas {
+  pointer-events: auto;
+  border-color: rgb(139 124 255 / 0.45);
+}
+.rejilla--globo .mapa-bloque .mapa-vistas__boton {
+  background: rgb(7 11 18 / 0.72);
+  color: var(--escena-tinta);
+}
+.rejilla--globo .mapa-bloque .mapa-vistas__boton[aria-pressed='true'] {
+  background: var(--escena-violeta);
+  color: var(--escena-tinta);
+}
+.rejilla--globo .mapa-bloque .mapa-marco {
+  margin: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.rejilla--globo .mapa-bloque .mapa-lienzo {
+  border: 0;
+  border-radius: 0;
+}
+.rejilla--globo .leaflet-control-container {
+  display: none;
+}
+@media (max-width: 40rem) {
+  .rejilla--globo .mapa-bloque .bloque__cab {
+    top: 2.35rem;
+  }
+}
+@media (max-width: 71.99rem) {
+  .app:not(.app--globo) .vista__controles {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

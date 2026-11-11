@@ -26,7 +26,7 @@
 }
 .mapa-bloque .mapa-vistas__boton[aria-pressed='true'] {
   background: var(--acento);
-  color: #fff;
+  color: var(--sobre-acento);
   font-weight: 600;
 }
 .mapa-bloque .mapa-vistas__boton:focus-visible {
@@ -82,10 +82,9 @@
   max-height: calc(100% - 5rem);
   overflow: auto;
   padding: var(--e-2) var(--e-3);
-  background: rgb(255 255 255 / 0.94);
-  border: 1px solid var(--linea-fuerte);
+  background: rgb(16 24 32 / 0.92);
+  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 40%, transparent);
   border-radius: var(--radio);
-  box-shadow: 0 1px 4px rgb(16 32 48 / 0.12);
   font-size: var(--t-xs);
   line-height: 1.35;
   color: var(--tinta);
@@ -205,13 +204,14 @@
   width: 2.25rem;
   height: 2.25rem;
   line-height: 2.25rem;
-  color: var(--tinta);
+  color: #0f1a24;
 }
 .mapa-bloque .leaflet-control-attribution {
-  color: var(--tinta);
+  color: #0f1a24;
+  background: rgb(255 255 255 / 0.78);
 }
 .mapa-bloque .leaflet-control-attribution a {
-  color: var(--acento);
+  color: #00596b;
 }
 .mapa-bloque .leaflet-popup-close-button {
   width: 2rem;
@@ -229,7 +229,10 @@
 }
 
 /* ── Ficha del terremoto (popup) ──────────────────────────────────── */
-.mapa-bloque .ficha-popup .leaflet-popup-content-wrapper {
+.mapa-bloque .ficha-popup .leaflet-popup-content-wrapper,
+.mapa-bloque .ficha-popup .leaflet-popup-tip {
+  background: var(--superficie);
+  color: var(--tinta);
   border-radius: var(--radio);
 }
 .mapa-bloque .ficha-popup .leaflet-popup-content {

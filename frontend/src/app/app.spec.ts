@@ -29,6 +29,8 @@ describe('App (esqueleto)', () => {
       'app-estado',
       'app-vista-datos',
       'app-filtros',
+      'app-frase-filtros',
+      'app-superficies',
       'app-mapa',
       'app-tabla',
       'app-recuentos',

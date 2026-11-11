@@ -1,7 +1,8 @@
-// Datos para el globo 3D (feature 008). Sin Angular ni three.js: solo transforma la respuesta de /eventos/mapa.
+// Datos para el globo 3D (008 + 010). Sin Angular ni three.js: transforma /eventos/mapa.
 import { T_ES, Traductor } from '../i18n/traducir';
 import { EventoMapa, PropiedadesEventoMapa } from '../modelos/api';
-import { estiloCirculo } from './escalas';
+import { DatoBarra, etiquetaHoraUtc } from './barras';
+import { INTERVALOS_PROFUNDIDAD, estiloCirculo } from './escalas';
 import { formatearInstanteUtc, formatearMagnitud, formatearProfundidad } from './formato';
 
 export const ANILLOS_MAX = 60;
@@ -10,14 +11,32 @@ export const RADIO_ANILLO_MAX = 14;
 /** Segundos que tarda un anillo en llegar a su radio máximo. */
 const DURACION_ANILLO_S = 1.8;
 const SIN_PAIS = 'Sin país asignado';
+export const VENTANA_CINTA_MS = 24 * 3600 * 1000;
+/** Stub de columna sin magnitud: no se trata como M = 0. En radios terrestres. */
+export const ALTURA_COLUMNA_ND = 0.04;
+const ALTURA_COLUMNA_BASE = 0.06;
+const ALTURA_COLUMNA_POR_M = 0.055;
+
+export const COLOR_PULSO_BAJO = '#8B7CFF';
+export const COLOR_PULSO_MEDIO = '#5B4DFF';
+export const COLOR_PULSO_ALTO = '#F2F0FF';
+export const COLOR_PULSO_ND = '#c8d0d8';
 
 /** Color del pulso por magnitud; ND va en gris claro (no se trata como 0). */
 export function colorPulso(magnitud: number | null): string {
   const m = magnitudValida(magnitud);
-  if (m === null) return '#c8d0d8';
-  if (m >= 6) return '#ff2e4d';
-  if (m >= 4) return '#ff6b3d';
-  return '#ffb347';
+  if (m === null) return COLOR_PULSO_ND;
+  if (m >= 6) return COLOR_PULSO_ALTO;
+  if (m >= 4) return COLOR_PULSO_MEDIO;
+  return COLOR_PULSO_BAJO;
+}
+
+/** Altura de la columna en radios terrestres. Un nulo no usa la escala de M = 0. */
+export function alturaColumna(magnitud: number | null): number {
+  const m = magnitudValida(magnitud);
+  if (m === null) return ALTURA_COLUMNA_ND;
+  const escala = Math.min(Math.max(m, 0), 9);
+  return ALTURA_COLUMNA_BASE + escala * ALTURA_COLUMNA_POR_M;
 }
 
 export interface PuntoGlobo {
@@ -66,7 +85,7 @@ export function puntosGlobo(features: readonly EventoMapa[]): PuntoGlobo[] {
       lat,
       lng,
       color: estiloCirculo(f.properties.magnitud, f.properties.profundidad).color,
-      altura: 0.004 + escala * 0.005,
+      altura: alturaColumna(m),
       radio: 0.3 + escala * 0.1,
       props: f.properties,
     };
@@ -129,5 +148,182 @@ export function etiquetaGlobo(p: PropiedadesEventoMapa, t: Traductor = T_ES): st
     `<span>${escaparHtml(lugar)}</span>` +
     `<span>${escaparHtml(formatearInstanteUtc(p.ocurrencia, t))} · ${escaparHtml(formatearProfundidad(p.profundidad, t))}</span>` +
     `</div>`
+  );
+}
+
+/** Oculta lo posterior al corte. `null` o fecha inválida = sin recorte. */
+export function recortarPorHora(
+  features: readonly EventoMapa[],
+  corte: string | null,
+): EventoMapa[] {
+  if (corte === null) return [...features];
+  const t = Date.parse(corte);
+  if (!Number.isFinite(t)) return [...features];
+  return features.filter((f) => {
+    const o = Date.parse(f.properties.ocurrencia);
+    return Number.isFinite(o) && o <= t;
+  });
+}
+
+export interface MarcaCinta {
+  id: string;
+  ocurrencia: string;
+  /** 0 = inicio de la ventana (24 h atrás), 1 = fin. */
+  t: number;
+}
+
+export function finCinta(features: readonly EventoMapa[], ahoraMs: number): number {
+  let fin = ahoraMs;
+  for (const f of features) {
+    const o = Date.parse(f.properties.ocurrencia);
+    if (Number.isFinite(o) && o > fin) fin = o;
+  }
+  return fin;
+}
+
+export function marcasCinta(features: readonly EventoMapa[], ahoraMs: number): MarcaCinta[] {
+  const fin = finCinta(features, ahoraMs);
+  const inicio = fin - VENTANA_CINTA_MS;
+  return conCoordenadas(features).map((f) => {
+    const o = Date.parse(f.properties.ocurrencia);
+    const t = Number.isFinite(o) ? (o - inicio) / VENTANA_CINTA_MS : 0;
+    return {
+      id: f.properties.event_id,
+      ocurrencia: f.properties.ocurrencia,
+      t: Math.min(1, Math.max(0, t)),
+    };
+  });
+}
+
+/** Instante ISO del cursor de la cinta (`pos` de 0 a 1). */
+export function instanteCinta(pos: number, ahoraMs: number, features: readonly EventoMapa[]): string {
+  const fin = finCinta(features, ahoraMs);
+  const inicio = fin - VENTANA_CINTA_MS;
+  const p = Math.min(1, Math.max(0, pos));
+  return new Date(inicio + p * VENTANA_CINTA_MS).toISOString();
+}
+
+export interface PaisGlobo {
+  type: 'Feature';
+  properties: { ADM0_A3: string | null };
+  geometry: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] } | null;
+}
+
+/** Ray casting en un anillo GeoJSON [lng, lat][]. */
+export function puntoEnAnillo(lng: number, lat: number, anillo: readonly number[][]): boolean {
+  let dentro = false;
+  for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+    const xi = anillo[i][0];
+    const yi = anillo[i][1];
+    const xj = anillo[j][0];
+    const yj = anillo[j][1];
+    const cruza = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi + Number.EPSILON) + xi;
+    if (cruza) dentro = !dentro;
+  }
+  return dentro;
+}
+
+function anillosDe(geometry: NonNullable<PaisGlobo['geometry']>): number[][][][] {
+  return geometry.type === 'Polygon'
+    ? [geometry.coordinates as number[][][]]
+    : (geometry.coordinates as number[][][][]);
+}
+
+export function puntoEnPais(lng: number, lat: number, pais: PaisGlobo): boolean {
+  if (!pais.geometry) return false;
+  for (const poligono of anillosDe(pais.geometry)) {
+    const [exterior, ...huecos] = poligono;
+    if (!exterior || !puntoEnAnillo(lng, lat, exterior)) continue;
+    if (huecos.some((h) => puntoEnAnillo(lng, lat, h))) continue;
+    return true;
+  }
+  return false;
+}
+
+/** Primer país (orden del catálogo) que contiene el punto. Sin coincidencia: null. */
+export function paisEnPunto(paises: readonly PaisGlobo[], lat: number, lng: number): PaisGlobo | null {
+  for (const p of paises) {
+    if (puntoEnPais(lng, lat, p)) return p;
+  }
+  return null;
+}
+
+export type SerieEscena = 'hora' | 'magnitud' | 'profundidad';
+
+const BORDES_MAGNITUD = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+function intervalosMagnitud(): { desde: number | null; hasta: number | null; etiqueta: string }[] {
+  const out: { desde: number | null; hasta: number | null; etiqueta: string }[] = [
+    { desde: null, hasta: BORDES_MAGNITUD[0], etiqueta: `< ${BORDES_MAGNITUD[0]}` },
+  ];
+  for (let i = 0; i < BORDES_MAGNITUD.length - 1; i++) {
+    const a = BORDES_MAGNITUD[i];
+    const b = BORDES_MAGNITUD[i + 1];
+    out.push({ desde: a, hasta: b, etiqueta: `${a}–${b}` });
+  }
+  const ultimo = BORDES_MAGNITUD[BORDES_MAGNITUD.length - 1];
+  out.push({ desde: ultimo, hasta: null, etiqueta: `≥ ${ultimo}` });
+  return out;
+}
+
+function contarEn(
+  valores: readonly (number | null)[],
+  intervalos: readonly { desde: number | null; hasta: number | null; etiqueta: string }[],
+  t: Traductor,
+): DatoBarra[] {
+  const n = intervalos.map(() => 0);
+  let sinValor = 0;
+  for (const v of valores) {
+    if (v === null || !Number.isFinite(v)) {
+      sinValor += 1;
+      continue;
+    }
+    const i = intervalos.findIndex(
+      (iv) => (iv.desde === null || v >= iv.desde) && (iv.hasta === null || v < iv.hasta),
+    );
+    if (i >= 0) n[i] += 1;
+  }
+  const barras: DatoBarra[] = intervalos.map((iv, i) => ({
+    clave: `i${i}`,
+    etiqueta: iv.etiqueta,
+    valor: n[i],
+  }));
+  barras.push({ clave: 'sin-valor', etiqueta: t('grafico.sin_valor'), valor: sinValor, sinValor: true });
+  return barras;
+}
+
+/** Barras de la escena a partir de los eventos ya recortados (la cinta no llama a la API). */
+export function barrasEscena(
+  features: readonly EventoMapa[],
+  serie: SerieEscena,
+  finMs: number,
+  t: Traductor = T_ES,
+): DatoBarra[] {
+  if (serie === 'hora') {
+    const inicio = finMs - VENTANA_CINTA_MS;
+    const recuento = new Map<number, number>();
+    for (let h = 0; h < 24; h++) recuento.set(inicio + h * 3600_000, 0);
+    for (const f of features) {
+      const o = Date.parse(f.properties.ocurrencia);
+      if (!Number.isFinite(o) || o < inicio || o > finMs) continue;
+      const bucket = inicio + Math.floor((o - inicio) / 3600_000) * 3600_000;
+      recuento.set(bucket, (recuento.get(bucket) ?? 0) + 1);
+    }
+    return [...recuento.entries()].map(([ms, valor]) => {
+      const iso = new Date(ms).toISOString();
+      return { clave: iso, etiqueta: etiquetaHoraUtc(iso, t), valor };
+    });
+  }
+  if (serie === 'magnitud') {
+    return contarEn(
+      features.map((f) => f.properties.magnitud),
+      intervalosMagnitud(),
+      t,
+    );
+  }
+  return contarEn(
+    features.map((f) => f.properties.profundidad),
+    INTERVALOS_PROFUNDIDAD.map((i) => ({ desde: i.desde, hasta: i.hasta, etiqueta: i.etiqueta })),
+    t,
   );
 }

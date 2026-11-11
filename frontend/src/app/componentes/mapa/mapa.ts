@@ -25,6 +25,7 @@ import {
   leyendaRadio,
 } from '../../puro/escalas';
 import { etiquetaDatosAntiguos } from '../../puro/etiqueta-antiguos';
+import { PanelUiStore } from '../../nucleo/panel-ui.store';
 import { Globo } from '../globo/globo';
 import { crearFicha, crearResumen } from './mapa-ficha';
 
@@ -64,6 +65,7 @@ interface Dibujado {
 })
 export class Mapa {
   private readonly store = inject(FiltrosStore);
+  protected readonly ui = inject(PanelUiStore);
   private readonly datos = inject(PanelDatosService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly habilitado = inject(MAPA_HABILITADO);
@@ -92,8 +94,8 @@ export class Mapa {
     const id = this.eventoAnunciado();
     return id === null ? '' : this.i18n.tr('mapa.anuncio', { id });
   });
-  /** Vista 3D opcional (feature 008); el plano es la vista por defecto y Leaflet sigue vivo debajo. */
-  protected readonly enGlobo = signal(false);
+  /** Vista 3D opcional (008/010); el plano es la vista por defecto y Leaflet sigue vivo debajo. */
+  protected readonly enGlobo = this.ui.enGlobo;
   /** La ficha vive dentro del panel de Leaflet (z-index 400): con ella abierta, la leyenda se aparta para no taparla. */
   protected readonly fichaVisible = signal(false);
 

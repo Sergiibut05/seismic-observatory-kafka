@@ -1,4 +1,4 @@
-/* Rejilla del panel (cerrada en T4: los componentes NO editan este fichero). */
+/* Rejilla del panel (reabierta en 010: escena a sangre y superficies móviles). */
 
 :host {
   display: block;
@@ -19,7 +19,7 @@
   align-items: center;
   max-width: var(--ancho-max);
   margin-inline: auto;
-  padding: var(--e-2) var(--e-4);
+  padding: 0.45rem var(--e-4);
 }
 .cabecera__marca h1 {
   font-size: var(--t-md);
@@ -80,13 +80,21 @@
 }
 
 /* Hueco reservado de cada componente. Los componentes rellenan su host; no fijan su posición. */
+.area-frase {
+  grid-area: frase;
+  display: none;
+}
+.area-superficies {
+  grid-area: superficies;
+  display: none;
+}
 .area-filtros {
   grid-area: filtros;
 }
 .area-mapa {
   grid-area: mapa;
-  height: var(--alto-mapa); /* el mapa ocupa el 100 % de su host */
-  isolation: isolate; /* los z-index internos de Leaflet no salen del mapa */
+  height: var(--alto-mapa);
+  isolation: isolate;
 }
 .area-tabla {
   grid-area: tabla;
@@ -101,6 +109,150 @@
   grid-area: distribuciones;
 }
 
+.filtros-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 2800;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgb(7 11 18 / 0.72);
+  cursor: pointer;
+}
+
+.app--globo {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100svh;
+  overflow: hidden;
+  background: var(--escena-fondo);
+  color: var(--escena-tinta);
+}
+.app--globo .cabecera {
+  background: var(--escena-fondo);
+}
+
+.rejilla--globo {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  position: relative;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  gap: 0;
+}
+.rejilla--globo .area-frase {
+  display: block;
+  grid-area: 1 / 1;
+  align-self: start;
+  z-index: 20;
+  margin: var(--e-2) 9rem 0 var(--e-3);
+  color: var(--escena-tinta);
+  pointer-events: auto;
+}
+.rejilla--globo .area-superficies,
+.rejilla--globo .area-tabla,
+.rejilla--globo .area-comparacion,
+.rejilla--globo .area-recuentos,
+.rejilla--globo .area-distribuciones {
+  display: none;
+}
+.rejilla--globo .area-mapa {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 1;
+  min-height: 0;
+  height: 100%;
+}
+.rejilla--globo:not(.rejilla--filtros) .area-filtros {
+  display: none;
+}
+.rejilla--globo.rejilla--filtros .area-filtros,
+.rejilla--filtros .area-filtros {
+  position: fixed;
+  z-index: 2900;
+  top: 4.5rem;
+  left: 50%;
+  width: min(24rem, calc(100vw - 1.5rem));
+  max-height: calc(100svh - 6rem);
+  overflow: auto;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 71.99rem) {
+  .cabecera__interior {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: 0.2rem 0.75rem;
+    padding: 0.3rem 0.75rem;
+  }
+  .cabecera__marca {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .cabecera__marca h1 {
+    font-size: var(--t-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cabecera__marca p {
+    display: none;
+  }
+  .idioma {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+  }
+  .cabecera__interior > app-estado {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .rejilla--globo .area-frase {
+    margin: 0.35rem 0.35rem 0;
+  }
+  .area-frase,
+  .area-superficies {
+    display: block;
+  }
+  .app:not(.app--globo) .vista__controles {
+    display: none;
+  }
+  .rejilla:not(.rejilla--globo):not(.rejilla--filtros) .area-filtros {
+    display: none;
+  }
+  .rejilla:not(.rejilla--globo) {
+    grid-template-areas:
+      'frase'
+      'superficies'
+      'filtros'
+      'mapa'
+      'tabla'
+      'comparacion'
+      'recuentos'
+      'distribuciones';
+  }
+  .rejilla:not(.rejilla--globo).rejilla--mapa .area-tabla,
+  .rejilla:not(.rejilla--globo).rejilla--mapa .area-comparacion,
+  .rejilla:not(.rejilla--globo).rejilla--mapa .area-recuentos,
+  .rejilla:not(.rejilla--globo).rejilla--mapa .area-distribuciones {
+    display: none;
+  }
+  .rejilla:not(.rejilla--globo).rejilla--tabla .area-mapa,
+  .rejilla:not(.rejilla--globo).rejilla--tabla .area-comparacion,
+  .rejilla:not(.rejilla--globo).rejilla--tabla .area-recuentos,
+  .rejilla:not(.rejilla--globo).rejilla--tabla .area-distribuciones {
+    display: none;
+  }
+  .rejilla:not(.rejilla--globo).rejilla--analisis .area-mapa,
+  .rejilla:not(.rejilla--globo).rejilla--analisis .area-tabla {
+    display: none;
+  }
+}
+
 @media (min-width: 72rem) {
   .cabecera__interior {
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -108,7 +260,7 @@
   .idioma {
     align-self: start;
   }
-  .rejilla {
+  .rejilla:not(.rejilla--globo) {
     grid-template-columns: 19rem minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       'filtros mapa mapa'
@@ -116,6 +268,17 @@
       'filtros comparacion recuentos'
       'filtros distribuciones recuentos';
     align-items: start;
+  }
+  .rejilla:not(.rejilla--globo) .area-filtros {
+    position: sticky;
+    top: calc(var(--alto-cabecera) + var(--e-2));
+  }
+  .rejilla:not(.rejilla--globo) .area-mapa {
+    height: calc(100svh - var(--alto-cabecera) - 7rem);
+    min-height: 24rem;
+  }
+  .rejilla--globo.rejilla--filtros .area-filtros {
+    top: 5.25rem;
   }
 }
 

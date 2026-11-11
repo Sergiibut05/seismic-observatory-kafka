@@ -1,0 +1,12 @@
+<div class="superficies" role="group" [attr.aria-label]="i18n.tr('superficie.aria')">
+  @for (o of opciones; track o.id) {
+    <button
+      type="button"
+      class="superficies__boton"
+      [attr.aria-pressed]="ui.superficie() === o.id"
+      (click)="elegir(o.id)"
+    >
+      {{ i18n.tr(o.clave) }}
+    </button>
+  }
+</div>

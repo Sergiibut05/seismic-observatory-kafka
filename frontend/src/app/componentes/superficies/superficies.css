@@ -1,0 +1,32 @@
+.superficies {
+  display: flex;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  overflow: hidden;
+}
+
+.superficies__boton {
+  flex: 1 1 0;
+  padding: var(--e-2) var(--e-3);
+  border: 0;
+  background: var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.superficies__boton + .superficies__boton {
+  border-left: 1px solid var(--linea-fuerte);
+}
+
+.superficies__boton[aria-pressed='true'] {
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 600;
+}
+
+.superficies__boton:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: -3px;
+}

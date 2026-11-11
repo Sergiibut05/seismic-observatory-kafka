@@ -4,6 +4,16 @@
   padding: var(--e-4);
 }
 
+:host-context(.rejilla--filtros) .bloque {
+  background: color-mix(in srgb, var(--escena-fondo) 88%, var(--superficie));
+  border: 1px solid color-mix(in srgb, var(--escena-violeta-bajo) 45%, transparent);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.55);
+}
+
+:host-context(.rejilla--filtros) .bloque__cab {
+  border-bottom-color: color-mix(in srgb, var(--escena-violeta-bajo) 28%, transparent);
+}
+
 .filtros__acciones {
   display: flex;
   flex-wrap: wrap;
@@ -12,4 +22,26 @@
 
 .filtros__acciones .boton {
   flex: 1 1 6rem;
+}
+
+.filtros__modo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.filtros__modo legend {
+  padding: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.filtros__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3);
+  margin: var(--e-2) 0;
+}
+.filtros__sinteticos {
+  display: flex;
+  gap: var(--e-2);
+  font-size: var(--t-sm);
 }

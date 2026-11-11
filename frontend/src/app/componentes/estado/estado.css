@@ -32,3 +32,40 @@
   max-width: none;
   padding: var(--e-1) var(--e-3);
 }
+
+@media (max-width: 71.99rem) {
+  .estado {
+    gap: 0.15rem;
+  }
+  .estado__datos {
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .estado__datos::-webkit-scrollbar {
+    display: none;
+  }
+  .estado__datos > div {
+    position: relative;
+    min-width: max-content;
+  }
+  .estado__datos dt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .estado__datos dd {
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+  .estado .aviso {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

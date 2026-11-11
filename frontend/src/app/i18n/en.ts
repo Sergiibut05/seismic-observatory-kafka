@@ -109,6 +109,21 @@ export const EN: Record<Clave, string> = {
   'filtros.origen_sinteticos': 'Synthetic test cases are included, marked “SYNTHETIC”.',
   'filtros.origen_replay': 'REPLAY data: events already received and published again; not live data.',
   'filtros.origen_reales': 'Only real events are shown.',
+  'filtros.cerrar': 'Close filters',
+  'filtros.dialogo_aria': 'Panel filters',
+
+  // Filter phrase and surfaces (010)
+  'frase.aria': 'Active filters; each piece opens the form',
+  'frase.todos_paises': 'all countries',
+  'frase.todas_magnitudes': 'all magnitudes',
+  'frase.todo_periodo': 'whole period',
+  'frase.mag_min': '≥ {valor}',
+  'frase.mag_max': '≤ {valor}',
+  'frase.mag_rango': '{min}–{max}',
+  'superficie.aria': 'What to show',
+  'superficie.mapa': 'Map',
+  'superficie.tabla': 'Table',
+  'superficie.analisis': 'Analysis',
 
   // Map
   'mapa.titulo': 'Event map',
@@ -156,14 +171,23 @@ export const EN: Record<Clave, string> = {
   'ficha.resumen_sin_pais': 'no country assigned',
 
   // 3D globe
-  'globo.aria': '3D globe with the filtered events. The events table is the accessible alternative.',
+  'globo.aria':
+    '3D globe with the filtered events. Size and height show magnitude; body colour shows depth, as on the flat map. Violet pulses mark the 60 most recent earthquakes. Drag to rotate, scroll to zoom, click a point to select it or a country to filter. The events table is the accessible alternative.',
   'globo.cargando': 'Loading the globe…',
   'globo.sin_webgl': 'This browser cannot draw the 3D globe (it needs WebGL). Use the “Flat” view.',
   'globo.inactivo': '3D globe not available in this environment.',
-  'globo.leyenda_reducido': 'Colour: depth, as on the flat map. Height: magnitude.',
-  'globo.leyenda_pulsos':
-    'Pulses mark the {n} most recent earthquakes in the filter: wider and redder the greater the magnitude (amber < 4, orange 4–6, red ≥ 6). Point colour: depth, as on the flat map.',
-  'globo.pista': 'Drag to rotate, scroll to zoom, click a point to select it.',
+  'globo.m2': 'M 2',
+  'globo.m5': 'M 5',
+  'globo.m7': 'M 7',
+  'cinta.aria': 'Local clip of the last 24 hours; does not query the API',
+  'cinta.etiqueta': 'Until',
+  'escena.cifra_vs': '{hoy} vs {media}',
+  'escena.cifra_rotulo': 'today / 2025 average',
+  'escena.cifra_aviso': 'The latest period may still be incomplete.',
+  'escena.grafica': 'Scene chart',
+  'escena.serie_hora': 'Hour',
+  'escena.serie_magnitud': 'Magnitude',
+  'escena.serie_profundidad': 'Depth',
 
   // Events table
   'tabla.titulo': 'Events',
