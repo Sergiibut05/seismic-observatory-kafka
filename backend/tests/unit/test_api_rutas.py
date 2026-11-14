@@ -391,6 +391,8 @@ def test_comparacion_con_historico():
     # Las 24 h son de la base viva, con magnitud mínima 4; el histórico no usa fechas ni sintéticos.
     sql_vivo, params_vivo = bd.llamadas[0]
     assert "live.evento_actual" in sql_vivo and "NOT sintetico" in sql_vivo and 4.0 in params_vivo
+    # 013: misma fuente que la base de 2025 (USGS); la unión con EMSC inflaría el cociente.
+    assert "'usgs' = ANY(fuentes)" in sql_vivo
     sql_hist, params_hist = bd.llamadas[-1]
     assert "historico.evento_2025" in sql_hist and "sintetico" not in sql_hist and "ocurrencia" not in sql_hist
     assert params_hist == [4.0]

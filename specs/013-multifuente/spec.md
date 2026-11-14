@@ -86,6 +86,7 @@ Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema l
 - **FR-010**: relleno: orden puntual que publica en los topics por fuente todos los terremotos M ≥ 2,5 de un intervalo (por defecto 2025-01-01 → ahora) de USGS y EMSC, partiendo cada intervalo según el recuento de la fuente hasta que la consulta cabe, y marcando lo publicado. Repetirlo no republica nada.
 - **FR-011**: el consumidor guarda las fuentes de cada evento (estado actual e historial); la API las devuelve; el panel las muestra en la ficha y atribuye EMSC.
 - **FR-012**: el modo `replay`, la prueba de humo y los casos sintéticos siguen funcionando (contrato v1).
+- **FR-013**: la comparación histórica compara la misma fuente: base de 2025 de USGS y, en las últimas 24 h, solo los eventos con `usgs` entre sus fuentes. Enunciado §7.
 
 ### Key Entities
 
@@ -104,7 +105,7 @@ Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema l
 ## Assumptions
 
 - EMSC (seismicportal.eu) mantiene su servicio FDSN gratuito y sin clave, con licencia CC BY 4.0.
-- La comparación con 2025 sigue usando la base histórica de USGS (M ≥ 4). Para M ≥ 4, EMSC y USGS dan el 97 % del mismo recuento anual, así que la comparación sigue siendo útil; queda documentado como limitación.
+- La comparación con 2025 sigue usando la base histórica de USGS (M ≥ 4) y, para comparar la misma fuente, las últimas 24 h cuentan solo los eventos en los que participa USGS. Medido tras el relleno: la unión fusionada da 21.938 eventos M ≥ 4 en 2025 frente a 18.302 de USGS (+20 %, unos 3.800 que solo cataloga EMSC); comparar la unión con la base USGS habría inflado el cociente.
 - Los terremotos pequeños de Europa (M < 2,5) solo entran en directo, no por el relleno.
 
 ## Fuera de alcance

@@ -1,7 +1,8 @@
 # Observatorio de actividad sísmica
 
-Recoge en tiempo real los terremotos que publica el USGS, los mueve por **Kafka**, los valida y les asigna país por
-coordenadas, los guarda en **PostgreSQL** y los enseña en un **panel Angular** con mapa plano y globo 3D.
+Recoge en tiempo real los terremotos que publican el **USGS** y el **EMSC**, los mueve por **Kafka**, junta con
+**PySpark** los que son el mismo terremoto visto por las dos fuentes, los valida y les asigna país por coordenadas, los
+guarda en **PostgreSQL** y los enseña en un **panel Angular** con mapa plano y globo 3D.
 
 La pregunta que responde: **¿dónde se está registrando actividad sísmica y cómo se compara con un periodo histórico
 equivalente?**
@@ -33,14 +34,21 @@ equivalente?**
 
 <p align="center"><img src="docs/img/architecture.svg" alt="Flujo de datos: USGS, productor, Kafka, consumidor, PostgreSQL, API, ngrok y panel" width="100%"></p>
 
-Cinco servicios en Docker Compose, todos con la misma imagen de Python 3.12 (`backend/`):
+Siete servicios en Docker Compose: los cinco del enunciado y, desde la feature 013, un segundo productor y la fusión.
+
+```text
+USGS (feed 24 h) ─► producer      ─► eventos.usgs ┐
+EMSC (FDSN)      ─► producer-emsc ─► eventos.emsc ├─► fusion (PySpark) ─► eventos.live ─► consumer ─► PostgreSQL ─► api
+```
 
 | Servicio | Tecnología | Qué hace |
 | --- | --- | --- |
-| `producer` | Python + aiokafka | Cada 60 s descarga el feed de 24 h del USGS y publica solo los eventos nuevos o revisados |
-| `kafka` | Apache Kafka 4.1 (KRaft) | Transporta los mensajes; topic `eventos.live` (y `eventos.replay` para la reproducción), clave = `id` del USGS |
+| `producer` | Python + aiokafka | Cada 60 s descarga el feed de 24 h del USGS y publica en `eventos.usgs` solo lo nuevo o revisado |
+| `producer-emsc` | Python + aiokafka (misma imagen) | Lo mismo con EMSC (FDSN, ventana de 26 h) hacia `eventos.emsc` |
+| `kafka` | Apache Kafka 4.1 (KRaft) | Un topic por fuente, `eventos.live` (eventos ya fusionados) y `eventos.replay` |
+| `fusion` | PySpark 4.2 Structured Streaming | Lee los topics por fuente, junta los informes del mismo terremoto (≤ 30 s y ≤ 100 km entre fuentes distintas) y escribe el evento fusionado en `eventos.live` |
 | `consumer` | Python + aiokafka | Valida, manda a cuarentena lo que no se puede tratar, asigna país por polígono y escribe de forma idempotente |
-| `postgres` | PostgreSQL 17 | Estado actual, historial de versiones, originales, cuarentena y registro de ingesta |
+| `postgres` | PostgreSQL 17 | Estado actual, historial de versiones, originales, cuarentena, registro de ingesta y estado de la fusión |
 | `api` | FastAPI | Solo lectura. Es lo único que se expone por el túnel |
 
 El **panel** (Angular + Leaflet + globe.gl) no es un servicio de Compose: se compila y se publica en Netlify, o se
@@ -69,6 +77,9 @@ Los recuentos y las distribuciones salen del estado actual, nunca de contar mens
 
 ### Reglas de datos
 
+- **Dos fuentes, un evento.** USGS cubre bien EE. UU. y lo grande del mundo; EMSC, Europa y el Mediterráneo (en
+  24 h, Europa: USGS 0, EMSC 98). Un terremoto que publican las dos sale una sola vez, con `fuentes = [emsc, usgs]`: la
+  regla y su medición están en [specs/013-multifuente/research.md](specs/013-multifuente/research.md).
 - **País por coordenadas.** Punto en polígono contra Natural Earth (EPSG:4326, código `ADM0_A3`), nunca leyendo el texto
   `place`. Si no cae en ningún país (casi siempre, en el mar): «Sin país asignado».
 - **Los nulos no se rellenan.** Sin magnitud o sin profundidad, el valor queda vacío y el panel lo marca como «ND».
@@ -84,7 +95,8 @@ Los recuentos y las distribuciones salen del estado actual, nunca de contar mens
 
 ### Requisitos
 
-- **Docker Desktop** con Compose v2, con los puertos 8000 y 9092 libres en `127.0.0.1`.
+- **Docker Desktop** con Compose v2, con los puertos 8000 y 9092 libres en `127.0.0.1`, y unos 2 GB de RAM libres
+  para la fusión (Spark). La primera construcción de su imagen tarda varios minutos.
 - **Node.js LTS**, para el panel.
 - **Python 3.12+**, solo para descargar el histórico.
 
@@ -105,7 +117,7 @@ git check-ignore .env      # debe imprimir ".env"
 
 ```powershell
 docker compose up --build -d
-docker compose ps                              # los cinco en "healthy" en unos 2 minutos
+docker compose ps                              # los siete en "healthy" en unos 2-3 minutos
 Invoke-RestMethod http://127.0.0.1:8000/status # eventos_reales sube tras el primer ciclo (60 s)
 ```
 
@@ -216,6 +228,21 @@ Los sintéticos llevan la marca «SINTÉTICO» y solo se ven en el panel con el 
 </details>
 
 <details>
+<summary><b>Rellenar la base con 2025 y 2026 (feature 013)</b></summary>
+
+Publica en los topics por fuente todos los terremotos M ≥ 2,5 desde la fecha indicada hasta ahora, de USGS y EMSC;
+pasan por la misma fusión que el directo. Cuenta antes y parte cada tramo para que ninguna consulta se trunque (EMSC
+corta a ~10.000 filas sin avisar). Repetirlo no republica nada.
+
+```powershell
+docker compose run --rm producer python -m observatorio.relleno --desde 2025-01-01 --magnitud-min 2.5
+docker compose logs fusion --since 5m          # result=listo action=lote … fusionados=… emitidos=…
+```
+
+Los originales de cada tramo quedan en `data/relleno/<fuente>/`.
+</details>
+
+<details>
 <summary><b>Histórico de 2025 y reproducción</b></summary>
 
 La descarga se hace una vez, en el anfitrión, y no entra en Git:
@@ -318,7 +345,7 @@ servicio (`kafka:19092`, `postgres:5432`), nunca `localhost`.
 ## Estructura del repositorio
 
 ```text
-backend/          Productor, consumidor y API (Python 3.12, una imagen para los tres) y sus tests
+backend/          Productores, consumidor, API y fusión (Python 3.12; la fusión con su propia imagen, Dockerfile.fusion)
 db/init/          Esquema SQL idempotente
 frontend/         Panel Angular (Leaflet + globe.gl)
 catalogo/         Países de Natural Earth (1:50m, 242 países) y su manifiesto
@@ -326,7 +353,7 @@ scripts/          Descarga del catálogo y limpieza de sintéticos
 docs/             Memoria, contrato de la API, fuentes y licencias, enunciado e imágenes del README
 specs/NNN-*/      Una carpeta por feature: spec, plan, tareas y evidencias
 data/             Feed y histórico descargados (fuera de Git)
-compose.yaml      Los cinco servicios
+compose.yaml      Los siete servicios
 ```
 
 ---
@@ -351,6 +378,7 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 009-i18n | Panel en español e inglés (ampliación) |
 | 010-escena | Globo a pantalla completa y panel adaptado al móvil (ampliación) |
 | 011-identidad | Identidad «papel y tinta»: temas papel y noche con una gota de tinta como transición, un mismo mundo para plano y globo, estilo suave y bloques de análisis rediseñados (ampliación) |
+| 013-multifuente | EMSC como segunda fuente, un topic por fuente, fusión con PySpark y relleno de 2025–2026 (ampliación) |
 
 **Pendiente de hacer a mano por el alumno:** publicar el panel en Netlify. El túnel real de ngrok ya está probado
 ([memoria, §13](docs/MEMORIA.md#s13)) y la explicación individual está redactada para que el alumno la revise
@@ -361,5 +389,5 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 - **Países:** Natural Earth Admin 0, 1:50m, versionado en `catalogo/`. Se regenera con
   `python scripts/descargar_paises.py`, que valida `ADM0_A3`, geometrías y CRS y escribe la huella en
   `catalogo/paises.manifest.json`.
-- **Terremotos:** USGS (dominio público). El feed y el histórico se descargan en `data/` y no se suben a Git.
+- **Terremotos:** USGS (dominio público) y EMSC (CC BY 4.0). El feed y el histórico se descargan en `data/` y no se suben a Git.
 - Detalle en [docs/FUENTES-Y-LICENCIAS.md](docs/FUENTES-Y-LICENCIAS.md).

@@ -1,8 +1,8 @@
 # Contrato de la API
 
-> Versión **0.3.0** (feature 007-memoria; cambio **aditivo** sobre la 0.2.0 de 005-api, que lo fue
-> sobre la 0.1.0 de 001-esqueleto: ningún campo anterior cambia). El panel solo debe consumir campos
-> definidos en este documento (Constitución II). Resumen de la 0.3.0 en [Cambios](#cambios).
+> Versión **0.4.0** (feature 013-multifuente; cambio **aditivo** sobre la 0.3.0 de 007-memoria, la
+> 0.2.0 de 005-api y la 0.1.0 de 001-esqueleto: ningún campo anterior cambia). El panel solo debe
+> consumir campos definidos en este documento (Constitución II). Resumen en [Cambios](#cambios).
 >
 > Fuente máquina: [specs/001-esqueleto/contracts/api.openapi.yaml](../specs/001-esqueleto/contracts/api.openapi.yaml).
 > La API **no** sirve `/docs`, `/redoc` ni `/openapi.json`.
@@ -82,10 +82,11 @@ Estado del sistema para el panel. **Siempre 200** mientras la API esté viva.
 | `ultimo_evento` | objeto \| `null` | Última versión procesada por el consumidor; `null` si no hay eventos o la base no responde |
 | `ultimo_evento.event_id` | texto | Identificador del evento |
 | `ultimo_evento.updated` | instante UTC | Versión del evento |
-| `ultimo_evento.source` | texto | Origen (`usgs`, `synthetic-smoke`…) |
+| `ultimo_evento.source` | texto | Origen (`usgs`, `emsc`, `synthetic-smoke`…); en un evento fusionado, su fuente principal |
 | `ultimo_evento.sintetico` | booleano | `true` si es un dato sintético |
 | `ultimo_evento.processed_at` | instante UTC | Cuándo lo procesó el consumidor |
-| `ultima_ingesta_correcta` | instante UTC \| `null` | **0.2.0.** Fin de la última consulta al feed de USGS con HTTP 200 y sin error. `null` si aún no hubo ninguna o la base no responde |
+| `ultima_ingesta_correcta` | instante UTC \| `null` | **0.2.0.** Fin de la última consulta correcta a una fuente (HTTP 200, o 204 «sin eventos», sin error). Desde la 0.4.0, de cualquier fuente. `null` si aún no hubo ninguna o la base no responde |
+| `ingesta_por_fuente` | objeto \| `null` | **0.4.0.** Última consulta correcta de cada fuente: `{"emsc": instante, "usgs": instante}`. `null` con la base caída |
 | `periodo_consultado` | objeto \| `null` | **0.2.0.** `{desde, hasta}`: primera y última `ocurrencia` de los eventos **reales** del estado actual. `null` sin eventos reales o con la base caída |
 | `datos_desactualizados` | booleano \| `null` | **0.2.0.** `true` si no hay ingesta correcta o la última supera el umbral; `false` si es reciente; `null` con la base caída |
 | `umbral_datos_desactualizados_segundos` | entero | **0.2.0.** Umbral configurado (`DATOS_DESACTUALIZADOS_SEGUNDOS`, defecto 300, mínimo 60). Se informa siempre |
@@ -152,7 +153,8 @@ Lista paginada (tabla alternativa al mapa). Filtros comunes más `limite` (1–5
       "pais_nombre": "Sin país asignado",
       "subregion": null,
       "sintetico": false,
-      "reproducido_en": null
+      "reproducido_en": null,
+      "fuentes": ["emsc", "usgs"]
     }
   ],
   "total": 254,
@@ -188,7 +190,7 @@ Con `?modo=replay` (ejemplo recortado: un evento de la reproducción; tiempo ori
 }
 ```
 
-`total` es el de eventos que cumplen los filtros, no el de la página. `magnitud` y `profundidad` pueden ser `null` (sin valor); la profundidad en km puede ser negativa. `pais_codigo` y `subregion` son `null` para «Sin país asignado».
+`fuentes` (**0.4.0**) son las fuentes que componen el evento, en orden alfabético: `["usgs"]`, `["emsc"]` o, si las dos publicaron el mismo terremoto y se fusionó, `["emsc", "usgs"]`; también en `properties` del mapa. `total` es el de eventos que cumplen los filtros, no el de la página. `magnitud` y `profundidad` pueden ser `null` (sin valor); la profundidad en km puede ser negativa. `pais_codigo` y `subregion` son `null` para «Sin país asignado».
 
 ## `GET /eventos/mapa`
 
@@ -337,6 +339,7 @@ Con el histórico sin cargar (200, nunca un 0 inventado; el panel muestra «no d
 | --- | --- | --- |
 | 0.1.0 | 001-esqueleto | `GET /health`, `GET /status` |
 | 0.2.0 | 005-api | Aditivo: `/eventos`, `/eventos/mapa`, `/recuentos/{pais,subregion,hora}`, `/distribuciones/{magnitud,profundidad}`, `/comparacion-historica`; `/status` añade `ultima_ingesta_correcta`, `periodo_consultado`, `datos_desactualizados` y `umbral_datos_desactualizados_segundos` (los campos de la 0.1.0 no cambian); filtros comunes, errores 400/503/500 genéricos y CORS (`GET`/`OPTIONS`, `ngrok-skip-browser-warning`) |
+| 0.4.0 | 013-multifuente | Aditivo: `fuentes` en `eventos[]` y en `properties` del mapa; `/status` añade `ingesta_por_fuente` y `ultima_ingesta_correcta` cuenta también las respuestas 204 (sin eventos) y la ingesta de EMSC. Los `event_id` de eventos que creó EMSC llevan el prefijo `emsc-` |
 | 0.3.0 | 007-memoria | Aditivo (REPRODUCCIÓN en la API): parámetro `modo` (`live` por defecto \| `replay`) en `/eventos`, `/eventos/mapa`, `/recuentos/{pais,subregion,hora}` y `/distribuciones/{magnitud,profundidad}` (7 rutas); `/comparacion-historica` admite `modo=live` y rechaza `replay` con 400 `parametro: modo`; campo `modo` en todas las respuestas (en el mapa, miembro de la `FeatureCollection`); `reproducido_en` en `eventos[]` y en `properties` del mapa (instante UTC en replay, `null` en live); `/status` añade `eventos_replay` (entero o `null`); `/recuentos/hora` en replay ancla la ventana por defecto al último `ocurrencia`. Rutas, `incluir_sinteticos`, errores 503/500, CORS y límites no cambian |
 
 ### Tabla de cambios de la 0.3.0

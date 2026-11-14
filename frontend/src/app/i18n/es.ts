@@ -241,7 +241,7 @@ export const ES = {
   // Comparación histórica
   'comparacion.titulo': 'Comparación histórica',
   'comparacion.nota_replay': 'Solo existe en directo',
-  'comparacion.nota_directo': 'Solo usa magnitud y país/subregión; ignora las fechas',
+  'comparacion.nota_directo': 'Solo usa magnitud y país/subregión; ignora las fechas; cuenta solo USGS, como la base de 2025',
   'comparacion.solo_directo':
     'La comparación histórica solo existe en directo. En REPRODUCCIÓN no se calcula: las cifras de reproducción no se pueden comparar con la media diaria de 2025. Vuelve a «En directo» para verla.',
   'comparacion.ultimas_24h': 'Últimas 24 h',

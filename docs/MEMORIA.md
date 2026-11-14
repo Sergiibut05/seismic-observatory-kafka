@@ -908,6 +908,12 @@ los casos correspondientes se probaron con eventos controlados (§13).
    actual lo conserva. Es una ampliación fuera del alcance mínimo.
 8. **Mediciones.** Se hicieron con la pila encendida y con otros procesos usando la máquina (§8), con datos sintéticos
    uniformes sobre el globo, que no se parecen a la sismicidad real.
+9. **Dos fuentes desde la feature 013.** El directo y el relleno de 2025–2026 juntan USGS y EMSC. La unión tiene más
+   terremotos M ≥ 4 que cualquiera de las dos por separado (2025: 21.938 fusionados frente a 18.302 de USGS, +20 %),
+   porque cada fuente cataloga algunos que la otra no. Por eso la comparación histórica (§5) sigue comparando USGS con
+   USGS: la base de 2025 es USGS y en las últimas 24 h solo cuentan los eventos en los que participa USGS. La fusión une dos informes si son de fuentes distintas y difieren ≤ 30 s y ≤ 100 km; en un enjambre
+   (varios terremotos de una fuente en pocos segundos) puede dejar alguno sin su pareja. Detalle y medición en
+   [specs/013-multifuente/research.md](../specs/013-multifuente/research.md).
 
 ---
 

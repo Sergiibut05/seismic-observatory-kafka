@@ -10,6 +10,8 @@ no se ha proporcionado.
 | --- | --- | --- | --- |
 | USGS Earthquake Hazards Program: feed `all_day.geojson` | Datos recientes (ventana móvil de 24 h), consultados cada 60 s por `producer` | <https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson> | Dominio público (EE. UU.). Se cita «Fuente: U.S. Geological Survey». |
 | USGS FDSN Event Web Service | Histórico 2025, magnitud ≥ 4, `eventtype=earthquake` (feature 004) | <https://earthquake.usgs.gov/fdsnws/event/1/> | Dominio público (EE. UU.). Las consultas se registran en el manifiesto del histórico. |
+| EMSC (Euro-Mediterranean Seismological Centre): FDSN Event Web Service | Segunda fuente (feature 013): ventana de 26 h consultada cada 60 s por `producer-emsc`, y relleno de 2025–2026 con magnitud ≥ 2,5 | <https://www.seismicportal.eu/fdsnws/event/1/> | CC BY 4.0. Se cita «Fuente: EMSC» en el panel (atribución del mapa) y aquí. |
+| USGS FDSN Event Web Service (relleno) | Relleno de 2025–2026 con magnitud ≥ 2,5 (feature 013) | <https://earthquake.usgs.gov/fdsnws/event/1/> | Dominio público (EE. UU.). |
 | Natural Earth: Admin 0 Countries 1:50m | Catálogo geográfico: punto en polígono en `consumer` y fronteras del mapa | Etiqueta `v5.1.2` de [nvkelso/natural-earth-vector](https://github.com/nvkelso/natural-earth-vector) | Dominio público. «Made with Natural Earth». |
 
 ## Catálogo geográfico entregado en el repositorio
@@ -59,6 +61,8 @@ editorial de facto y no una posición oficial sobre territorios en disputa.
 | Apache Kafka 4.1 (`apache/kafka`) | Broker | Apache 2.0 |
 | PostgreSQL | Almacenamiento | PostgreSQL License |
 | aiokafka, FastAPI, Uvicorn, Shapely | Backend Python | Apache 2.0, MIT, BSD-3, BSD-3 |
+| Apache Spark 4.2 (PySpark) y su conector de Kafka (`spark-sql-kafka-0-10`) | Fusión de fuentes (013), servicio `fusion` | Apache 2.0 |
+| OpenJDK 17 (Debian) | JVM de Spark en la imagen de la fusión | GPL-2.0 con Classpath Exception |
 | Angular | Panel | MIT |
 | Leaflet | Mapa plano | BSD-2-Clause |
 | globe.gl y three.js | Globo 3D (008, 010) | MIT |

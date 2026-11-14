@@ -94,6 +94,16 @@ SQL_INGESTA_POR_FUENTE = (
 SQL_PERIODO = f"SELECT min(ocurrencia), max(ocurrencia) FROM {ESTADO_ACTUAL} WHERE NOT sintetico"
 
 
+# Comparación (013): la base de 2025 es USGS; en las últimas 24 h solo cuentan los eventos en los que
+# participa USGS, para comparar la misma fuente (la unión con EMSC da un 20 % más de M >= 4 en 2025).
+SOLO_USGS = "'usgs' = ANY(fuentes)"
+
+
+def anadir_condicion(donde: str, condicion: str) -> str:
+    """Añade una condición constante a un `WHERE` ya construido (o lo crea)."""
+    return f"{donde} AND {condicion}" if donde else f" WHERE {condicion}"
+
+
 def con_where(sql: str, donde: str, modo: str = "live") -> str:
     """Inserta el `WHERE` (constante, con `%s`) y la tabla de `modo` en la plantilla.
 

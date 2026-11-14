@@ -239,7 +239,7 @@ export const EN: Record<Clave, string> = {
   // Historical comparison
   'comparacion.titulo': 'Historical comparison',
   'comparacion.nota_replay': 'Only available in live mode',
-  'comparacion.nota_directo': 'Only uses magnitude and country/subregion; ignores dates',
+  'comparacion.nota_directo': 'Only uses magnitude and country/subregion; ignores dates; counts USGS only, like the 2025 baseline',
   'comparacion.solo_directo':
     'The historical comparison only exists in live mode. It is not computed in REPLAY: replayed figures cannot be compared with the 2025 daily average. Go back to “Live” to see it.',
   'comparacion.ultimas_24h': 'Last 24 h',

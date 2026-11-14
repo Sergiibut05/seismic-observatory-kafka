@@ -52,6 +52,7 @@ MAGNITUD_MINIMA_COMPARACION = 4.0
 SIN_SUBREGION = "Sin subregión"
 AVISO_COMPARACION = (
     "El último periodo puede estar incompleto: USGS publica con retraso y revisa los eventos después."
+    " Solo cuenta lo que publica USGS, igual que la base de 2025."
 )
 AVISO_NO_CARGADO = " El histórico de 2025 no está cargado: no hay media ni cociente."
 
@@ -222,6 +223,7 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
         reciente = replace(efectivos, desde=generado - timedelta(hours=24), hasta=generado)
 
         donde, params = construir_where(reciente)
+        donde = sql.anadir_condicion(donde, sql.SOLO_USGS)
         n_24h = (await ejecutar(db, sql.con_where(sql.SQL_TOTAL, donde), params))[0][0]
 
         cargado, n_2025 = False, None

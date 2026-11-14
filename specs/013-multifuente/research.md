@@ -87,4 +87,7 @@ Orden en cada lote: (1) leer estado y decidir, en una transacción de PostgreSQL
 
 ## Comparación con 2025
 
-- La base sigue siendo USGS M ≥ 4. En directo, el recuento M ≥ 4 de las últimas 24 h sale ahora de USGS ∪ EMSC fusionados, que para M ≥ 4 es casi lo mismo (97 %). Se documenta como limitación en la memoria.
+- **Supuesto inicial (equivocado)**: como USGS y EMSC dan casi el mismo recuento anual de M ≥ 4 (18.305 frente a 17.768), comparar la unión con la base USGS sería casi lo mismo.
+- **Medido tras el relleno**: la unión fusionada de 2025 tiene 21.938 eventos M ≥ 4 frente a 18.302 de la base USGS (+20 %): 14.557 en las dos fuentes, 3.550 solo en USGS y 3.831 solo en EMSC. Los recuentos por fuente se parecen, pero cada una tiene terremotos que la otra no cataloga (un M 4,3 en Tayikistán solo en EMSC, por ejemplo); la unión suma los dos. En directo, las M ≥ 4 de 24 h pasaron de 24 a 41.
+- **Decisión**: la base sigue siendo USGS (es el histórico que pide el enunciado) y las últimas 24 h cuentan solo los eventos con `usgs` entre sus fuentes. Se compara la misma fuente con la misma fuente.
+- **Alternativa**: cambiar la base por la unión fusionada de 2025, que ya está en la base. Más coherente con lo que enseña el mapa, pero deja de ser el histórico de USGS del enunciado.
