@@ -1,0 +1,12 @@
+USGS 469  EMSC 2053 (EMSC con M>=2.0 para no perder pares por magnitud)
+USGS con pareja EMSC (120 s, 300 km): 390/469 = 83.2%
+  dt s     p50=0.4  p90=2.1  p95=3.6  p99=8.8  max=30.1
+  dist km  p50=3.3  p90=16.4  p95=24.9  p99=53.2  max=144.5
+  dmag     p50=0.0  p90=0.3  p95=0.4  p99=0.5  max=0.6
+  emparejados con <= 10 s y <=  50 km: 385/469 = 82.1%
+  emparejados con <= 20 s y <=  50 km: 385/469 = 82.1%
+  emparejados con <= 30 s y <= 100 km: 388/469 = 82.7%
+  emparejados con <= 30 s y <= 150 km: 389/469 = 82.9%
+  emparejados con <= 60 s y <= 150 km: 390/469 = 83.2%
+  parejas USGS-USGS a <= 30 s y <= 100 km (réplicas que no deben fusionarse entre sí): 2
+  parejas USGS-USGS a <= 60 s y <= 150 km (réplicas que no deben fusionarse entre sí): 3

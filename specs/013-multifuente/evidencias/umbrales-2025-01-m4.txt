@@ -1,0 +1,12 @@
+USGS 1413  EMSC 2492 (EMSC con M>=3.5 para no perder pares por magnitud)
+USGS con pareja EMSC (120 s, 300 km): 1106/1413 = 78.3%
+  dt s     p50=0.6  p90=3.6  p95=6.0  p99=52.5  max=105.6
+  dist km  p50=8.4  p90=31.2  p95=44.5  p99=104.6  max=258.4
+  dmag     p50=0.0  p90=0.3  p95=0.4  p99=0.7  max=0.9
+  emparejados con <= 10 s y <=  50 km: 1032/1413 = 73.0%
+  emparejados con <= 20 s y <=  50 km: 1040/1413 = 73.6%
+  emparejados con <= 30 s y <= 100 km: 1079/1413 = 76.4%
+  emparejados con <= 30 s y <= 150 km: 1087/1413 = 76.9%
+  emparejados con <= 60 s y <= 150 km: 1091/1413 = 77.2%
+  parejas USGS-USGS a <= 30 s y <= 100 km (réplicas que no deben fusionarse entre sí): 7
+  parejas USGS-USGS a <= 60 s y <= 150 km (réplicas que no deben fusionarse entre sí): 16

@@ -3,9 +3,10 @@
 ## Core Principles
 
 ### I. Entorno reproducible en Docker Compose
-Productor, Kafka, consumidor, PostgreSQL y API MUST ser cinco servicios
-separados de `compose.yaml` que arrancan juntos con
-`docker compose up --build -d` desde un clon limpio. Los servicios Python MUST
+Productor, Kafka, consumidor, PostgreSQL y API MUST ser servicios separados de
+`compose.yaml` que arrancan juntos con `docker compose up --build -d` desde un
+clon limpio. Desde la 3.0.0 hay un productor por fuente de datos y un servicio
+de fusión (Spark); los cinco servicios del enunciado MUST seguir existiendo. Los servicios Python MUST
 construirse desde una imagen reproducible con dependencias fijadas; MAY
 compartir imagen con comandos de inicio distintos. Cada servicio MUST declarar
 healthcheck, y quien dependa de Kafka o PostgreSQL MUST reintentar la conexión
@@ -15,17 +16,24 @@ limitada. Dentro de Compose las direcciones MUST usar nombres de servicio,
 nunca `localhost`.
 
 ### II. Contrato de mensaje explícito y versionado
-Todo mensaje en Kafka MUST usar el `id` del evento USGS como clave y MUST
-incluir `schema_version`, `source`, `ingested_at`, `mode` (`live` o `replay`)
-y el evento original sin alterar. El contrato MUST estar documentado en
-`specs/` y compartido por productor, replay y consumidor; un cambio
-incompatible MUST subir `schema_version`. La API MUST documentar su contrato
+Hay dos contratos. El de fuente (v1) viaja en un topic por fuente
+(`eventos.usgs`, `eventos.emsc`) y en `eventos.replay`: clave = `id` del evento
+en esa fuente, con `schema_version`, `source`, `ingested_at`, `mode` y el evento
+original sin alterar. El de evento fusionado (v2) viaja en `eventos.live`: clave =
+id canónico, con el evento en forma normalizada y la lista de fuentes que lo
+componen, cada una con su original sin alterar. Los contratos MUST estar
+documentados en `specs/` y compartidos por quien los escribe y quien los lee; un
+cambio incompatible MUST subir `schema_version`. La API MUST documentar su contrato
 en `docs/CONTRATO-API.md` y el panel MUST consumir solo campos definidos ahí,
 nunca la respuesta cruda de USGS.
 
 ### III. Al menos una vez con escritura idempotente (NO NEGOCIABLE)
-El productor MUST marcar una versión `(id, updated)` como publicada solo
-después del acuse de Kafka. El consumidor MUST escribir cada mensaje en una
+Cada productor MUST marcar una versión `(fuente, id, updated)` como publicada
+solo después del acuse de Kafka. La fusión MUST ser determinista: la misma
+entrada produce el mismo mensaje fusionado, y MUST escribir en Kafka antes de
+confirmar su propio estado, de modo que un fallo provoque una reentrega idéntica
+y nunca una pérdida. El estado de la fusión es de la fusión (esquema propio); las
+tablas analíticas MUST escribirlas solo el consumidor. El consumidor MUST escribir cada mensaje en una
 única transacción de PostgreSQL y MUST confirmar el offset después del commit.
 Restricciones únicas y upsert MUST impedir que un reenvío aumente recuentos.
 El estado actual de un evento MUST cambiar solo si la versión recibida tiene un
@@ -44,9 +52,11 @@ con motivo y referencia al original; MUST NOT descartarse en silencio ni
 inventarse valores. Los nulos MUST NOT rellenarse con cero; magnitudes y
 profundidades negativas MUST estudiarse antes de rechazarse. Las fechas MUST
 almacenarse en UTC, separando tiempo de ocurrencia, actualización USGS e
-ingesta. Solo se publican como terremotos los eventos con
-`properties.type == "earthquake"`; el resto MUST conservar su motivo de
-exclusión.
+ingesta. Solo se publican como terremotos los eventos que su fuente marca como tales
+(USGS: `properties.type == "earthquake"`; EMSC: `properties.evtype == "ke"`);
+el resto MUST conservar su motivo de exclusión. Dos informes de fuentes distintas
+sobre el mismo terremoto MUST fusionarse con una regla escrita, probada y medida;
+dos informes de la misma fuente MUST NOT fusionarse.
 
 ### V. Integración geográfica por geometría
 El país de un terremoto MUST obtenerse por punto dentro de polígono contra el
@@ -79,8 +89,10 @@ MUST escuchar en `0.0.0.0:8000` en HTTP dentro de Docker; el HTTPS lo aporta
 ngrok.
 
 ### VIII. Simplicidad y evidencia
-La pila MUST limitarse a lo que exige `docs/ENUNCIADO.md`: sin Spark, Flink,
-Kubernetes ni aprendizaje automático. Una dependencia, servicio o abstracción
+La pila MUST limitarse a lo que exige `docs/ENUNCIADO.md` más las ampliaciones
+justificadas en un `research.md`. Spark (PySpark, Structured Streaming) está
+admitido para fusionar fuentes (feature 013); Flink, Kubernetes y el aprendizaje
+automático siguen fuera. Una dependencia, servicio o abstracción
 adicional MUST justificarse en el `research.md` de la feature. Cada feature
 MUST cerrar con evidencia verificable (tests, consultas, capturas o logs)
 ligada a las pruebas de aceptación del apartado 11 del enunciado. Toda
@@ -90,14 +102,15 @@ equivalentes y MUST NOT presentarse como predicción ni evaluación de riesgo.
 ## Restricciones de plataforma
 
 - Backend en Python 3.12 con `aiokafka`, `asyncpg`/`psycopg`, `shapely` y
-  `fastapi`/`uvicorn`; versiones fijadas en `requirements.txt`.
+  `fastapi`/`uvicorn`; versiones fijadas en `requirements.txt`. La fusión usa
+  PySpark 4 con su conector de Kafka, también con versiones fijadas.
 - Kafka 4.1 en modo KRaft, un único nodo, sin ZooKeeper. El listener interno
   es `kafka:19092`; el del host, `localhost:9092`, solo para inspección.
 - PostgreSQL con esquema inicial versionado en `db/init/`. Índices y
   restricciones MUST justificarse en el `data-model.md` de la feature.
 - Frontend Angular + Leaflet compilado como SPA y publicado en Netlify. La URL
   de la API se lee de `public/config.json`. El panel consulta la API cada 60 s
-  y el productor consulta USGS cada 60 s, de forma independiente.
+  y cada productor consulta su fuente cada 60 s, de forma independiente.
 - Datos descargados (histórico, originales) fuera de Git, en `data/`, con un
   script que los regenera. Los puertos publicados al host se documentan en un
   único sitio.
@@ -136,4 +149,14 @@ comando, contrato versionado, idempotencia probada, cuarentena con motivo,
 aislamiento de replay, ausencia de secretos y ausencia de complejidad no
 justificada.
 
-**Version**: 2.0.1 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-11-02
+**Version**: 3.0.0 | **Ratified**: 2026-10-26 | **Last Amended**: 2026-11-14
+
+### Historial de enmiendas
+
+- **3.0.0 (2026-11-14, feature 013)**. MAJOR: redefine II (dos contratos: de fuente v1 y
+  fusionado v2; la clave de `eventos.live` pasa a ser el id canónico) y VIII (Spark admitido
+  para la fusión). Amplía I (un productor por fuente y servicio de fusión), III (fusión
+  determinista que escribe en Kafka antes de confirmar su estado; el estado de la fusión es
+  propio) y IV (tipo de evento por fuente; regla de fusión escrita y medida). Motivo: USGS solo
+  cubre la sismicidad pequeña de EE. UU.; en Europa daba 0 eventos en 24 h frente a 98 de EMSC.
+- **2.0.1 (2026-11-02)**. PATCH de redacción.

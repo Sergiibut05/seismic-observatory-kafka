@@ -9,7 +9,7 @@ alwaysApply: true
   Si una petición contradice alguno de los dos, avisa antes de implementarla.
 - Stack fijo: producer, consumer y api en Python 3.12 (aiokafka, FastAPI);
   Kafka 4.1 KRaft; PostgreSQL; panel Angular + Leaflet en Netlify; ngrok solo
-  para la API. Nada de Spark, Flink, Kubernetes ni ML.
+  para la API. Desde la 013, PySpark para fusionar fuentes; nada de Flink, Kubernetes ni ML.
 - Cinco servicios en `compose.yaml`, una imagen Python compartida en `backend/`.
   Dentro de Compose usa nombres de servicio (`kafka:19092`, `postgres:5432`), nunca `localhost`.
 - Trabajo por features de Spec Kit en `specs/NNN-nombre/`, una rama por feature.
@@ -19,7 +19,8 @@ alwaysApply: true
 
 ## Reglas de dominio que se olvidan fácilmente
 
-- Clave Kafka = `id` USGS. Mensaje con `schema_version`, `source`, `ingested_at`, `mode`, evento original.
+- Topics por fuente (`eventos.usgs`, `eventos.emsc`, contrato v1): clave = `id` de la fuente; `schema_version`, `source`, `ingested_at`, `mode`, evento original.
+- `eventos.live` (contrato v2, lo escribe Spark): clave = id canónico; evento normalizado y lista de fuentes con sus originales.
 - Publicado solo tras el acuse de Kafka; offset confirmado solo tras el commit en PostgreSQL.
 - Estado actual solo con `updated` más reciente; historial `(event_id, updated)` sin sobrescribir.
 - Agregaciones desde el estado actual, nunca contando mensajes.
