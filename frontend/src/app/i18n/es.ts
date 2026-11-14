@@ -136,6 +136,7 @@ export const ES = {
   'mapa.plano': 'Plano',
   'mapa.globo': 'Globo 3D',
   'mapa.usa_filtros': 'Usa todos los filtros.',
+  'mapa.ultimas_24h': 'Sin fechas: últimas 24 h.',
   'mapa.replay_nota': 'REPRODUCCIÓN: eventos reproducidos, no en directo.',
   'mapa.dibujados': '{n} eventos dibujados.',
   'mapa.truncado':

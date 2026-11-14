@@ -7,6 +7,7 @@ import {
   VistaDatos,
   aQuery,
   acotarVentanaHora,
+  filtrosMapa,
   notaOrigenDatos,
   validarFiltros,
 } from './filtros';
@@ -83,7 +84,10 @@ describe('validarFiltros', () => {
   });
 
   it('país: ADM0_A3 o «Sin país asignado» literal', () => {
-    expect(validarFiltros(editados({ pais: 'USA' }))).toEqual({ ok: true, filtros: { pais: 'USA' } });
+    expect(validarFiltros(editados({ pais: 'USA' }))).toEqual({
+      ok: true,
+      filtros: { pais: 'USA' },
+    });
     expect(validarFiltros(editados({ pais: SIN_PAIS }))).toEqual({
       ok: true,
       filtros: { pais: SIN_PAIS },
@@ -207,13 +211,21 @@ describe('aQuery con vista (modo y sintéticos, 007)', () => {
 
   it('la comparación no lleva ni `modo` ni `incluir_sinteticos`, sea cual sea la vista', () => {
     for (const vista of [replay, sinteticos, ambos]) {
-      const q = new URLSearchParams(aQuery({ ...f, desde: '2026-11-01T00:00:00.000Z' }, 'comparacion', {}, ahora, vista));
+      const q = new URLSearchParams(
+        aQuery({ ...f, desde: '2026-11-01T00:00:00.000Z' }, 'comparacion', {}, ahora, vista),
+      );
       expect([...q.keys()].sort()).toEqual(['magnitud_min', 'pais']);
     }
   });
 
   it('la vista va antes de `extra` (la paginación sigue al final)', () => {
-    const q = aQuery({ magnitudMin: 2 }, 'completo', { limite: 50, desplazamiento: 0 }, ahora, ambos);
+    const q = aQuery(
+      { magnitudMin: 2 },
+      'completo',
+      { limite: 50, desplazamiento: 0 },
+      ahora,
+      ambos,
+    );
     expect(q).toBe('magnitud_min=2&modo=replay&incluir_sinteticos=true&limite=50&desplazamiento=0');
   });
 });
@@ -285,5 +297,29 @@ describe('acotarVentanaHora', () => {
     );
     expect(r.filtros.magnitudMin).toBe(4);
     expect(r.filtros.pais).toBe('CHL');
+  });
+});
+
+describe('filtrosMapa (013)', () => {
+  const ahora = Date.parse('2026-11-14T12:00:00.000Z');
+
+  it('en directo y sin fechas, solo las últimas 24 h', () => {
+    const { filtros, ultimas24h } = filtrosMapa({ magnitudMin: 3 }, VISTA_VIVO, ahora);
+    expect(ultimas24h).toBe(true);
+    expect(filtros).toEqual({ magnitudMin: 3, desde: '2026-11-13T12:00:00.000Z' });
+  });
+
+  it('con fechas manda el rango elegido', () => {
+    const f = { desde: '2025-03-01T00:00:00Z' };
+    expect(filtrosMapa(f, VISTA_VIVO, ahora)).toEqual({ filtros: f, ultimas24h: false });
+    const g = { hasta: '2025-04-01T00:00:00Z' };
+    expect(filtrosMapa(g, VISTA_VIVO, ahora)).toEqual({ filtros: g, ultimas24h: false });
+  });
+
+  it('en REPRODUCCIÓN no se acota (son eventos de 2025)', () => {
+    expect(filtrosMapa({}, { modo: 'replay', sinteticos: false }, ahora)).toEqual({
+      filtros: {},
+      ultimas24h: false,
+    });
   });
 });

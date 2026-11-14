@@ -86,6 +86,7 @@ Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema l
 - **FR-010**: relleno: orden puntual que publica en los topics por fuente todos los terremotos M ≥ 2,5 de un intervalo (por defecto 2025-01-01 → ahora) de USGS y EMSC, partiendo cada intervalo según el recuento de la fuente hasta que la consulta cabe, y marcando lo publicado. Repetirlo no republica nada.
 - **FR-011**: el consumidor guarda las fuentes de cada evento (estado actual e historial); la API las devuelve; el panel las muestra en la ficha y atribuye EMSC.
 - **FR-012**: el modo `replay`, la prueba de humo y los casos sintéticos siguen funcionando (contrato v1).
+- **FR-014**: con casi dos años en la base, el mapa (plano y globo) en directo y sin fechas en los filtros enseña solo las últimas 24 h; con fechas, el rango elegido; en REPRODUCCIÓN, todo. La tabla, los recuentos y las distribuciones siguen usando todo el periodo. Petición del usuario tras ver el relleno.
 - **FR-013**: la comparación histórica compara la misma fuente: base de 2025 de USGS y, en las últimas 24 h, solo los eventos con `usgs` entre sus fuentes. Enunciado §7.
 
 ### Key Entities

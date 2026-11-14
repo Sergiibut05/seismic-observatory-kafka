@@ -23,7 +23,7 @@
   </style>
 
   <rect class="bg" width="1000" height="340" rx="16"/>
-  <text class="title" x="28" y="42">USGS revises earthquakes. We keep the latest and remember the rest.</text>
+  <text class="title" x="28" y="42">USGS and EMSC revise earthquakes. We keep the latest and remember the rest.</text>
   <text class="sub" x="28" y="64">Same event id us7000abcd, four messages arriving in this order.</text>
 
   <text class="head" x="28" y="100">ARRIVING MESSAGE</text>

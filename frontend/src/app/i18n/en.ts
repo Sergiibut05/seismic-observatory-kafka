@@ -136,6 +136,7 @@ export const EN: Record<Clave, string> = {
   'mapa.plano': 'Flat',
   'mapa.globo': '3D globe',
   'mapa.usa_filtros': 'Uses all filters.',
+  'mapa.ultimas_24h': 'No dates: last 24 h.',
   'mapa.replay_nota': 'REPLAY: replayed events, not live.',
   'mapa.dibujados': '{n} events drawn.',
   'mapa.truncado':

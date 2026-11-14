@@ -32,7 +32,7 @@ equivalente?**
 
 ## Cómo funciona
 
-<p align="center"><img src="docs/img/architecture.svg" alt="Flujo de datos: USGS, productor, Kafka, consumidor, PostgreSQL, API, ngrok y panel" width="100%"></p>
+<p align="center"><img src="docs/img/architecture.svg" alt="Flujo de datos: USGS y EMSC con su productor y su topic, fusión con PySpark, eventos.live, consumidor, PostgreSQL, API, ngrok y panel" width="100%"></p>
 
 Siete servicios en Docker Compose: los cinco del enunciado y, desde la feature 013, un segundo productor y la fusión.
 
@@ -56,10 +56,13 @@ ejecuta en local con `npm start`.
 
 ### Garantías de entrega
 
-<p align="center"><img src="docs/img/delivery.svg" alt="Ocho pasos: el productor marca publicado solo tras el acuse de Kafka; el consumidor confirma el offset solo tras el COMMIT en PostgreSQL" width="100%"></p>
+<p align="center"><img src="docs/img/delivery.svg" alt="Doce pasos en tres carriles: los productores marcan publicado solo tras el acuse de Kafka; la fusión escribe en Kafka antes de guardar su estado; el consumidor confirma el offset solo tras el COMMIT en PostgreSQL" width="100%"></p>
 
 - El productor marca un evento como **publicado solo después del acuse de Kafka** (`acks=all`). Si Kafka no responde,
   reintenta con espera creciente (1, 2, 4, 8, 16, 30 s…).
+- La fusión (Spark) **escribe en `eventos.live` antes de guardar su estado**. Si se cae entre ambos pasos, repite el lote
+  desde su *checkpoint* y emite exactamente los mismos mensajes, que el consumidor descarta como duplicados (probado con
+  un corte a propósito en esa ventana: [evidencia](specs/013-multifuente/evidencias/resiliencia-fusion.txt)).
 - El consumidor guarda cada mensaje en **una transacción** y **confirma el offset solo después del `COMMIT`**. Si se cae
   entre ambos pasos, Kafka le vuelve a entregar el mensaje y la escritura idempotente lo descarta.
 
@@ -154,7 +157,7 @@ docker compose up -d    # vuelve a arrancar con los mismos datos
 | Tema | Papel (por defecto) o noche. Al pasar a noche, una gota de tinta se derrama desde el botón de la cabecera hasta cubrir la ventana; al volver a papel, se recoge hacia él |
 | Origen de los datos | «En directo» o «REPRODUCCIÓN», y el interruptor de casos de prueba sintéticos (apagado por defecto) |
 | Filtros | Fechas en UTC, magnitud mínima y máxima, país y subregión. Afectan a todos los bloques salvo la comparación histórica, que solo usa magnitud y país o subregión |
-| Mapa | **Plano** (Leaflet): círculo por evento, tamaño = magnitud, color = profundidad. **Globo 3D** (globe.gl), a pantalla completa: columna por evento cuya altura sigue la magnitud y pulsos rojos en los 60 más recientes, con cinta de 24 h. Los dos dibujan el mismo mundo (Natural Earth, sin teselas externas) y al cambiar de uno a otro se conserva la región que se miraba |
+| Mapa | Sin fechas en los filtros, **solo las últimas 24 h** (con fechas, el rango elegido). **Plano** (Leaflet): círculo por evento, tamaño = magnitud, color = profundidad. **Globo 3D** (globe.gl), a pantalla completa: columna por evento cuya altura sigue la magnitud y pulsos rojos en los 60 más recientes, con cinta de 24 h. Los dos dibujan el mismo mundo (Natural Earth, sin teselas externas) y al cambiar de uno a otro se conserva la región que se miraba |
 | Eventos | Tabla paginada; «Ver en el mapa» centra el evento en el plano o en el globo |
 | Comparación histórica | Eventos de las últimas 24 h frente a la media diaria de 2025 (magnitud ≥ 4): dos barras sobre la misma escala y su cociente, dicho también en palabras («52 % por debajo de la media diaria») |
 | Recuentos | Por país o subregión (lista ordenada con la parte del total de cada uno) y por hora UTC (con la hora punta y la media por hora) |

@@ -46,8 +46,7 @@ export interface FiltrosAplicados {
 export type CampoFiltro = keyof FiltrosEditados;
 export type ErroresFiltros = Partial<Record<CampoFiltro, string>>;
 export type ResultadoValidacion =
-  | { ok: true; filtros: FiltrosAplicados }
-  | { ok: false; errores: ErroresFiltros };
+  { ok: true; filtros: FiltrosAplicados } | { ok: false; errores: ErroresFiltros };
 
 export type ModoQuery = 'completo' | 'comparacion' | 'hora';
 
@@ -182,6 +181,26 @@ export function acotarVentanaHora(f: FiltrosAplicados, ahoraMs: number): Ventana
  * y **nunca** en la comparación (que solo existe en directo y ignora los sintéticos).
  * `extra` (p. ej. `limite`, `desplazamiento`) va al final.
  */
+/** 013: lo que enseña el mapa por defecto en directo, sin fechas en los filtros. */
+export const VENTANA_MAPA_MS = 24 * 3600 * 1000;
+
+/**
+ * Filtros del mapa (y del globo, que usa los mismos datos). En directo y sin fechas, solo las últimas
+ * 24 h: con el relleno la base tiene casi dos años y el mapa no debe mezclar lo de hoy con lo de hace
+ * meses. Con fechas manda el rango elegido; en REPRODUCCIÓN (eventos de 2025) no se acota.
+ */
+export function filtrosMapa(
+  f: FiltrosAplicados,
+  vista: VistaDatos,
+  ahoraMs: number,
+): { filtros: FiltrosAplicados; ultimas24h: boolean } {
+  if (vista.modo !== 'live' || f.desde || f.hasta) return { filtros: f, ultimas24h: false };
+  return {
+    filtros: { ...f, desde: new Date(ahoraMs - VENTANA_MAPA_MS).toISOString() },
+    ultimas24h: true,
+  };
+}
+
 export function aQuery(
   filtros: FiltrosAplicados,
   modo: ModoQuery,

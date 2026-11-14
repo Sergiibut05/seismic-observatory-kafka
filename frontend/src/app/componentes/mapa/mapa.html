@@ -27,6 +27,9 @@
     </div>
     <span class="bloque__nota">
       {{ i18n.tr('mapa.usa_filtros') }}
+      @if (ultimas24h()) {
+        {{ i18n.tr('mapa.ultimas_24h') }}
+      }
       @if (esReplay()) {
         {{ i18n.tr('mapa.replay_nota') }}
       }

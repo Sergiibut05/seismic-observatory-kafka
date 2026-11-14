@@ -82,6 +82,8 @@ export class Mapa {
   private readonly contenedor = viewChild<ElementRef<HTMLElement>>('lienzo');
 
   protected readonly bloque = this.datos.mapa;
+  /** 013: sin fechas, el mapa en directo enseña solo las últimas 24 h. */
+  protected readonly ultimas24h = this.datos.mapaUltimas24h;
   protected readonly respuesta = computed(() => this.bloque().datos);
   protected readonly antiguos = computed(() => bloqueConDatosAntiguos(this.bloque()));
   protected readonly etiquetaAntiguos = computed(() =>

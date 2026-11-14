@@ -12,7 +12,7 @@ import {
 } from '../modelos/api';
 import { calcularEstado } from '../puro/desactualizado';
 import { ErrorPanel, clasificarError } from '../puro/errores';
-import { FiltrosAplicados, acotarVentanaHora, aQuery } from '../puro/filtros';
+import { FiltrosAplicados, acotarVentanaHora, aQuery, filtrosMapa } from '../puro/filtros';
 import { ApiService } from './api.service';
 import { FiltrosStore } from './filtros.store';
 import { RELOJ } from './reloj';
@@ -71,6 +71,10 @@ export class PanelDatosService {
   readonly horaAcotada = signal<{ desde: string; hasta: string } | null>(null);
 
   /** Última respuesta correcta de `/status` medida por el panel (ms epoch), o `null`. */
+  /** El mapa en directo y sin fechas enseña solo las últimas 24 h (`filtrosMapa`). */
+  readonly mapaUltimas24h = computed(
+    () => filtrosMapa(this.store.aplicados(), this.store.vista(), 0).ultimas24h,
+  );
   readonly ultimoAccesoOk = computed(() => this.status().lecturaOk);
   /** Avisos destacados: API sin respuesta, base fallida, datos desactualizados. */
   readonly estadoSistema = computed(() =>
@@ -88,7 +92,11 @@ export class PanelDatosService {
       aQuery(f, 'completo', extra, undefined, vista);
     const tareas = [
       this.cargar('status', this.status, () => this.api.status()),
-      this.cargar('mapa', this.mapa, () => this.api.eventosMapa(q())),
+      this.cargar('mapa', this.mapa, () =>
+        this.api.eventosMapa(
+          aQuery(filtrosMapa(f, vista, this.reloj()).filtros, 'completo', {}, undefined, vista),
+        ),
+      ),
       this.cargarTabla(),
       this.cargar('porPais', this.porPais, () => this.api.recuentosPais(q())),
       this.cargar('porSubregion', this.porSubregion, () => this.api.recuentosSubregion(q())),
@@ -127,7 +135,9 @@ export class PanelDatosService {
     const q = aQuery({}, 'completo', {}, undefined, this.store.vista());
     return Promise.all([
       this.cargar('opcionesPais', this.opcionesPais, () => this.api.recuentosPais(q)),
-      this.cargar('opcionesSubregion', this.opcionesSubregion, () => this.api.recuentosSubregion(q)),
+      this.cargar('opcionesSubregion', this.opcionesSubregion, () =>
+        this.api.recuentosSubregion(q),
+      ),
     ]).then(() => undefined);
   }
 
@@ -135,7 +145,9 @@ export class PanelDatosService {
     const ahora = this.reloj();
     const acotada = acotarVentanaHora(f, ahora);
     this.horaAcotada.set(
-      acotada.acotado ? { desde: acotada.filtros.desde ?? '', hasta: acotada.filtros.hasta ?? '' } : null,
+      acotada.acotado
+        ? { desde: acotada.filtros.desde ?? '', hasta: acotada.filtros.hasta ?? '' }
+        : null,
     );
     const vista = this.store.vista();
     return this.cargar('porHora', this.porHora, () =>

@@ -43,5 +43,7 @@
 - [x] T17 Verificador independiente (subagente) sobre spec, plan, tareas y evidencias (evidencias/README.md)
 - [x] T19 Comparación con 2025 de la misma fuente: 24 h solo con USGS (FR-013, medido tras el relleno)
 - [x] T20 Prueba con la pila de la prueba de humo, la reproducción y el relleno repetido (FR-012, FR-010)
+- [x] T22 Mapa en directo sin fechas: últimas 24 h (`filtrosMapa`, nota «Sin fechas: últimas 24 h») (FR-014)
+- [x] T23 Diagramas del README al día: arquitectura (7 servicios), entregas (carril de la fusión), puesta en marcha y revisiones
 - [x] T21 Corte de la fusión dentro de la ventana «escrito en Kafka, estado sin confirmar» (SC-004; evidencias/resiliencia-fusion.txt)
 - [x] T18 README, `docs/FUENTES-Y-LICENCIAS.md`, `docs/MEMORIA.md` (limitación de la comparación) y quickstart
