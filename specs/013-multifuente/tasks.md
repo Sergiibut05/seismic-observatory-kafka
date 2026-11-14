@@ -40,5 +40,8 @@
 ## Fase 7 — Verificación y documentación
 
 - [x] T16 Pila real: Europa con eventos (SC-001), fusión medida (SC-002, SC-003), corte de la fusión a mitad de lote (SC-004), relleno completo sin truncar (SC-005); evidencias
-- [ ] T17 Verificador independiente (subagente) sobre spec, plan, tareas y evidencias
+- [x] T17 Verificador independiente (subagente) sobre spec, plan, tareas y evidencias (evidencias/README.md)
+- [x] T19 Comparación con 2025 de la misma fuente: 24 h solo con USGS (FR-013, medido tras el relleno)
+- [x] T20 Prueba con la pila de la prueba de humo, la reproducción y el relleno repetido (FR-012, FR-010)
+- [x] T21 Corte de la fusión dentro de la ventana «escrito en Kafka, estado sin confirmar» (SC-004; evidencias/resiliencia-fusion.txt)
 - [x] T18 README, `docs/FUENTES-Y-LICENCIAS.md`, `docs/MEMORIA.md` (limitación de la comparación) y quickstart

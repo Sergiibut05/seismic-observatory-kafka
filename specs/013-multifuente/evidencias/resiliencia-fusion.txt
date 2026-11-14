@@ -1,15 +1,41 @@
-== 2026-11-14T11:42:03Z antes del corte
-fusion-1  | ts=2026-11-14T11:41:47.122Z level=INFO service=fusion result=listo component=fusion action=lote lote=6 informes=4997 nuevos=4997 revisados=0 sin_cambios=0 fusionados=607 emitidos=4997 recibidos=4997 duplicados_en_lote=0 descartes=0
-fusion-1  | ts=2026-11-14T11:42:02.263Z level=INFO service=fusion result=listo component=fusion action=lote lote=7 informes=4998 nuevos=4998 revisados=0 sin_cambios=0 fusionados=848 emitidos=4998 recibidos=4998 duplicados_en_lote=0 descartes=0
-== 2026-11-14T11:42:10Z SIGKILL a la fusión (a mitad de lote)
- Container seismic-observatory-fusion-1  Killing
+# SC-004 / FR-008: corte de la fusión DENTRO de la ventana «escrito en Kafka, estado sin confirmar»
+#
+# Técnica: otra sesión de PostgreSQL toma `LOCK TABLE fusion.informe IN EXCLUSIVE MODE` (deja leer,
+# no escribir). La fusión carga el estado, decide, escribe en `eventos.live` y se queda esperando en
+# el INSERT de `guardar` (se ve abajo: una sesión con wait_event_type=Lock en ese INSERT). En ese
+# momento: SIGKILL a la fusión, se suelta el bloqueo y se vuelve a arrancar.
+#
+# Lectura del resultado:
+# - El lote 68 (revisión del evento emsc-20261114_0000146) ya había escrito su mensaje en Kafka y
+#   no había confirmado su estado: `canonicos` no cambia con el corte (181485 antes y después).
+# - Al reiniciar, Spark repite el lote 68 desde el checkpoint y emite el MISMO mensaje (misma clave y
+#   versión 1794659741500); el consumidor lo descarta: `result=omitido ... reason=duplicado`.
+# - Final: nada perdido (publicadas = en la fusión), todas las versiones en la base, ningún id repetido.
+#
+# (El primer intento, resiliencia-fusion-intento1.txt, cortó entre dos lotes: no ejercitaba esta ventana.)
+
+== 2026-11-14T12:36:42Z corte dentro de la ventana (intento 2, a mano)
+sesión que espera el bloqueo:
+|Lock| INSERT INTO fusion.informe (fuente, id_origen, updated_ms, tiempo_ms,
+último lote confirmado antes del corte:
+fusion-1  | ts=2026-11-14T12:36:01.426Z level=INFO service=fusion result=listo component=fusion action=lote lote=67 informes=4 nuevos=3 revisados=1 sin_cambios=0 fusionados=1 emitidos=4 recibidos=4 duplicados_en_lote=0 descartes=0
+fin de eventos.live (ya escrito por el lote bloqueado): 225460
+canonicos (sin el lote bloqueado): 181485
+== 2026-11-14T12:36:45Z SIGKILL
  Container seismic-observatory-fusion-1  Killed
-== arranque
+canonicos tras el corte: 181485
+== 2026-11-14T12:36:47Z arranque y 90 s
  Container seismic-observatory-fusion-1  Started
-== 2026-11-14T11:43:16Z tras reanudar
-fusion-1  | ts=2026-11-14T11:42:16.814Z level=INFO service=fusion result=iniciado component=fusion patron="eventos\\.(usgs|emsc)" salida=eventos.live
-fusion-1  | ts=2026-11-14T11:42:16.890Z level=INFO service=fusion result=listo component=fusion action=esquema sembrados=0
-fusion-1  | ts=2026-11-14T11:42:28.885Z level=INFO service=fusion result=listo component=fusion action=lote lote=8 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=745 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0
-fusion-1  | ts=2026-11-14T11:42:32.304Z level=INFO service=fusion result=listo component=fusion action=lote lote=9 informes=4998 nuevos=4998 revisados=0 sin_cambios=0 fusionados=945 emitidos=4998 recibidos=4998 duplicados_en_lote=0 descartes=0
-fusion-1  | ts=2026-11-14T11:42:47.473Z level=INFO service=fusion result=listo component=fusion action=lote lote=10 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=1092 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0
-fusion-1  | ts=2026-11-14T11:43:02.096Z level=INFO service=fusion result=listo component=fusion action=lote lote=11 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=1069 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T12:36:49.350Z level=INFO service=fusion result=listo component=fusion action=esquema sembrados=0
+fusion-1  | ts=2026-11-14T12:36:58.529Z level=INFO service=fusion result=listo component=fusion action=lote lote=68 informes=1 nuevos=0 revisados=1 sin_cambios=0 fusionados=0 emitidos=1 recibidos=1 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T12:37:01.438Z level=INFO service=fusion result=listo component=fusion action=lote lote=69 informes=1 nuevos=0 revisados=1 sin_cambios=0 fusionados=0 emitidos=1 recibidos=1 duplicados_en_lote=0 descartes=0
+mensajes nuevos en eventos.live tras repetir: 3
+== consumidor
+consumer-1  | ts=2026-11-14T12:36:58.522Z level=INFO service=consumer result=omitido event_id=emsc-20261114_0000146 updated=1794659741500 reason=duplicado topic=eventos.live partition=1 offset=75259 pais=México
+consumer-1  | ts=2026-11-14T12:37:01.435Z level=INFO service=consumer result=persistido event_id=emsc-20261114_0000146 updated=1794659741893 topic=eventos.live partition=1 offset=75260 pais=México
+consumer-1  | ts=2026-11-14T12:38:01.349Z level=INFO service=consumer result=persistido event_id=nc75466352 updated=1794659845424 topic=eventos.live partition=0 offset=75240 pais="Estados Unidos"
+== comprobación final
+canonicos: 181485
+publicadas - en fusión: emsc=0 usgs=0
+canónicos sin su versión en la base: 0
+ids repetidos: 0

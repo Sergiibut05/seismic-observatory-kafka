@@ -1,0 +1,36 @@
+== extra A: miembros de un mismo evento fuera de regla (>30 s o >100 km)
+ fuera_de_regla | por_tiempo 
+----------------+------------
+              0 |          0
+(1 row)
+
+== extra B: eventos con un informe de cada fuente y su id canonico
+    id    | count 
+----------+-------
+ id emsc- |    42
+ id usgs  | 45541
+(2 rows)
+
+== extra C: historial vs mensajes (versiones por evento) y estado actual sin fuentes
+ sin_fuentes | count  
+-------------+--------
+           0 | 181476
+(1 row)
+
+ versiones | posiciones_distintas 
+-----------+----------------------
+    225357 |               225357
+(1 row)
+
+== extra D: comparacion M>=4 24h
+ total | con_usgs 
+-------+----------
+    40 |       26
+(1 row)
+
+== extra E: M>=4 en 2025 (union fusionada)
+ count 
+-------
+ 21938
+(1 row)
+

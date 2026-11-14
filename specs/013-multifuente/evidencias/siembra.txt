@@ -1,0 +1,12 @@
+== FR-009: eventos que ya estaban (versión v1 de USGS en live.versiones_evento antes de la 013)
+ eventos_previos | sembrados_con_su_id | recibieron_pareja_emsc | movidos_a_otro_id 
+-----------------+---------------------+------------------------+-------------------
+            1376 |                1376 |                    279 |                 0
+(1 row)
+
+== Sin duplicados: ningún evento EMSC que repita un previo (misma hora ±30 s y ≤100 km con id distinto)
+ posibles_duplicados 
+---------------------
+                   0
+(1 row)
+

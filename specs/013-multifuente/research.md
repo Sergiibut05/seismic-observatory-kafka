@@ -4,7 +4,7 @@
 
 - **Medición (2026-11-12, 24 h)**: Europa (lat 34–72, lon −25–45): USGS 0, EMSC 98. EE. UU. continental: USGS 132, EMSC 19. Mundo: USGS 239, EMSC 305.
 - **Causa**: el feed de USGS es el catálogo de USGS: pequeña sismicidad de EE. UU. y, del resto, sobre todo M ≥ 4,5. EMSC agrega las redes nacionales europeas.
-- **Decisión**: USGS + EMSC. Ninguna de las dos basta sola (EMSC pierde la mayoría de EE. UU.; USGS deja Europa vacía). Para M ≥ 4 coinciden en un 97 % del recuento anual de 2025 (18.305 frente a 17.768).
+- **Decisión**: USGS + EMSC. Ninguna de las dos basta sola (EMSC pierde la mayoría de EE. UU.; USGS deja Europa vacía). Para M ≥ 4 sus recuentos anuales de 2025 se parecen (USGS 18.305 según `/count` el 14-nov; la base histórica, descargada el 2-nov, tiene 18.302; EMSC 17.768), pero no son los mismos terremotos: ver «Comparación con 2025».
 - **Descartadas por ahora**: INGV (EMSC ya lo agrega), GEOFON (lenta: 4 s por consulta pequeña), AFAD (solo Turquía), ISC (boletín con horas de retraso y flojo en lo reciente: 5 eventos en Europa en 48 h frente a 280 de EMSC; un mes M ≥ 2,5 tarda 74 s), EarthScope/IRIS (retirado el 1-jun-2026).
 
 ## EMSC
@@ -46,7 +46,7 @@ Script en `evidencias/umbrales.py`. Para cada evento USGS se busca el EMSC más 
 
 - **Spark**: lectura de los dos topics con offsets en *checkpoint*, micro-lotes con tope de tamaño (`maxOffsetsPerTrigger`), extracción de id y versión con funciones JSON de Spark SQL y deduplicación dentro del lote (se queda la última versión de cada informe), y escritura en `eventos.live` con su conector de Kafka.
 - **Python puro** (`observatorio/fusion/`): normalizar cada fuente y emparejar. Es la lógica delicada y se prueba con pytest sin levantar Spark.
-- **Honestidad sobre el tamaño**: en directo son unos cientos de eventos al día; Spark está sobredimensionado para eso. Se justifica por el relleno (unos 200.000 informes de 2025–2026), por el objetivo docente (Big Data) y porque deja el camino abierto a más fuentes.
+- **Honestidad sobre el tamaño**: en directo son unos cientos de eventos al día; Spark está sobredimensionado para eso. Se justifica por el relleno (227.055 informes de 2025–2026, medidos), por el objetivo docente (Big Data) y porque deja el camino abierto a más fuentes.
 
 ## Garantía de entrega de la fusión
 
@@ -61,6 +61,11 @@ Orden en cada lote: (1) leer estado y decidir, en una transacción de PostgreSQL
 - **Determinismo**: la versión del evento fusionado es `max(versión de sus informes, versión anterior + 1 ms)` y `ingested_at` es el máximo de los de sus informes: no depende del reloj del proceso.
 - **Alternativa descartada**: escribir con un productor de `aiokafka` dentro del lote. Funciona igual, pero el conector de Kafka de Spark es la pieza que se quiere enseñar.
 
+### Límites de la garantía
+
+- **Retención de Kafka**: la fusión lee con `failOnDataLoss=false`. Si estuviera parada más de los 7 días de retención (`TOPIC_RETENTION_MS`), los mensajes caducados de los topics por fuente ya no existirían y se saltarían sin error: se perderían. Con la fusión en marcha (o parada menos de 7 días) no ocurre. Se eligió así para que un topic recreado o compactado no bloquee la fusión para siempre; la alternativa (`true`) la dejaría parada hasta intervención manual.
+- **Frescura por fuente**: `/status` marca los datos como desactualizados con la última ingesta correcta de *cualquier* fuente. Si cae USGS y EMSC sigue bien, no salta el aviso; `ingesta_por_fuente` sí deja ver la diferencia.
+
 ## Id canónico y eventos que ya existían
 
 - **Decisión**: el id del primer informe; USGS tal cual (`us7000abcd`), EMSC con prefijo (`emsc-20261113_0000315`). Dentro de un mismo lote se procesa USGS antes que EMSC, para que un terremoto que ven las dos fuentes a la vez conserve el id USGS.
@@ -69,12 +74,12 @@ Orden en cada lote: (1) leer estado y decidir, en una transacción de PostgreSQL
 
 ## Fuente principal
 
-- **Decisión**: EMSC en Europa (lat 34–72, lon −25–45), USGS fuera. Son las redes que mejor conocen cada zona.
+- **Decisión**: EMSC en Europa (lat 34–72, lon −25–45), USGS fuera. Son las redes que mejor conocen cada zona. Un evento es «de Europa» si alguno de sus informes cae en la caja (los dos suelen estar a pocos km).
 - **Alternativa**: la de magnitud más reciente o la de `auth` local de EMSC. Más fina, pero más difícil de explicar y de probar.
 
 ## Relleno
 
-- **Volumen medido**: 2025 M ≥ 2,5: USGS 29.286, EMSC 79.758. 2026 hasta el 14-nov: USGS 25.533, EMSC unos 65.000. En total, unos 200.000 informes. Un mes de EMSC (≈ 10.000 eventos) se descarga en 1,4 s.
+- **Volumen medido**: 2025 M ≥ 2,5: USGS 29.286, EMSC 79.758. 2026 hasta el 14-nov: USGS 25.533, EMSC unos 92.000 (la estimación previa de 65.000 se quedó corta). El relleno contó 54.450 de USGS y 171.548 de EMSC; con el directo, 227.055 informes. Un mes de EMSC (≈ 10.000 eventos) se descarga en 1,4 s.
 - **Ruta**: el relleno publica en los mismos topics por fuente; así pasa por la misma fusión que el directo. No hay un segundo camino a la base.
 - **Partición**: USGS rechaza más de 20.000 (se parte por encima de 15.000); EMSC corta en ~10.000 (se parte por encima de 8.000). Se cuenta antes con `/count`.
 

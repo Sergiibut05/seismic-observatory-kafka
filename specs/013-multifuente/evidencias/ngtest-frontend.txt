@@ -1,0 +1,383 @@
+﻿> Building...
+√ Building...
+Initial chunk files                                   | Names                                              |  Raw size
+chunk-VTRIWOGK.js                                     | -                                                  | 100.65 kB | 
+chunk-QKDRFC7G.js                                     | -                                                  |  56.80 kB | 
+chunk-LSIAGKIK.js                                     | -                                                  |  36.59 kB | 
+chunk-HKJMMQR3.js                                     | -                                                  |  31.35 kB | 
+styles.css                                            | styles                                             |  31.33 kB | 
+chunk-OB3UGFPO.js                                     | -                                                  |  30.80 kB | 
+chunk-ERRQTR34.js                                     | -                                                  |  26.84 kB | 
+chunk-76QKCRDV.js                                     | -                                                  |  26.83 kB | 
+chunk-YWOIHMDK.js                                     | -                                                  |  23.54 kB | 
+spec-app-nucleo-panel-datos.service.js                | spec-app-nucleo-panel-datos.service                |  22.10 kB | 
+chunk-P4VWSG2W.js                                     | -                                                  |  16.58 kB | 
+chunk-CRZZ7INM.js                                     | -                                                  |  15.88 kB | 
+chunk-AJDEM2AZ.js                                     | -                                                  |  15.63 kB | 
+spec-app-puro-filtros.js                              | spec-app-puro-filtros                              |  11.12 kB | 
+chunk-O3JWRCIA.js                                     | -                                                  |   8.58 kB | 
+spec-app-componentes-tabla-tabla.js                   | spec-app-componentes-tabla-tabla                   |   8.35 kB | 
+spec-app-i18n-i18n.js                                 | spec-app-i18n-i18n                                 |   7.83 kB | 
+chunk-65KP4CVR.js                                     | -                                                  |   7.71 kB | 
+spec-app-puro-globo.js                                | spec-app-puro-globo                                |   7.59 kB | 
+chunk-GRSL6J2T.js                                     | -                                                  |   7.46 kB | 
+spec-app-app.js                                       | spec-app-app                                       |   7.25 kB | 
+spec-app-componentes-recuentos-recuentos.js           | spec-app-componentes-recuentos-recuentos           |   7.23 kB | 
+spec-app-componentes-grafico-barras-grafico-barras.js | spec-app-componentes-grafico-barras-grafico-barras |   6.89 kB | 
+spec-app-componentes-filtros-filtros.js               | spec-app-componentes-filtros-filtros               |   6.55 kB | 
+spec-app-componentes-comparacion-comparacion.js       | spec-app-componentes-comparacion-comparacion       |   6.49 kB | 
+spec-app-idioma.js                                    | spec-app-idioma                                    |   6.14 kB | 
+chunk-BT6UB4Y2.js                                     | -                                                  |   6.05 kB | 
+spec-app-componentes-vista-datos-vista-datos.js       | spec-app-componentes-vista-datos-vista-datos       |   5.82 kB | 
+spec-app-componentes-mapa-mapa-ficha.js               | spec-app-componentes-mapa-mapa-ficha               |   5.61 kB | 
+chunk-SWIW5WQP.js                                     | -                                                  |   5.43 kB | 
+spec-app-puro-escalas.js                              | spec-app-puro-escalas                              |   5.33 kB | 
+spec-app-puro-cola-refresco.js                        | spec-app-puro-cola-refresco                        |   5.25 kB | 
+spec-app-componentes-distribuciones-distribuciones.js | spec-app-componentes-distribuciones-distribuciones |   5.15 kB | 
+chunk-AQOB5VNF.js                                     | -                                                  |   5.03 kB | 
+chunk-Y4W3VJAE.js                                     | -                                                  |   4.99 kB | 
+spec-app-puro-barras.js                               | spec-app-puro-barras                               |   4.79 kB | 
+spec-app-componentes-mapa-mapa.js                     | spec-app-componentes-mapa-mapa                     |   4.77 kB | 
+chunk-RSTWSNOR.js                                     | -                                                  |   4.75 kB | 
+chunk-FOVRWSO2.js                                     | -                                                  |   4.41 kB | 
+spec-app-componentes-estado-estado.js                 | spec-app-componentes-estado-estado                 |   4.38 kB | 
+spec-app-nucleo-panel-ui.store.js                     | spec-app-nucleo-panel-ui.store                     |   4.35 kB | 
+chunk-PCMJL4OI.js                                     | -                                                  |   3.94 kB | 
+spec-app-nucleo-api.service.js                        | spec-app-nucleo-api.service                        |   3.89 kB | 
+spec-app-nucleo-config.service.js                     | spec-app-nucleo-config.service                     |   3.59 kB | 
+spec-app-puro-texto-comparacion.js                    | spec-app-puro-texto-comparacion                    |   3.56 kB | 
+chunk-SKG3V5OL.js                                     | -                                                  |   3.46 kB | 
+chunk-P5GRL3KV.js                                     | -                                                  |   3.31 kB | 
+spec-app-puro-tinta.js                                | spec-app-puro-tinta                                |   3.31 kB | 
+chunk-5ZL7KV3W.js                                     | -                                                  |   3.30 kB | 
+chunk-DSH3BF6R.js                                     | -                                                  |   3.20 kB | 
+spec-app-puro-desactualizado.js                       | spec-app-puro-desactualizado                       |   3.13 kB | 
+spec-app-puro-styles.contraste.js                     | spec-app-puro-styles.contraste                     |   2.95 kB | 
+spec-app-puro-formato.js                              | spec-app-puro-formato                              |   2.82 kB | 
+spec-app-puro-errores.js                              | spec-app-puro-errores                              |   2.78 kB | 
+chunk-UYZ2JFNQ.js                                     | -                                                  |   2.77 kB | 
+chunk-PB2ICYQT.js                                     | -                                                  |   2.58 kB | 
+chunk-FU73L2IM.js                                     | -                                                  |   2.56 kB | 
+chunk-JTX2MO6T.js                                     | -                                                  |   2.36 kB | 
+chunk-SMHBRYZX.js                                     | -                                                  |   2.28 kB | 
+chunk-NZK7CT2W.js                                     | -                                                  |   2.28 kB | 
+chunk-4DKQC4WB.js                                     | -                                                  |   2.15 kB | 
+chunk-V4SOPW5C.js                                     | -                                                  |   2.14 kB | 
+spec-app-nucleo-tema.service.js                       | spec-app-nucleo-tema.service                       |   1.87 kB | 
+chunk-BUNABRKU.js                                     | -                                                  |   1.78 kB | 
+spec-app-versiones.js                                 | spec-app-versiones                                 |   1.75 kB | 
+chunk-QORI76QD.js                                     | -                                                  |   1.67 kB | 
+spec-app-puro-mundo.js                                | spec-app-puro-mundo                                |   1.56 kB | 
+spec-app-componentes-frase-filtros-frase-filtros.js   | spec-app-componentes-frase-filtros-frase-filtros   |   1.56 kB | 
+chunk-6NQ52YO2.js                                     | -                                                  |   1.52 kB | 
+init-testbed.js                                       | init-testbed                                       |   1.21 kB | 
+chunk-VK37FVRW.js                                     | -                                                  |   1.19 kB | 
+spec-app-puro-frase-filtros.js                        | spec-app-puro-frase-filtros                        |   1.09 kB | 
+spec-app-componentes-superficies-superficies.js       | spec-app-componentes-superficies-superficies       |   1.01 kB | 
+vitest-mock-patch.js                                  | vitest-mock-patch                                  | 974 bytes | 
+spec-app-componentes-nota-aviso-nota-aviso.js         | spec-app-componentes-nota-aviso-nota-aviso         | 757 bytes | 
+spec-app-puro-etiqueta-antiguos.js                    | spec-app-puro-etiqueta-antiguos                    | 716 bytes | 
+spec-app-puro-fuentes.js                              | spec-app-puro-fuentes                              | 569 bytes | 
+chunk-BH7NYRQA.js                                     | -                                                  | 550 bytes | 
+chunk-FDBYALGT.js                                     | -                                                  | 442 bytes | 
+chunk-HV2AUN33.js                                     | -                                                  | 251 bytes | 
+chunk-EBVSJ6VV.js                                     | -                                                  | 217 bytes | 
+
+                                                      | Initial total                                      | 693.26 kB
+
+Lazy chunk files                                      | Names                                              |  Raw size
+chunk-AQZK57G2.js                                     | mallas                                             |   5.28 kB | 
+
+Application bundle generation complete. [3.630 seconds] - 2026-11-14T12:07:18.185Z
+
+
+ RUN  v4.0.18 C:/Users/mnsa1/Desktop/Paginas Web y Proyectos/seismic-observatory-kafka/frontend
+
+ ✓ |panel| src/app/componentes/estado/estado.spec.ts (7 tests) 341ms
+ ✓ |panel| src/app/componentes/filtros/filtros.spec.ts (10 tests) 318ms
+ ✓ |panel| src/app/componentes/vista-datos/vista-datos.spec.ts (10 tests) 415ms
+ ✓ |panel| src/app/componentes/tabla/tabla.spec.ts (15 tests) 431ms
+node.exe : stderr | src/app/nucleo/panel-datos.service.spec.ts > PanelDatosService > un 503 marca el bloque, conserva 
+los datos y el siguiente 200 lo limpia
+En C:\Program Files\nodejs\npx.ps1: 29 Carácter: 3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | src/ap...e 200 lo limpia:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+service=panel result=error bloque=mapa tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos no 
+responde."
+
+stderr | src/app/nucleo/panel-datos.service.spec.ts > PanelDatosService > si /status falla: aviso «API sin respuesta» 
+y se conserva el último acceso correcto
+service=panel result=error bloque=status tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo 
+CORS)."
+service=panel result=error bloque=mapa tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo CORS)."
+service=panel result=error bloque=tabla tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo 
+CORS)."
+service=panel result=error bloque=porPais tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo 
+CORS)."
+service=panel result=error bloque=porSubregion tipo=red motivo="La API no responde (red, túnel de ngrok caído o 
+bloqueo CORS)."
+service=panel result=error bloque=porHora tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo 
+CORS)."
+service=panel result=error bloque=distMagnitud tipo=red motivo="La API no responde (red, túnel de ngrok caído o 
+bloqueo CORS)."
+service=panel result=error bloque=distProfundidad tipo=red motivo="La API no responde (red, túnel de ngrok caído o 
+bloqueo CORS)."
+service=panel result=error bloque=comparacion tipo=red motivo="La API no responde (red, túnel de ngrok caído o bloqueo 
+CORS)."
+
+ ✓ |panel| src/app/componentes/mapa/mapa.spec.ts (8 tests) 311ms
+ ✓ |panel| src/app/componentes/comparacion/comparacion.spec.ts (9 tests) 485ms
+ ✓ |panel| src/app/puro/tinta.spec.ts (8 tests) 63ms
+ ✓ |panel| src/app/i18n/i18n.spec.ts (17 tests) 55ms
+ ✓ |panel| src/app/nucleo/api.service.spec.ts (5 tests) 16ms
+ ✓ |panel| src/app/componentes/frase-filtros/frase-filtros.spec.ts (1 test) 13ms
+ ✓ |panel| src/app/nucleo/panel-ui.store.spec.ts (6 tests) 67ms
+stderr | src/app/nucleo/panel-datos.service.spec.ts > RefrescoService > pestaña oculta: 0 rondas; al volver, 1 
+inmediata
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=status tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=mapa tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=tabla tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porPais tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porSubregion tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=porHora tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distMagnitud tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=distProfundidad tipo=desconocido motivo="Error inesperado en el panel."
+service=panel result=error bloque=comparacion tipo=desconocido motivo="Error inesperado en el panel."
+
+ ✓ |panel| src/app/nucleo/panel-datos.service.spec.ts (31 tests) 208ms
+stderr | src/app/nucleo/config.service.spec.ts > ConfigService > cuerpo sin apiBaseUrl → error de configuración, sin 
+lanzar
+service=panel result=error componente=config motivo="Falta «apiBaseUrl» en config.json."
+
+stderr | src/app/nucleo/config.service.spec.ts > ConfigService > fichero ausente (404) → error
+service=panel result=error componente=config motivo="No se pudo leer config.json."
+
+stderr | src/app/nucleo/config.service.spec.ts > ConfigService > JSON roto o fallo de red → error
+service=panel result=error componente=config motivo="config.json no se pudo leer o no es un JSON válido."
+
+stderr | src/app/nucleo/config.service.spec.ts > ConfigService > URL no válida → error con el motivo
+service=panel result=error componente=config motivo="«apiBaseUrl» debe usar HTTPS (http solo en localhost o 
+127.0.0.1)."
+
+ ✓ |panel| src/app/nucleo/config.service.spec.ts (11 tests) 13ms
+ ✓ |panel| src/app/puro/cola-refresco.spec.ts (12 tests) 188ms
+ ✓ |panel| src/app/nucleo/tema.service.spec.ts (4 tests) 34ms
+ ✓ |panel| src/app/componentes/mapa/mapa-ficha.spec.ts (12 tests) 58ms
+ ✓ |panel| src/app/puro/formato.spec.ts (11 tests) 5ms
+ ✓ |panel| src/app/componentes/grafico-barras/grafico-barras.spec.ts (13 tests) 792ms
+ ✓ |panel| src/app/puro/styles.contraste.spec.ts (42 tests) 10ms
+ ✓ |panel| src/app/puro/barras.spec.ts (15 tests) 12ms
+ ✓ |panel| src/app/versiones.spec.ts (5 tests) 23ms
+ ✓ |panel| src/app/componentes/nota-aviso/nota-aviso.spec.ts (1 test) 24ms
+ ✓ |panel| src/app/componentes/superficies/superficies.spec.ts (1 test) 31ms
+ ✓ |panel| src/app/puro/filtros.spec.ts (35 tests) 19ms
+ ✓ |panel| src/app/puro/etiqueta-antiguos.spec.ts (2 tests) 1ms
+ ✓ |panel| src/app/puro/escalas.spec.ts (18 tests) 10ms
+ ✓ |panel| src/app/puro/globo.spec.ts (16 tests) 12ms
+ ✓ |panel| src/app/puro/errores.spec.ts (10 tests) 3ms
+ ✓ |panel| src/app/puro/mundo.spec.ts (5 tests) 1ms
+ ✓ |panel| src/app/puro/desactualizado.spec.ts (13 tests) 13ms
+ ✓ |panel| src/app/puro/frase-filtros.spec.ts (2 tests) 1ms
+ ✓ |panel| src/app/puro/fuentes.spec.ts (2 tests) 1ms
+ ✓ |panel| src/app/componentes/distribuciones/distribuciones.spec.ts (6 tests) 892ms
+     ✓ sin_valor: 2 se ve aparte, no mezclado con el intervalo 0–1 ni con ceros  353ms
+ ✓ |panel| src/app/puro/texto-comparacion.spec.ts (8 tests) 19ms
+stderr | src/app/app.spec.ts > App (esqueleto) > REPRODUCCIÓN y casos sintéticos (007) > REPRODUCCIÓN: franja, 
+cabecera rotulada y ninguna petición a /comparacion-historica
+service=panel result=error bloque=opcionesPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=opcionesSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la 
+base de datos no responde."
+service=panel result=error bloque=status tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=mapa tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos no 
+responde."
+service=panel result=error bloque=tabla tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=porHora tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=distMagnitud tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=distProfundidad tipo=servicio_no_disponible motivo="Servicio no disponible: la base 
+de datos no responde."
+service=panel result=error bloque=comparacion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+
+stderr | src/app/app.spec.ts > App (esqueleto) > REPRODUCCIÓN y casos sintéticos (007) > al volver a «En directo» 
+desaparece la franja y vuelve la comparación
+service=panel result=error bloque=opcionesPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=opcionesSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la 
+base de datos no responde."
+service=panel result=error bloque=status tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=mapa tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos no 
+responde."
+service=panel result=error bloque=tabla tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=porHora tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=distMagnitud tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=distProfundidad tipo=servicio_no_disponible motivo="Servicio no disponible: la base 
+de datos no responde."
+service=panel result=error bloque=comparacion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+
+stderr | src/app/app.spec.ts > App (esqueleto) > REPRODUCCIÓN y casos sintéticos (007) > al volver a «En directo» 
+desaparece la franja y vuelve la comparación
+service=panel result=error bloque=opcionesPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=opcionesSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la 
+base de datos no responde."
+service=panel result=error bloque=status tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=mapa tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos no 
+responde."
+service=panel result=error bloque=tabla tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=porHora tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=distMagnitud tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=distProfundidad tipo=servicio_no_disponible motivo="Servicio no disponible: la base 
+de datos no responde."
+
+ ✓ |panel| src/app/componentes/recuentos/recuentos.spec.ts (11 tests) 1003ms
+stderr | src/app/app.spec.ts > App (esqueleto) > REPRODUCCIÓN y casos sintéticos (007) > con el interruptor encendido 
+aparece el aviso y las peticiones piden sintéticos
+service=panel result=error bloque=opcionesPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=opcionesSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la 
+base de datos no responde."
+service=panel result=error bloque=status tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=mapa tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos no 
+responde."
+service=panel result=error bloque=tabla tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porPais tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=porSubregion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=porHora tipo=servicio_no_disponible motivo="Servicio no disponible: la base de datos 
+no responde."
+service=panel result=error bloque=distMagnitud tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+service=panel result=error bloque=distProfundidad tipo=servicio_no_disponible motivo="Servicio no disponible: la base 
+de datos no responde."
+service=panel result=error bloque=comparacion tipo=servicio_no_disponible motivo="Servicio no disponible: la base de 
+datos no responde."
+
+stderr | src/app/app.spec.ts > App (esqueleto) > REPRODUCCIÓN y casos sintéticos (007) > con la configuración inválida 
+no hay controles de vista
+service=panel result=error componente=config motivo="«apiBaseUrl» debe usar HTTPS (http solo en localhost o 
+127.0.0.1)."
+
+stderr | src/app/app.spec.ts > App (esqueleto) > con la configuración inválida muestra el error y no pide nada
+service=panel result=error componente=config motivo="«apiBaseUrl» debe usar HTTPS (http solo en localhost o 
+127.0.0.1)."
+
+ ✓ |panel| src/app/app.spec.ts (8 tests) 825ms
+     ✓ coloca todos los componentes y el enlace de salto  385ms
+ ✓ |panel| src/app/idioma.spec.ts (4 tests) 860ms
+     ✓ por defecto está en español, con el grupo accesible y ES pulsado  455ms
+
+ Test Files  37 passed (37)
+      Tests  394 passed (394)
+   Start at  13:07:18
+   Duration  3.49s (transform 2.95s, setup 5.79s, import 5.37s, tests 7.58s, environment 45.50s)
+

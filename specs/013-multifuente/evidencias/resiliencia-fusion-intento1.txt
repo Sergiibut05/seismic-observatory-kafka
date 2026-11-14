@@ -1,0 +1,18 @@
+# Primer intento: el SIGKILL cayó probablemente entre dos lotes (disparo cada 15 s). Insuficiente para
+# SC-004; ver resiliencia-fusion.txt para el corte dentro de la ventana.
+
+== 2026-11-14T11:42:03Z antes del corte
+fusion-1  | ts=2026-11-14T11:41:47.122Z level=INFO service=fusion result=listo component=fusion action=lote lote=6 informes=4997 nuevos=4997 revisados=0 sin_cambios=0 fusionados=607 emitidos=4997 recibidos=4997 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T11:42:02.263Z level=INFO service=fusion result=listo component=fusion action=lote lote=7 informes=4998 nuevos=4998 revisados=0 sin_cambios=0 fusionados=848 emitidos=4998 recibidos=4998 duplicados_en_lote=0 descartes=0
+== 2026-11-14T11:42:10Z SIGKILL a la fusión (a mitad de lote)
+ Container seismic-observatory-fusion-1  Killing
+ Container seismic-observatory-fusion-1  Killed
+== arranque
+ Container seismic-observatory-fusion-1  Started
+== 2026-11-14T11:43:16Z tras reanudar
+fusion-1  | ts=2026-11-14T11:42:16.814Z level=INFO service=fusion result=iniciado component=fusion patron="eventos\\.(usgs|emsc)" salida=eventos.live
+fusion-1  | ts=2026-11-14T11:42:16.890Z level=INFO service=fusion result=listo component=fusion action=esquema sembrados=0
+fusion-1  | ts=2026-11-14T11:42:28.885Z level=INFO service=fusion result=listo component=fusion action=lote lote=8 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=745 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T11:42:32.304Z level=INFO service=fusion result=listo component=fusion action=lote lote=9 informes=4998 nuevos=4998 revisados=0 sin_cambios=0 fusionados=945 emitidos=4998 recibidos=4998 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T11:42:47.473Z level=INFO service=fusion result=listo component=fusion action=lote lote=10 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=1092 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0
+fusion-1  | ts=2026-11-14T11:43:02.096Z level=INFO service=fusion result=listo component=fusion action=lote lote=11 informes=4996 nuevos=4996 revisados=0 sin_cambios=0 fusionados=1069 emitidos=4996 recibidos=4996 duplicados_en_lote=0 descartes=0

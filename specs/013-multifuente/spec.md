@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-14
 
-**Status**: Borrador
+**Status**: Implementada
 
 **Input**: El panel solo enseña bien América: el feed de USGS trae la sismicidad pequeña de EE. UU. y, del resto del mundo, casi solo M ≥ 4,5. Medido el 2026-11-12, en 24 h: Europa 0 eventos en USGS frente a 98 en EMSC; EE. UU. continental 132 en USGS frente a 19 en EMSC. Se pide añadir EMSC como segunda fuente, un topic por productor, una etapa de PySpark que junte las dos fuentes sin duplicar un mismo terremoto (por la hora en que ocurrió, no por cuándo se procesó) y escriba en un topic que haga el papel del `eventos.live` actual, y rellenar PostgreSQL con todo 2025 y lo que va de 2026.
 
@@ -49,7 +49,7 @@ Un terremoto que publican USGS y EMSC aparece una sola vez en el mapa, en la tab
 
 ### User Story 3 - Histórico 2025–2026 en la base (Priority: P2)
 
-Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema lleve poco tiempo en marcha: la base tiene todos los terremotos M ≥ 2,5 de 2025 y de 2026 hasta hoy, de las dos fuentes, fusionados.
+Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema lleve poco tiempo en marcha: la base tiene todos los terremotos M ≥ 2,5 de 2025 y de 2026 hasta hoy, de las dos fuentes, fusionados (unos 227.000 informes).
 
 **Independent Test**: lanzar el relleno, esperar a que termine y comparar los recuentos por mes con los de las fuentes.
 
@@ -79,7 +79,7 @@ Un filtro por país o por fechas pasadas devuelve resultados aunque el sistema l
 - **FR-003**: un servicio de fusión con PySpark Structured Streaming lee los topics por fuente y escribe en `eventos.live` con el contrato v2.
 - **FR-004**: regla de fusión: dos informes son el mismo terremoto si son de fuentes distintas, sus horas de ocurrencia difieren ≤ 30 s y sus epicentros ≤ 100 km. Dos informes de la misma fuente nunca se fusionan; un evento tiene como mucho un informe por fuente. La magnitud no decide.
 - **FR-005**: id canónico estable: el del primer informe que creó el evento (id USGS tal cual; los de EMSC con prefijo `emsc-`). No cambia cuando se une otra fuente ni con revisiones.
-- **FR-006**: fuente principal (de la que salen hora, epicentro, profundidad y magnitud): EMSC dentro de la caja de Europa (lat 34–72, lon −25–45), USGS fuera; si solo hay una, esa.
+- **FR-006**: fuente principal (de la que salen hora, epicentro, profundidad y magnitud): EMSC si algún informe del evento cae en la caja de Europa (lat 34–72, lon −25–45), USGS si no; si solo hay una, esa.
 - **FR-007**: versión del evento fusionado: cambia cuando cambia cualquiera de sus informes o se une uno nuevo, y es siempre mayor que la anterior. La misma entrada produce exactamente el mismo mensaje (determinista).
 - **FR-008**: garantías de la fusión: escribe en Kafka antes de confirmar su estado; un fallo provoca una reentrega idéntica que el consumidor descarta; nunca una pérdida.
 - **FR-009**: los eventos que ya estaban en la base antes de esta feature se incorporan al estado de la fusión con su id, para que no se dupliquen.

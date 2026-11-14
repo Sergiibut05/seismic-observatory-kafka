@@ -1,0 +1,13 @@
+== 2026-11-14T12:38:46Z FR-012: prueba de humo (v1 directo a eventos.live)
+ts=2026-11-14T12:38:47.678Z level=INFO service=producer result=listo component=topic action=topic_conforme topic=eventos.live partitions=3 retention_ms=604800000
+ts=2026-11-14T12:38:47.683Z level=INFO service=producer result=publicado event_id=synthetic-smoke-0001 updated=1767225600000 topic=eventos.live partition=2 offset=74961
+consumer-1  | ts=2026-11-14T12:38:47.688Z level=INFO service=consumer result=persistido event_id=synthetic-smoke-0001 updated=1767225600000 topic=eventos.live partition=2 offset=74961 pais=España
+== 2026-11-14T12:38:53Z FR-012: reproducción (v1 por eventos.replay)
+ts=2026-11-14T12:39:02.453Z level=INFO service=replay result=publicado etiqueta=REPRODUCCIÓN caso=duplicado event_id=us6000pjr6 updated=1742247237040 ocurrencia=2025-01-01T00:13:22.650Z ingested_at=2026-11-14T12:39:02.452Z topic=eventos.replay offset=40
+ts=2026-11-14T12:39:02.655Z level=INFO service=replay result=publicado etiqueta=REPRODUCCIÓN caso=revision event_id=us6000pjr6 updated=1742247297040 ocurrencia=2025-01-01T00:13:22.650Z ingested_at=2026-11-14T12:39:02.654Z topic=eventos.replay offset=41
+replay.evento_actual (total|fuentes coherentes): 40|40
+== 2026-11-14T12:39:11Z FR-010: relleno repetido sobre noviembre (no debe republicar nada)
+ts=2026-11-14T12:39:13.231Z level=INFO service=relleno result=listo component=topic action=topic_conforme topic=eventos.emsc partitions=3 retention_ms=604800000
+ts=2026-11-14T12:39:13.990Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=1/1 desde=2026-11-01T00:00:00+00:00 publicados=0 omitidos=700 excluidos=0
+ts=2026-11-14T12:39:15.200Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=1/1 desde=2026-11-01T00:00:00+00:00 publicados=0 omitidos=2949 excluidos=2
+ts=2026-11-14T12:39:15.203Z level=INFO service=relleno result=listo component=relleno publicados_usgs=0 publicados_emsc=0 segundos=2

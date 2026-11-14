@@ -1,0 +1,80 @@
+Pager usage is off.
+== 1. Nada perdido: informes publicados frente a informes en la fusión (por fuente)
+ fuente | publicados | en_fusion | diferencia 
+--------+------------+-----------+------------
+ emsc   |     171499 |    171499 |          0
+ usgs   |      55560 |     55560 |          0
+(2 rows)
+
+== 2. Todo lo emitido está en la base: eventos fusionados frente al estado actual (misma versión)
+ canonicos | en_estado_actual | faltan | version_distinta 
+-----------+------------------+--------+------------------
+    181476 |           181476 |      0 |                0
+(1 row)
+
+== 3. SC-003: ningún id repetido en el estado actual
+ filas  | ids_distintos 
+--------+---------------
+ 181476 |        181476
+(1 row)
+
+== 4. Eventos por combinación de fuentes
+   fuentes   | count  
+-------------+--------
+ {emsc}      | 125916
+ {emsc,usgs} |  45583
+ {usgs}      |   9977
+(3 rows)
+
+== 5. SC-002: pares USGS-EMSC dentro de la regla (<= 30 s y <= 100 km), por magnitud USGS
+ magnitud | pares_en_regla | en_el_mismo_evento | porcentaje 
+----------+----------------+--------------------+------------
+ M < 4    |          17007 |              16855 |       99.1
+ M >= 4   |          28917 |              28728 |       99.3
+(2 rows)
+
+== 6. Los pares sin fusionar: ¿el evento ya tenía informe de esa fuente? (caso «dos candidatos»)
+ sin_fusionar | porque_ya_tenia_pareja 
+--------------+------------------------
+          341 |                    341
+(1 row)
+
+== 7. SC-001: Europa (lat 34-72, lon -25..45) en las últimas 24 h, por fuentes
+ fuentes | count 
+---------+-------
+ {emsc}  |   107
+(1 row)
+
+== 8. Eventos por mes (2025-2026), M >= 2,5
+   mes   | eventos | fusionados 
+---------+---------+------------
+ 2025-01 |    6648 |       1539
+ 2025-02 |    8013 |       1624
+ 2025-03 |    6748 |       1596
+ 2025-04 |    6903 |       1450
+ 2025-05 |    6699 |       1482
+ 2025-06 |    6094 |       1551
+ 2025-07 |    8659 |       2499
+ 2025-08 |    8205 |       2193
+ 2025-09 |    6618 |       2149
+ 2025-10 |    6958 |       1948
+ 2025-11 |    6465 |       1857
+ 2025-12 |    8013 |       2503
+ 2026-01 |    8097 |       2071
+ 2026-02 |    7410 |       2000
+ 2026-03 |    8936 |       2346
+ 2026-04 |   10428 |       2422
+ 2026-05 |    9048 |       2033
+ 2026-06 |    9818 |       2273
+ 2026-07 |    9596 |       2508
+ 2026-08 |   11303 |       2523
+ 2026-09 |    7760 |       2188
+ 2026-10 |    8789 |       2218
+ 2026-11 |    3064 |        590
+(23 rows)
+
+== 9. Descartes de la fusión y cuarentena del consumidor
+ tabla | motivo | count 
+-------+--------+-------
+(0 rows)
+
