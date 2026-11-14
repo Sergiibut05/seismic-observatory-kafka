@@ -1,0 +1,59 @@
+ts=2026-11-14T11:40:41.762Z level=INFO service=relleno result=listo component=postgres
+ts=2026-11-14T11:40:41.780Z level=INFO service=relleno result=listo component=topic action=topic_conforme topic=eventos.usgs partitions=3 retention_ms=604800000
+ts=2026-11-14T11:40:41.784Z level=INFO service=relleno result=listo component=topic action=topic_conforme topic=eventos.emsc partitions=3 retention_ms=604800000
+ts=2026-11-14T11:40:51.594Z level=INFO service=relleno result=info component=relleno source=usgs tramos=23 eventos=54450 desde=2025-01-01T00:00:00+00:00 hasta=2026-11-14T11:40:41+00:00
+ts=2026-11-14T11:40:53.145Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=1/23 desde=2025-01-01T00:00:00+00:00 publicados=2239 omitidos=0 excluidos=0
+ts=2026-11-14T11:40:54.777Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=2/23 desde=2025-02-01T00:00:00+00:00 publicados=2167 omitidos=0 excluidos=0
+ts=2026-11-14T11:40:56.326Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=3/23 desde=2025-03-01T00:00:00+00:00 publicados=2222 omitidos=0 excluidos=0
+ts=2026-11-14T11:40:57.427Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=4/23 desde=2025-04-01T00:00:00+00:00 publicados=2113 omitidos=0 excluidos=0
+ts=2026-11-14T11:40:58.912Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=5/23 desde=2025-05-01T00:00:00+00:00 publicados=2003 omitidos=0 excluidos=0
+ts=2026-11-14T11:40:59.886Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=6/23 desde=2025-06-01T00:00:00+00:00 publicados=1997 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:02.102Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=7/23 desde=2025-07-01T00:00:00+00:00 publicados=4159 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:03.901Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=8/23 desde=2025-08-01T00:00:00+00:00 publicados=3056 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:05.531Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=9/23 desde=2025-09-01T00:00:00+00:00 publicados=2298 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:07.016Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=10/23 desde=2025-10-01T00:00:00+00:00 publicados=1998 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:08.375Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=11/23 desde=2025-11-01T00:00:00+00:00 publicados=1925 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:09.997Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=12/23 desde=2025-12-01T00:00:00+00:00 publicados=2866 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:11.081Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=13/23 desde=2026-01-01T00:00:00+00:00 publicados=2353 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:12.581Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=14/23 desde=2026-02-01T00:00:00+00:00 publicados=2109 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:13.666Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=15/23 desde=2026-03-01T00:00:00+00:00 publicados=2488 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:15.533Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=16/23 desde=2026-04-01T00:00:00+00:00 publicados=2630 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:16.959Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=17/23 desde=2026-05-01T00:00:00+00:00 publicados=2224 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:18.480Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=18/23 desde=2026-06-01T00:00:00+00:00 publicados=2494 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:19.596Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=19/23 desde=2026-07-01T00:00:00+00:00 publicados=2700 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:21.224Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=20/23 desde=2026-08-01T00:00:00+00:00 publicados=2753 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:22.934Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=21/23 desde=2026-09-01T00:00:00+00:00 publicados=2489 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:24.541Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=22/23 desde=2026-10-01T00:00:00+00:00 publicados=2468 omitidos=0 excluidos=0
+ts=2026-11-14T11:41:25.387Z level=INFO service=relleno result=publicado component=relleno source=usgs tramo=23/23 desde=2026-11-01T00:00:00+00:00 publicados=491 omitidos=208 excluidos=0
+ts=2026-11-14T11:41:32.340Z level=INFO service=relleno result=info component=relleno source=emsc tramos=30 eventos=171548 desde=2025-01-01T00:00:00+00:00 hasta=2026-11-14T11:40:41+00:00
+ts=2026-11-14T11:41:35.313Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=1/30 desde=2025-01-01T00:00:00+00:00 publicados=5948 omitidos=0 excluidos=13
+ts=2026-11-14T11:41:38.335Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=2/30 desde=2025-02-01T00:00:00+00:00 publicados=7470 omitidos=0 excluidos=12
+ts=2026-11-14T11:41:40.572Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=3/30 desde=2025-03-01T00:00:00+00:00 publicados=6122 omitidos=0 excluidos=18
+ts=2026-11-14T11:41:43.089Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=4/30 desde=2025-04-01T00:00:00+00:00 publicados=6240 omitidos=0 excluidos=18
+ts=2026-11-14T11:41:45.525Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=5/30 desde=2025-05-01T00:00:00+00:00 publicados=6178 omitidos=0 excluidos=17
+ts=2026-11-14T11:41:47.699Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=6/30 desde=2025-06-01T00:00:00+00:00 publicados=5648 omitidos=0 excluidos=10
+ts=2026-11-14T11:41:50.459Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=7/30 desde=2025-07-01T00:00:00+00:00 publicados=6999 omitidos=0 excluidos=8
+ts=2026-11-14T11:41:53.342Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=8/30 desde=2025-08-01T00:00:00+00:00 publicados=7342 omitidos=0 excluidos=8
+ts=2026-11-14T11:41:55.746Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=9/30 desde=2025-09-01T00:00:00+00:00 publicados=6469 omitidos=0 excluidos=5
+ts=2026-11-14T11:41:58.238Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=10/30 desde=2025-10-01T00:00:00+00:00 publicados=6908 omitidos=0 excluidos=5
+ts=2026-11-14T11:42:00.609Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=11/30 desde=2025-11-01T00:00:00+00:00 publicados=6397 omitidos=0 excluidos=1
+ts=2026-11-14T11:42:03.582Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=12/30 desde=2025-12-01T00:00:00+00:00 publicados=7650 omitidos=0 excluidos=6
+ts=2026-11-14T11:42:06.557Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=13/30 desde=2026-01-01T00:00:00+00:00 publicados=7815 omitidos=0 excluidos=2
+ts=2026-11-14T11:42:09.803Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=14/30 desde=2026-02-01T00:00:00+00:00 publicados=7301 omitidos=0 excluidos=5
+ts=2026-11-14T11:42:11.663Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=15/30 desde=2026-03-01T00:00:00+00:00 publicados=4356 omitidos=0 excluidos=3
+ts=2026-11-14T11:42:13.489Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=16/30 desde=2026-03-16T12:00:00+00:00 publicados=4438 omitidos=0 excluidos=0
+ts=2026-11-14T11:42:15.787Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=17/30 desde=2026-04-01T00:00:00+00:00 publicados=5614 omitidos=0 excluidos=4
+ts=2026-11-14T11:42:17.593Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=18/30 desde=2026-04-16T00:00:00+00:00 publicados=4606 omitidos=0 excluidos=0
+ts=2026-11-14T11:42:19.647Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=19/30 desde=2026-05-01T00:00:00+00:00 publicados=4448 omitidos=0 excluidos=0
+ts=2026-11-14T11:42:21.501Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=20/30 desde=2026-05-16T12:00:00+00:00 publicados=4409 omitidos=0 excluidos=3
+ts=2026-11-14T11:42:23.517Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=21/30 desde=2026-06-01T00:00:00+00:00 publicados=4711 omitidos=0 excluidos=1
+ts=2026-11-14T11:42:25.595Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=22/30 desde=2026-06-16T00:00:00+00:00 publicados=4886 omitidos=0 excluidos=4
+ts=2026-11-14T11:42:27.431Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=23/30 desde=2026-07-01T00:00:00+00:00 publicados=4396 omitidos=0 excluidos=4
+ts=2026-11-14T11:42:29.556Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=24/30 desde=2026-07-16T12:00:00+00:00 publicados=5008 omitidos=0 excluidos=7
+ts=2026-11-14T11:42:31.805Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=25/30 desde=2026-08-01T00:00:00+00:00 publicados=5352 omitidos=0 excluidos=3
+ts=2026-11-14T11:42:34.266Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=26/30 desde=2026-08-16T12:00:00+00:00 publicados=5721 omitidos=0 excluidos=6
+ts=2026-11-14T11:42:37.190Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=27/30 desde=2026-09-01T00:00:00+00:00 publicados=7459 omitidos=0 excluidos=6
+ts=2026-11-14T11:42:39.051Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=28/30 desde=2026-10-01T00:00:00+00:00 publicados=4370 omitidos=0 excluidos=3
+ts=2026-11-14T11:42:40.763Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=29/30 desde=2026-10-16T12:00:00+00:00 publicados=4169 omitidos=0 excluidos=3
+ts=2026-11-14T11:42:42.078Z level=INFO service=relleno result=publicado component=relleno source=emsc tramo=30/30 desde=2026-11-01T00:00:00+00:00 publicados=2719 omitidos=222 excluidos=2
+ts=2026-11-14T11:42:42.083Z level=INFO service=relleno result=listo component=relleno publicados_usgs=54242 publicados_emsc=171149 segundos=121

@@ -39,6 +39,6 @@
 
 ## Fase 7 — Verificación y documentación
 
-- [ ] T16 Pila real: Europa con eventos (SC-001), fusión medida (SC-002, SC-003), corte de la fusión a mitad de lote (SC-004), relleno completo sin truncar (SC-005); evidencias
+- [x] T16 Pila real: Europa con eventos (SC-001), fusión medida (SC-002, SC-003), corte de la fusión a mitad de lote (SC-004), relleno completo sin truncar (SC-005); evidencias
 - [ ] T17 Verificador independiente (subagente) sobre spec, plan, tareas y evidencias
 - [x] T18 README, `docs/FUENTES-Y-LICENCIAS.md`, `docs/MEMORIA.md` (limitación de la comparación) y quickstart
