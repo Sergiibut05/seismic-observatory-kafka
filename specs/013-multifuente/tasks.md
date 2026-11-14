@@ -7,11 +7,11 @@
 
 ## Fase 1 — Lógica pura (bloquea lo demás)
 
-- [ ] T2 [P] `common/contrato.py`: v2 (validación, motivos nuevos, `fuentes` en `MensajeValido`, `construir_mensaje_v2` determinista) + `test_contrato_v2.py` (FR-003, FR-007)
-- [ ] T3 [P] `fusion/normalizar.py` + fixtures reales USGS y EMSC + `test_normalizar.py` (FR-002, edge cases)
-- [ ] T4 `fusion/emparejar.py` + `test_emparejar.py`: regla, réplicas, dos candidatos, id estable, principal, versión monótona, reentrega, determinismo (FR-004–FR-007)
-- [ ] T5 [P] `producer/fuentes.py`: adaptadores USGS (lo de `feed.py`) y EMSC + `test_fuentes.py` (FR-001, FR-002)
-- [ ] T6 [P] plan de intervalos del relleno (`relleno.planificar`) + `test_relleno.py` (FR-010)
+- [x] T2 [P] `common/contrato.py`: v2 (validación, motivos nuevos, `fuentes` en `MensajeValido`, `construir_mensaje_v2` determinista) + `test_contrato_v2.py` (FR-003, FR-007)
+- [x] T3 [P] `fusion/normalizar.py` + fixtures reales USGS y EMSC + `test_normalizar.py` (FR-002, edge cases)
+- [x] T4 `fusion/emparejar.py` + `test_emparejar.py`: regla, réplicas, dos candidatos, id estable, principal, versión monótona, reentrega, determinismo (FR-004–FR-007)
+- [x] T5 [P] `producer/fuentes.py`: adaptadores USGS (lo de `feed.py`) y EMSC + `test_fuentes.py` (FR-001, FR-002)
+- [x] T6 [P] plan de intervalos del relleno (`relleno.planificar`) + `test_relleno.py` (FR-010)
 
 ## Fase 2 — Esquema
 
@@ -19,7 +19,7 @@
 
 ## Fase 3 — Productores (US1)
 
-- [ ] T8 `ciclo.una_pasada` y `app.py` genéricos por fuente; `config.py` (`FUENTE`, `TOPIC_FUENTE`, `EMSC_URL_BASE`); publicadas por fuente e ids de la respuesta
+- [x] T8 `ciclo.una_pasada` y `app.py` genéricos por fuente; `config.py` (`FUENTE`, `TOPIC_FUENTE`, `EMSC_URL_BASE`); publicadas por fuente e ids de la respuesta
 - [ ] T9 Compose: `producer` (usgs → `eventos.usgs`) y `producer-emsc`; `.env.example`
 
 ## Fase 4 — Fusión con Spark (US2)

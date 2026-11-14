@@ -140,7 +140,8 @@ def test_campo_desconocido_en_la_raiz():
     assert "extra" in resultado.detalle
 
 
-@pytest.mark.parametrize("version", ["1", True, 2, 0, 1.0, None, [1]])
+# 2 es el contrato fusionado (013): se prueba en test_contrato_v2.py.
+@pytest.mark.parametrize("version", ["1", True, 3, 0, 1.0, None, [1]])
 def test_schema_version_no_soportada(version):
     assert motivo(validar(con(schema_version=version))) == "schema_version_no_soportada"
 
@@ -243,7 +244,7 @@ def test_sintetico_inconsistente_source_real_e_id_sintetico():
 
 def test_el_primer_fallo_decide_el_motivo():
     # schema_version, source y mode son inválidos a la vez: manda schema_version.
-    m = con(schema_version=2, source="MAL", mode="x")
+    m = con(schema_version=3, source="MAL", mode="x")
     assert motivo(validar(m)) == "schema_version_no_soportada"
     # source antes que mode
     assert motivo(validar(con(source="MAL", mode="x"))) == "source_invalido"

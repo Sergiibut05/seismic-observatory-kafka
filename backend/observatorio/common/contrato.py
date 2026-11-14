@@ -1,6 +1,11 @@
-"""Contrato Kafka v1 (specs/001-esqueleto/contracts/mensaje-kafka-v1.md).
+"""Contratos Kafka v1 y v2 (specs/001-esqueleto/contracts/mensaje-kafka-v1.md y
+specs/013-multifuente/contracts/mensajes-kafka.md).
 
-Única fuente de verdad en ejecución: productor, consumidor y replay lo importan.
+- v1: un evento de una fuente, sin alterar. Topics por fuente, `eventos.replay`, humo y sintéticos.
+- v2: un evento fusionado (lo escribe la fusión en `eventos.live`), con la lista de fuentes que lo
+  componen y el original de cada una.
+
+Única fuente de verdad en ejecución: productores, fusión, consumidor y replay lo importan.
 La validación es manual y devuelve un motivo de lista cerrada, sin pydantic ni jsonschema (R-10).
 """
 
@@ -12,10 +17,13 @@ from datetime import datetime, timezone
 from observatorio.common.tiempo import iso_utc, ms_a_datetime
 
 SCHEMA_VERSION = 1
+SCHEMA_VERSION_FUSION = 2
 MODOS = ("live", "replay")
 PREFIJO_SINTETICO = "synthetic-"
 
 _CAMPOS_RAIZ = ("schema_version", "source", "ingested_at", "mode", "event")
+_CAMPOS_RAIZ_V2 = _CAMPOS_RAIZ + ("fuentes",)
+_CAMPOS_FUENTE = ("fuente", "id", "updated", "principal", "original")
 _PATRON_SOURCE = re.compile(r"^[a-z][a-z0-9_-]{0,62}$")
 _UPDATED_MAXIMO_MS = 4_102_444_800_000  # 2100-01-01 UTC
 
@@ -30,6 +38,8 @@ class MensajeValido:
     ingested_at: datetime
     sintetico: bool
     mensaje: dict
+    # v1: `(source,)`. v2: las fuentes del evento fusionado, en orden alfabético.
+    fuentes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -89,8 +99,10 @@ def validar_mensaje(clave: bytes | None, valor: bytes | None, modo_del_topic: st
     if not isinstance(mensaje, dict):
         return Rechazo("no_es_objeto", f"raíz de tipo {type(mensaje).__name__}")
 
-    faltan = [c for c in _CAMPOS_RAIZ if c not in mensaje]
-    sobran = sorted(c for c in mensaje if c not in _CAMPOS_RAIZ)
+    # El campo `fuentes` solo existe en v2: la versión decide qué campos se esperan.
+    campos = _CAMPOS_RAIZ_V2 if mensaje.get("schema_version") == SCHEMA_VERSION_FUSION else _CAMPOS_RAIZ
+    faltan = [c for c in campos if c not in mensaje]
+    sobran = sorted(c for c in mensaje if c not in campos)
     if faltan or sobran:
         detalle = ", ".join([f"falta {c}" for c in faltan] + [f"campo desconocido {c}" for c in sobran])
         return Rechazo("campo_ausente", detalle, *_identificadores(mensaje))
@@ -99,7 +111,7 @@ def validar_mensaje(clave: bytes | None, valor: bytes | None, modo_del_topic: st
         return Rechazo(motivo, detalle, *_identificadores(mensaje))
 
     version = mensaje["schema_version"]
-    if not _es_entero(version) or version != SCHEMA_VERSION:
+    if not _es_entero(version) or version not in (SCHEMA_VERSION, SCHEMA_VERSION_FUSION):
         return rechazo("schema_version_no_soportada", "schema_version")
 
     source = mensaje["source"]
@@ -111,7 +123,7 @@ def validar_mensaje(clave: bytes | None, valor: bytes | None, modo_del_topic: st
     modo = mensaje["mode"]
     if not isinstance(modo, str):
         return rechazo("tipo_invalido", "mode")
-    if modo not in MODOS:
+    if modo not in MODOS or (version == SCHEMA_VERSION_FUSION and modo != "live"):
         return rechazo("mode_invalido", "mode")
     if modo != modo_del_topic:
         return rechazo("mode_no_corresponde_al_topic", f"mode={modo} topic={modo_del_topic}")
@@ -148,6 +160,13 @@ def validar_mensaje(clave: bytes | None, valor: bytes | None, modo_del_topic: st
     if sintetico != es_sintetico(event_id):
         return rechazo("sintetico_inconsistente", "source y event.id no coinciden en el prefijo synthetic-")
 
+    fuentes: tuple[str, ...] = (source,)
+    if version == SCHEMA_VERSION_FUSION:
+        nombres, fallo = _validar_fuentes(mensaje["fuentes"], source)
+        if fallo is not None:
+            return rechazo(*fallo)
+        fuentes = nombres
+
     return MensajeValido(
         event_id=event_id,
         updated_ms=updated_ms,
@@ -157,7 +176,54 @@ def validar_mensaje(clave: bytes | None, valor: bytes | None, modo_del_topic: st
         ingested_at=ingested_at,
         sintetico=sintetico,
         mensaje=mensaje,
+        fuentes=fuentes,
     )
+
+
+def _validar_fuentes(fuentes, source: str) -> tuple[tuple[str, ...], tuple[str, str] | None]:
+    """`(fuentes ordenadas, None)`, o `((), (motivo, detalle))` si la lista no cumple el contrato v2."""
+    if not isinstance(fuentes, list) or not fuentes:
+        return (), ("fuentes_invalidas", "fuentes debe ser una lista no vacía")
+    nombres: list[str] = []
+    principales: list[str] = []
+    for entrada in fuentes:
+        if not isinstance(entrada, dict) or sorted(entrada) != sorted(_CAMPOS_FUENTE):
+            return (), ("fuentes_invalidas", "cada fuente lleva fuente, id, updated, principal y original")
+        nombre, origen, updated = entrada["fuente"], entrada["id"], entrada["updated"]
+        if not isinstance(nombre, str) or not _PATRON_SOURCE.match(nombre):
+            return (), ("fuentes_invalidas", "fuentes[].fuente")
+        if not isinstance(origen, str) or not origen:
+            return (), ("fuentes_invalidas", "fuentes[].id")
+        if not _es_entero(updated) or not 0 <= updated <= _UPDATED_MAXIMO_MS:
+            return (), ("fuentes_invalidas", "fuentes[].updated")
+        if not isinstance(entrada["principal"], bool) or not isinstance(entrada["original"], dict):
+            return (), ("fuentes_invalidas", "fuentes[].principal u original")
+        nombres.append(nombre)
+        if entrada["principal"]:
+            principales.append(nombre)
+    if len(set(nombres)) != len(nombres):
+        return (), ("fuentes_repetidas", "una fuente aparece dos veces")
+    if principales != [source]:
+        return (), ("principal_incoherente", "debe haber una sola principal y ser la de source")
+    return tuple(sorted(nombres)), None
+
+
+def construir_mensaje_v2(evento: dict, fuentes: list[dict], source: str, ingested_at: datetime) -> tuple[bytes, bytes]:
+    """Clave y valor del evento fusionado (v2). Determinista: claves ordenadas y sin espacios,
+    así la misma entrada produce los mismos bytes (la reentrega de la fusión es idéntica)."""
+    event_id = evento.get("id")
+    if not isinstance(event_id, str) or not event_id:
+        raise ValueError("el evento no tiene id")
+    cuerpo = {
+        "schema_version": SCHEMA_VERSION_FUSION,
+        "source": source,
+        "ingested_at": iso_utc(ingested_at),
+        "mode": "live",
+        "event": evento,
+        "fuentes": sorted(fuentes, key=lambda f: f["fuente"]),
+    }
+    valor = json.dumps(cuerpo, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":"))
+    return event_id.encode("utf-8"), valor.encode("utf-8")
 
 
 def construir_mensaje(evento: dict, source: str, mode: str, ingested_at: datetime) -> tuple[bytes, bytes]:

@@ -63,7 +63,7 @@ Orden en cada lote: (1) leer estado y decidir, en una transacción de PostgreSQL
 
 ## Id canónico y eventos que ya existían
 
-- **Decisión**: el id del primer informe; USGS tal cual (`us7000abcd`), EMSC con prefijo (`emsc-20261113_0000315`).
+- **Decisión**: el id del primer informe; USGS tal cual (`us7000abcd`), EMSC con prefijo (`emsc-20261113_0000315`). Dentro de un mismo lote se procesa USGS antes que EMSC, para que un terremoto que ven las dos fuentes a la vez conserve el id USGS.
 - **Por qué USGS sin prefijo**: la base ya tiene ~1.000 eventos con id USGS y el modo `replay` también los usa. Al arrancar, la fusión copia esos eventos a su estado (`fusion.informe`) con su id; si después llega su pareja de EMSC se une a ellos y no hay duplicado.
 - **Alternativa descartada**: id derivado de un hash del contenido o del primer informe por hora: cambiaría al unirse otra fuente y rompería el upsert por id.
 

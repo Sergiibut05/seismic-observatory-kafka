@@ -1,7 +1,9 @@
-"""Feed USGS: qué se publica, cuándo reintentar y cómo no guardar copias idénticas.
+"""Qué se publica de una respuesta, cuándo reintentar y cómo no guardar copias idénticas.
 
-Funciones puras. La red y PostgreSQL están en `ciclo.py`.
+Funciones puras. La red y PostgreSQL están en `ciclo.py`; lo propio de cada fuente (qué es un
+terremoto y cuál es la versión de un evento), en `fuentes.py`. Por defecto, las reglas de USGS.
 """
+from collections.abc import Callable
 
 import hashlib
 from dataclasses import dataclass
@@ -43,10 +45,27 @@ def es_transitorio(status: int) -> bool:
     return status == 429 or status >= 500
 
 
-def clasificar(features, publicadas: set[tuple[str, int]]) -> Clasificacion:
-    """Separa el feed en publicar, ya publicados y excluidos.
+def tipo_usgs(propiedades: dict) -> tuple[bool, str | None]:
+    """`(es terremoto, tipo tal como lo da la fuente)`."""
+    tipo = propiedades.get("type")
+    return tipo == "earthquake", tipo if isinstance(tipo, str) else None
 
-    `publicadas` son pares `(id, updated_ms)` con acuse. Dentro de la misma
+
+def version_usgs(propiedades: dict) -> int | None:
+    """`properties.updated` en ms epoch, o `None` si no es un entero válido."""
+    updated = propiedades.get("updated")
+    return updated if _es_entero(updated) and 0 <= updated <= _UPDATED_MAXIMO_MS else None
+
+
+def clasificar(
+    features,
+    publicadas: set[tuple[str, int]],
+    tipo: Callable[[dict], tuple[bool, str | None]] = tipo_usgs,
+    version: Callable[[dict], int | None] = version_usgs,
+) -> Clasificacion:
+    """Separa la respuesta en publicar, ya publicados y excluidos.
+
+    `publicadas` son pares `(id, versión en ms)` con acuse. Dentro de la misma
     respuesta, una versión repetida se omite una sola vez y no se publica dos.
     """
     publicar: list[dict] = []
@@ -63,12 +82,12 @@ def clasificar(features, publicadas: set[tuple[str, int]]) -> Clasificacion:
             continue
         propiedades = crudo.get("properties")
         propiedades = propiedades if isinstance(propiedades, dict) else {}
-        tipo = propiedades.get("type")
-        if tipo != "earthquake":
-            exclusiones.append(Exclusion("tipo_no_terremoto", event_id, tipo if isinstance(tipo, str) else None))
+        es_terremoto, nombre_tipo = tipo(propiedades)
+        if not es_terremoto:
+            exclusiones.append(Exclusion("tipo_no_terremoto", event_id, nombre_tipo))
             continue
-        updated = propiedades.get("updated")
-        if not _es_entero(updated) or not 0 <= updated <= _UPDATED_MAXIMO_MS:
+        updated = version(propiedades)
+        if updated is None:
             exclusiones.append(Exclusion("updated_invalido", event_id))
             continue
         clave = (event_id, updated)

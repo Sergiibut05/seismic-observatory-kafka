@@ -14,6 +14,8 @@ from observatorio.common.logging import configurar_logging, registrar
 from observatorio.common.retry import Backoff
 
 _NIVELES_LOG = ("DEBUG", "INFO", "WARNING", "ERROR")
+FUENTES = ("usgs", "emsc")
+EMSC_URL_BASE = "https://www.seismicportal.eu/fdsnws/event/1"
 
 
 class ConfigError(Exception):
@@ -93,6 +95,10 @@ class AjustesProductor(AjustesComunes):
     feed_dir: str
     feed_retention_hours: float
     topic_replay: str
+    # 013: un productor por fuente, cada uno a su topic.
+    fuente: str = "usgs"
+    topic_fuente: str = "eventos.usgs"
+    emsc_url_base: str = EMSC_URL_BASE
 
     def secretos(self) -> tuple[str, ...]:
         return (self.postgres.password,)
@@ -161,8 +167,16 @@ def _postgres(env: Mapping[str, str]) -> AjustesPostgres:
     )
 
 
+def _fuente(env: Mapping[str, str]) -> str:
+    fuente = _texto(env, "FUENTE", "usgs")
+    if fuente not in FUENTES:
+        raise ConfigError("valor inválido en la variable FUENTE: debe ser usgs o emsc")
+    return fuente
+
+
 def ajustes_productor(env: Mapping[str, str] | None = None) -> AjustesProductor:
     env = os.environ if env is None else env
+    fuente = _fuente(env)
     return AjustesProductor(
         **_comunes(env),
         kafka_bootstrap_servers=_texto(env, "KAFKA_BOOTSTRAP_SERVERS", "kafka:19092"),
@@ -178,9 +192,12 @@ def ajustes_productor(env: Mapping[str, str] | None = None) -> AjustesProductor:
         ),
         poll_interval_seconds=_entero(env, "POLL_INTERVAL_SECONDS", 60),
         http_timeout_seconds=_entero(env, "HTTP_TIMEOUT_SECONDS", 30),
-        feed_dir=_texto(env, "FEED_DIR", "/data/usgs"),
+        feed_dir=_texto(env, "FEED_DIR", f"/data/{fuente}"),
         feed_retention_hours=_numero_positivo(env, "FEED_RETENTION_HOURS", 48),
         topic_replay=_texto(env, "TOPIC_REPLAY", "eventos.replay"),
+        fuente=fuente,
+        topic_fuente=_texto(env, "TOPIC_FUENTE", f"eventos.{fuente}"),
+        emsc_url_base=_texto(env, "EMSC_URL_BASE", EMSC_URL_BASE),
     )
 
 

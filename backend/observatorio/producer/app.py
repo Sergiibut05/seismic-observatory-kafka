@@ -1,4 +1,4 @@
-"""Servicio productor: mantiene Kafka y publica el feed USGS cada `POLL_INTERVAL_SECONDS`."""
+"""Servicio productor: mantiene Kafka y publica su fuente (`FUENTE`) cada `POLL_INTERVAL_SECONDS`."""
 
 import asyncio
 import logging
@@ -29,8 +29,9 @@ class SesionKafka:
 async def _abrir_kafka(ajustes: AjustesProductor, sesion: SesionKafka) -> AIOKafkaProducer:
     admin = await abrir_admin(ajustes.kafka_bootstrap_servers)
     try:
-        await ensure_topic(admin, ajustes.topic_live, ajustes.topic_partitions, ajustes.topic_retention_ms, _log)
-        await ensure_topic(admin, ajustes.topic_replay, ajustes.topic_partitions, ajustes.topic_retention_ms, _log)
+        # Cada productor crea su topic y también los comunes (idempotente): da igual cuál arranque antes.
+        for topic in (ajustes.topic_fuente, ajustes.topic_live, ajustes.topic_replay):
+            await ensure_topic(admin, topic, ajustes.topic_partitions, ajustes.topic_retention_ms, _log)
     finally:
         await cerrar_sin_error(admin)
     productor = AIOKafkaProducer(
@@ -72,13 +73,13 @@ async def _bucle(ajustes: AjustesProductor, sesion: SesionKafka, db: Database, p
                 tablas_listas = True
             await una_pasada(ajustes, sesion.productor, db)
         except ErrorTransitorio as exc:
-            registrar(_log, "reintento", component="usgs", reason=exc.motivo, wait_s=espera)
+            registrar(_log, "reintento", component=ajustes.fuente, reason=exc.motivo, wait_s=espera)
             if await esperar(parada, espera):
                 return
             espera = min(espera * ajustes.retry_factor, ajustes.retry_max_seconds)
             continue
         except Exception as exc:
-            registrar(_log, "error", nivel="ERROR", component="usgs", reason=motivo_de(exc))
+            registrar(_log, "error", nivel="ERROR", component=ajustes.fuente, reason=motivo_de(exc))
             tablas_listas = False
         espera = ajustes.retry_initial_seconds
         if await esperar(parada, ajustes.poll_interval_seconds):
@@ -88,7 +89,7 @@ async def _bucle(ajustes: AjustesProductor, sesion: SesionKafka, db: Database, p
 async def ejecutar(ajustes: AjustesProductor) -> None:
     estado = EstadoSalud(["kafka", "postgres"])
     parada = evento_de_parada()
-    registrar(_log, "iniciado", component="producer")
+    registrar(_log, "iniciado", component="producer", fuente=ajustes.fuente, topic=ajustes.topic_fuente)
     servidor = await servidor_salud(estado, ajustes.health_port)
     db = Database.desde_ajustes(ajustes.postgres, ajustes.backoff, estado=estado)
     sesion = SesionKafka()

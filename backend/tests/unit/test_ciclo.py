@@ -79,8 +79,9 @@ def test_publica_el_terremoto_marca_tras_el_acuse_y_excluye_el_resto(tmp_path):
 
     resultado = asyncio.run(una_pasada(ajustes(tmp_path), productor, base, descargar, AHORA))
     assert [e["id"] for e in resultado.publicar] == ["us1"]
-    assert productor.enviados[0][1] == b"us1"
-    assert ("us1", 1000) in base.publicadas
+    # 013: cada productor publica en el topic de su fuente; la fusión escribe `eventos.live`.
+    assert productor.enviados[0] == ("eventos.usgs", b"us1")
+    assert ("us1", 1000, "usgs") in base.publicadas
     assert resultado.exclusiones[0].motivo == "tipo_no_terremoto"
     assert any(tmp_path.glob("*.geojson"))
 
@@ -120,3 +121,42 @@ def test_http_429_es_transitorio_y_conserva_el_estado(tmp_path):
     else:
         raise AssertionError("429 tenía que reintentarse")
     assert base.publicadas == [("us1", 1000)]
+
+
+EMSC = (
+    b'{"type":"FeatureCollection","features":['
+    b'{"type":"Feature","id":"20261114_0000001","properties":{"evtype":"ke","lastupdate":"2026-11-14T10:00:00.5Z",'
+    b'"time":"2026-11-14T09:58:00Z","lat":42.3,"lon":13.1,"depth":9.8,"mag":2.7}},'
+    b'{"type":"Feature","id":"20261114_0000002","properties":{"evtype":"ue","lastupdate":"2026-11-14T10:00:00Z"}}]}'
+)
+
+
+def ajustes_emsc(tmp_path):
+    return ajustes_productor({"POSTGRES_PASSWORD": "x", "FEED_DIR": str(tmp_path), "FUENTE": "emsc"})
+
+
+def test_emsc_publica_en_su_topic_con_la_version_de_lastupdate(tmp_path):
+    base = BaseFalsa()
+    productor = ProductorFalso()
+    urls = []
+
+    def descargar(url, timeout):
+        urls.append(url)
+        return 200, EMSC
+
+    resultado = asyncio.run(una_pasada(ajustes_emsc(tmp_path), productor, base, descargar, AHORA))
+    assert productor.enviados == [("eventos.emsc", b"20261114_0000001")]
+    # lastupdate 2026-11-14T10:00:00.5Z en ms epoch, y la fuente en la marca
+    version = int(datetime(2026, 11, 14, 10, 0, 0, 500_000, tzinfo=timezone.utc).timestamp() * 1000)
+    assert ("20261114_0000001", version, "emsc") in base.publicadas
+    assert resultado.exclusiones[0].motivo == "tipo_no_terremoto" and resultado.exclusiones[0].tipo == "ue"
+    assert urls[0].startswith("https://www.seismicportal.eu/fdsnws/event/1/query?format=json&start=2026-11-01T10")
+
+
+def test_sin_eventos_fdsn_responde_204_y_no_es_un_error(tmp_path):
+    base = BaseFalsa()
+    productor = ProductorFalso()
+    resultado = asyncio.run(una_pasada(ajustes_emsc(tmp_path), productor, base, lambda url, timeout: (204, b""), AHORA))
+    assert resultado.publicar == () and productor.enviados == []
+    consultas = [p for sql, p in base.sentencias if "INSERT INTO ingesta.consultas" in sql]
+    assert consultas and consultas[0][1] == 204 and consultas[0][-2] is None  # sin error
