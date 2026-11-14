@@ -117,6 +117,24 @@ class AjustesConsumidor(AjustesComunes):
         return (self.postgres.password,)
 
 
+@dataclass(frozen=True)
+class AjustesFusion(AjustesComunes):
+    """Servicio de fusión (013): PySpark lee los topics por fuente y escribe `eventos.live`."""
+
+    kafka_bootstrap_servers: str
+    topic_live: str
+    patron_fuentes: str
+    postgres: AjustesPostgres
+    checkpoint_dir: str
+    max_por_lote: int
+    trigger_segundos: int
+    spark_master: str
+    jars_dir: str
+
+    def secretos(self) -> tuple[str, ...]:
+        return (self.postgres.password,)
+
+
 ORIGEN_LOCAL = "http://localhost:4200"
 # `https://host[:puerto]`: sin ruta, sin `/` final y sin comodín.
 _ORIGEN_HTTPS = re.compile(r"https://[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:[0-9]{1,5})?")
@@ -211,6 +229,22 @@ def ajustes_consumidor(env: Mapping[str, str] | None = None) -> AjustesConsumido
         catalogo_path=_texto(env, "CATALOGO_PATH", "/catalogo/paises.geojson"),
         postgres=_postgres(env),
         topic_replay=_texto(env, "TOPIC_REPLAY", "eventos.replay"),
+    )
+
+
+def ajustes_fusion(env: Mapping[str, str] | None = None) -> AjustesFusion:
+    env = os.environ if env is None else env
+    return AjustesFusion(
+        **_comunes(env),
+        kafka_bootstrap_servers=_texto(env, "KAFKA_BOOTSTRAP_SERVERS", "kafka:19092"),
+        topic_live=_texto(env, "TOPIC_LIVE", "eventos.live"),
+        patron_fuentes=_texto(env, "PATRON_FUENTES", r"eventos\.(usgs|emsc)"),
+        postgres=_postgres(env),
+        checkpoint_dir=_texto(env, "FUSION_CHECKPOINT_DIR", "/data/fusion/checkpoint"),
+        max_por_lote=_entero(env, "FUSION_MAX_POR_LOTE", 5000),
+        trigger_segundos=_entero(env, "FUSION_TRIGGER_SEGUNDOS", 15),
+        spark_master=_texto(env, "SPARK_MASTER", "local[2]"),
+        jars_dir=_texto(env, "SPARK_JARS_DIR", "/opt/spark-jars"),
     )
 
 

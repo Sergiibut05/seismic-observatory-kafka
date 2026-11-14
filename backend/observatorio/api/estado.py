@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from observatorio.api.calculos import desactualizado
 from observatorio.api.consultas import (
+    SQL_INGESTA_POR_FUENTE,
     SQL_PERIODO,
     SQL_REPLAY_EXISTE,
     SQL_REPLAY_RECUENTO,
@@ -43,6 +44,7 @@ def armar_estado(
     periodo: tuple[datetime | None, datetime | None] | None = None,
     umbral_segundos: int = UMBRAL_DEFECTO_SEGUNDOS,
     eventos_replay: int | None = None,
+    ingesta_por_fuente: dict[str, datetime] | None = None,
 ) -> dict:
     """Con la base caída todo dato de la base es `None` («no disponible»), nunca 0."""
     if not db_ok:
@@ -53,6 +55,7 @@ def armar_estado(
             "eventos_replay": None,
             "ultimo_evento": None,
             "ultima_ingesta_correcta": None,
+            "ingesta_por_fuente": None,
             "periodo_consultado": None,
             "datos_desactualizados": None,
             "umbral_datos_desactualizados_segundos": umbral_segundos,
@@ -79,6 +82,12 @@ def armar_estado(
         "eventos_replay": eventos_replay,
         "ultimo_evento": ultimo_evento,
         "ultima_ingesta_correcta": iso_utc(ultima_ingesta) if ultima_ingesta is not None else None,
+        # 013: la última consulta correcta de cada fuente ({"emsc": …, "usgs": …}).
+        "ingesta_por_fuente": (
+            {fuente: iso_utc(instante) for fuente, instante in sorted(ingesta_por_fuente.items())}
+            if ingesta_por_fuente is not None
+            else None
+        ),
         "periodo_consultado": periodo_consultado,
         "datos_desactualizados": desactualizado(ultima_ingesta, ahora, umbral_segundos),
         "umbral_datos_desactualizados_segundos": umbral_segundos,
@@ -105,13 +114,17 @@ async def consultar_estado(
         if existe and existe[0][0]:
             recuento = await db.consultar(SQL_REPLAY_RECUENTO, timeout=3)
             eventos_replay = int(recuento[0][0]) if recuento else 0
+        por_fuente = await db.consultar(SQL_INGESTA_POR_FUENTE, timeout=3)
+        ingesta_por_fuente = {fuente: instante for fuente, instante in por_fuente if instante is not None}
         db_ok = True
     except SinConexion:
         conteos, ultimo, ultima_ingesta, periodo, eventos_replay, db_ok = None, None, None, None, None, False
+        ingesta_por_fuente = None
     except Exception as exc:
         registrar(logger, "error", nivel="WARNING", component="postgres", reason=motivo_de(exc))
         conteos, ultimo, ultima_ingesta, periodo, eventos_replay, db_ok = None, None, None, None, None, False
+        ingesta_por_fuente = None
     return armar_estado(
         conteos, ultimo, db_ok, datetime.now(timezone.utc), ultima_ingesta, periodo, umbral_segundos,
-        eventos_replay,
+        eventos_replay, ingesta_por_fuente,
     )

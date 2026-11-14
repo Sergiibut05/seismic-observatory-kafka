@@ -1,4 +1,7 @@
-# Observatorio de actividad sísmica: los cinco servicios del enunciado (apartado 2).
+# Observatorio de actividad sísmica: los cinco servicios del enunciado (apartado 2) y, desde la
+# feature 013, un productor por fuente (USGS, EMSC) y la fusión con PySpark:
+#   producer (USGS) ─► eventos.usgs ┐
+#   producer-emsc   ─► eventos.emsc ├─► fusion (Spark) ─► eventos.live ─► consumer ─► postgres ─► api
 # Arranque: copiar .env.example a .env, definir POSTGRES_PASSWORD y ejecutar
 # `docker compose up --build -d`. Detalle en el README y en specs/001-esqueleto/.
 #
@@ -88,8 +91,11 @@ services:
     volumes:
       - ./data/usgs:/data/usgs
       - ./data/historico:/data/historico
+      - ./data/relleno:/data/relleno
       - ./catalogo:/catalogo:ro
-    environment:
+    environment: &entorno-productor
+      FUENTE: usgs
+      TOPIC_FUENTE: ${TOPIC_USGS:-eventos.usgs}
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
       TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
       TOPIC_REPLAY: ${TOPIC_REPLAY:-eventos.replay}
@@ -114,6 +120,53 @@ services:
       SMOKE_TIMEOUT_SECONDS: ${SMOKE_TIMEOUT_SECONDS:-30}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       HEALTH_PORT: "8081"
+
+  # 013: la misma imagen y el mismo ciclo que `producer`, con otra fuente y otro topic.
+  producer-emsc:
+    <<: *backend
+    command: ["python", "-m", "observatorio.producer"]
+    volumes:
+      - ./data/emsc:/data/emsc
+    environment:
+      <<: *entorno-productor
+      FUENTE: emsc
+      TOPIC_FUENTE: ${TOPIC_EMSC:-eventos.emsc}
+      EMSC_URL_BASE: ${EMSC_URL_BASE:-https://www.seismicportal.eu/fdsnws/event/1}
+      FEED_DIR: /data/emsc
+
+  # 013: PySpark Structured Streaming. Lee los topics por fuente, fusiona duplicados y escribe en
+  # eventos.live. Su estado vive en PostgreSQL (esquema fusion); el checkpoint, en un volumen.
+  fusion:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.fusion
+    image: observatorio-fusion:local
+    restart: unless-stopped
+    command: ["python", "-m", "observatorio.fusion"]
+    volumes:
+      - fusion_checkpoint:/data/fusion
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      TOPIC_LIVE: ${TOPIC_LIVE:-eventos.live}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env: copia .env.example a .env y define una contraseña}"
+      FUSION_MAX_POR_LOTE: ${FUSION_MAX_POR_LOTE:-5000}
+      FUSION_TRIGGER_SEGUNDOS: ${FUSION_TRIGGER_SEGUNDOS:-15}
+      SPARK_MASTER: ${SPARK_MASTER:-local[2]}
+      RETRY_INITIAL_SECONDS: ${RETRY_INITIAL_SECONDS:-1}
+      RETRY_FACTOR: ${RETRY_FACTOR:-2}
+      RETRY_MAX_SECONDS: ${RETRY_MAX_SECONDS:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    healthcheck:
+      # Latido en fichero mientras la consulta de Spark está viva (fusion/salud.py).
+      test: ["CMD", "python", "-m", "observatorio.fusion.salud"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 120s
 
   consumer:
     <<: *backend
@@ -164,3 +217,4 @@ services:
 volumes:
   kafka_data:
   postgres_data:
+  fusion_checkpoint:

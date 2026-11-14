@@ -88,13 +88,18 @@ def reproducido_en(ingested_at: datetime | None, modo: str) -> str | None:
     return iso_utc(ingested_at)
 
 
+def fuentes_de(extra) -> list[str]:
+    """`fuentes` (013) como lista; una fila sin esa columna (consulta anterior) da lista vacía."""
+    return list(extra[0]) if extra and extra[0] else []
+
+
 def geojson_mapa(
     filas: Sequence[tuple], total: int, limite: int, generado: datetime, modo: str = "live"
 ) -> dict:
     """`FeatureCollection` para Leaflet; `[lon, lat]`; `truncado` si hay más eventos que el tope.
 
     `filas` = `(event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_nombre,
-    sintetico, ingested_at)`.
+    sintetico, ingested_at, fuentes)`.
     """
     if modo not in ("live", "replay"):
         raise ValueError("modo")
@@ -111,11 +116,12 @@ def geojson_mapa(
                 "pais_nombre": pais_nombre,
                 "sintetico": bool(sintetico),
                 "reproducido_en": reproducido_en(ingested_at, modo),
+                "fuentes": fuentes_de(extra),
             },
         }
         for (
             event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud,
-            pais_nombre, sintetico, ingested_at,
+            pais_nombre, sintetico, ingested_at, *extra,
         ) in filas[:limite]
     ]
     # Dos consultas no son atómicas: el total nunca puede quedar por debajo de lo devuelto.

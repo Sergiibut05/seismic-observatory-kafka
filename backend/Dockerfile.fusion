@@ -1,0 +1,34 @@
+# Servicio de fusión (feature 013): Python 3.12 + Java 17 + PySpark 4.2.1 + conector de Kafka.
+# Imagen aparte de la del backend: Java y Spark suman cientos de MB que productores, consumidor
+# y API no necesitan. Comparte el paquete `observatorio`.
+FROM python:3.12-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    SPARK_JARS_DIR=/opt/spark-jars
+
+# Spark corre en la JVM; `procps` lo usan sus scripts de arranque.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-17-jre-headless procps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt requirements-fusion.txt ./
+RUN pip install -r requirements-fusion.txt
+
+# El conector de Kafka y sus dependencias se resuelven aquí, una vez: el arranque no descarga nada.
+COPY observatorio/fusion/jars.py /tmp/jars.py
+RUN python /tmp/jars.py && rm /tmp/jars.py
+
+COPY observatorio/ observatorio/
+COPY tests/ tests/
+COPY pytest.ini .
+
+RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin appuser \
+    && mkdir -p /data/fusion \
+    && chown appuser /data/fusion
+USER appuser
+
+CMD ["python", "-m", "observatorio.fusion"]

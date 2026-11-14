@@ -70,7 +70,7 @@ describe('App (esqueleto)', () => {
       expect(interruptor(el).checked).toBe(false);
       expect(el.querySelector('.franja--replay')).toBeNull();
       expect(el.querySelector('.franja--sinteticos')).toBeNull();
-      expect(el.querySelector('header')?.textContent).toContain('Eventos reales de USGS');
+      expect(el.querySelector('header')?.textContent).toContain('Eventos reales de USGS y EMSC');
       // Ninguna petición lleva `modo` ni `incluir_sinteticos`.
       expect(http.match((r) => /modo|sinteticos/.test(r.url)).length).toBe(0);
     });
@@ -84,7 +84,7 @@ describe('App (esqueleto)', () => {
       await fixture.whenStable();
       expect(el.querySelector('.franja--replay')?.getAttribute('role')).toBe('status');
       expect(el.querySelector('header')?.textContent).toContain('REPRODUCCIÓN');
-      expect(el.querySelector('header')?.textContent).not.toContain('Eventos reales de USGS');
+      expect(el.querySelector('header')?.textContent).not.toContain('Eventos reales de USGS y EMSC');
 
       const pendientes = http.match(() => true);
       expect(pendientes.some((r) => r.request.url.includes('/comparacion-historica'))).toBe(false);
@@ -101,7 +101,7 @@ describe('App (esqueleto)', () => {
       radio(el, 'live').click();
       await fixture.whenStable();
       expect(el.querySelector('.franja--replay')).toBeNull();
-      expect(el.querySelector('header')?.textContent).toContain('Eventos reales de USGS');
+      expect(el.querySelector('header')?.textContent).toContain('Eventos reales de USGS y EMSC');
       const pendientes = http.match(() => true);
       expect(pendientes.some((r) => r.request.url.includes('/comparacion-historica'))).toBe(true);
       expect(pendientes.some((r) => r.request.url.includes('modo'))).toBe(false);

@@ -21,7 +21,8 @@ CLAVES_NUEVAS = {
     "umbral_datos_desactualizados_segundos",
 }
 CLAVES_0_3 = {"eventos_replay"}
-CLAVES = CLAVES_0_1 | CLAVES_NUEVAS | CLAVES_0_3
+CLAVES_013 = {"ingesta_por_fuente"}
+CLAVES = CLAVES_0_1 | CLAVES_NUEVAS | CLAVES_0_3 | CLAVES_013
 CLAVES_ULTIMO = {"event_id", "updated", "source", "sintetico", "processed_at"}
 
 INGESTA = AHORA - timedelta(seconds=40)
@@ -182,6 +183,7 @@ def test_consultar_estado_lee_ingesta_y_periodo():
         {
             "count(*) FILTER": [(7, 1)],
             "ORDER BY processed_at": [],
+            "GROUP BY fuente": [("emsc", ahora - timedelta(seconds=20)), ("usgs", ahora - timedelta(seconds=30))],
             "FROM ingesta.consultas": [(ahora - timedelta(seconds=30),)],
             "min(ocurrencia)": [(ahora - timedelta(days=10), ahora - timedelta(minutes=5))],
             "to_regclass": [(True,)],
@@ -192,6 +194,8 @@ def test_consultar_estado_lee_ingesta_y_periodo():
     assert estado["base_de_datos"] == "conectada"
     assert estado["eventos_replay"] == 42
     assert estado["eventos_reales"] == 7 and estado["eventos_sinteticos"] == 1
+    assert set(estado["ingesta_por_fuente"]) == {"emsc", "usgs"}
+    assert all(ISO.match(v) for v in estado["ingesta_por_fuente"].values())
     assert estado["datos_desactualizados"] is False
     assert estado["umbral_datos_desactualizados_segundos"] == 120
     assert ISO.match(estado["periodo_consultado"]["desde"])
@@ -202,6 +206,7 @@ def test_consultar_estado_sin_filas_de_ingesta_esta_desactualizado():
         {
             "count(*) FILTER": [(0, 0)],
             "ORDER BY processed_at": [],
+            "GROUP BY fuente": [],
             "FROM ingesta.consultas": [],
             "min(ocurrencia)": [(None, None)],
             "to_regclass": [(True,)],
@@ -227,6 +232,7 @@ def test_eventos_replay_es_none_si_la_tabla_no_existe_y_no_se_cuenta():
         {
             "count(*) FILTER": [(1, 0)],
             "ORDER BY processed_at": [],
+            "GROUP BY fuente": [],
             "FROM ingesta.consultas": [],
             "min(ocurrencia)": [(None, None)],
             "to_regclass": [(False,)],

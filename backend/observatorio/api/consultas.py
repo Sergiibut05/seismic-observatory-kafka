@@ -28,7 +28,7 @@ SQL_TOTAL = "SELECT count(*) FROM {tabla}{where}"
 
 SQL_LISTA = (
     "SELECT e.event_id, e.ocurrencia, e.updated, e.magnitud, e.profundidad, e.longitud, e.latitud, "
-    "e.pais_codigo, e.pais_nombre, p.subregion, e.sintetico, e.ingested_at "
+    "e.pais_codigo, e.pais_nombre, p.subregion, e.sintetico, e.ingested_at, e.fuentes "
     "FROM (SELECT * FROM {tabla}{where}" + _ORDEN + " LIMIT %s OFFSET %s) e "
     "LEFT JOIN ingesta.pais p ON p.codigo = e.pais_codigo "
     "ORDER BY e.ocurrencia DESC, e.event_id ASC"
@@ -36,7 +36,7 @@ SQL_LISTA = (
 
 SQL_MAPA = (
     "SELECT event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud, pais_nombre, "
-    "sintetico, ingested_at "
+    "sintetico, ingested_at, fuentes "
     "FROM {tabla}{where}" + _ORDEN + " LIMIT %s"
 )
 
@@ -81,9 +81,15 @@ SQL_REPLAY_RECUENTO = f"SELECT count(*) FROM {ESTADO_REPLAY}"
 SQL_REPLAY_ULTIMA_OCURRENCIA = f"SELECT max(ocurrencia) FROM {ESTADO_REPLAY}"
 
 # /status
+# 204: la fuente respondió bien y no había eventos nuevos (EMSC); también es una ingesta correcta.
 SQL_ULTIMA_INGESTA = (
     "SELECT acabada_en FROM ingesta.consultas "
-    "WHERE http_status = 200 AND error IS NULL ORDER BY id DESC LIMIT 1"
+    "WHERE http_status IN (200, 204) AND error IS NULL ORDER BY id DESC LIMIT 1"
+)
+# 013: la última consulta correcta de cada fuente.
+SQL_INGESTA_POR_FUENTE = (
+    "SELECT fuente, max(acabada_en) FROM ingesta.consultas "
+    "WHERE http_status IN (200, 204) AND error IS NULL GROUP BY fuente ORDER BY fuente"
 )
 SQL_PERIODO = f"SELECT min(ocurrencia), max(ocurrencia) FROM {ESTADO_ACTUAL} WHERE NOT sintetico"
 

@@ -27,22 +27,34 @@ export class Estado {
     const iso = this.bloque().datos?.ultima_ingesta_correcta;
     return iso ? `${formatearCortoUtc(iso, this.i18n.t())} UTC` : textoNd(this.i18n.t());
   });
-  protected readonly ultimaIngestaCompleta = computed(() =>
-    this.i18n.instante(this.bloque().datos?.ultima_ingesta_correcta),
-  );
+  /** 013: el instante completo y, detrás, el de cada fuente (`USGS: … · EMSC: …`). */
+  protected readonly ultimaIngestaCompleta = computed(() => {
+    const datos = this.bloque().datos;
+    const general = this.i18n.instante(datos?.ultima_ingesta_correcta);
+    const porFuente = Object.entries(datos?.ingesta_por_fuente ?? {})
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([fuente, iso]) => `${fuente.toUpperCase()}: ${this.i18n.instante(iso)}`);
+    return porFuente.length ? `${general} · ${porFuente.join(' · ')}` : general;
+  });
   protected readonly periodo = computed(() => {
     const p = this.bloque().datos?.periodo_consultado;
     const t = this.i18n.t();
-    return p ? `${formatearCortoUtc(p.desde, t)} → ${formatearCortoUtc(p.hasta, t)} UTC` : textoNd(t);
+    return p
+      ? `${formatearCortoUtc(p.desde, t)} → ${formatearCortoUtc(p.hasta, t)} UTC`
+      : textoNd(t);
   });
   protected readonly periodoCompleto = computed(() => {
     const p = this.bloque().datos?.periodo_consultado;
     return p ? `${this.i18n.instante(p.desde)} → ${this.i18n.instante(p.hasta)}` : '';
   });
-  protected readonly eventosReales = computed(() => this.i18n.entero(this.bloque().datos?.eventos_reales));
+  protected readonly eventosReales = computed(() =>
+    this.i18n.entero(this.bloque().datos?.eventos_reales),
+  );
   protected readonly esReplay = computed(() => this.store.vista().modo === 'replay');
   /** Eventos de `replay.evento_actual`; «ND» si no hay base de datos (`null`). */
-  protected readonly eventosReplay = computed(() => this.i18n.entero(this.bloque().datos?.eventos_replay));
+  protected readonly eventosReplay = computed(() =>
+    this.i18n.entero(this.bloque().datos?.eventos_replay),
+  );
 
   private readonly avisos = computed<Aviso[]>(() => this.datos.estadoSistema().avisos);
   /** El único `role="alert"`: el aviso más grave (API sin respuesta o base caída), si lo hay. */
@@ -53,7 +65,9 @@ export class Estado {
       null,
   );
   /** Resto de avisos, en la región `aria-live="polite"`. */
-  protected readonly avisosCorteses = computed(() => this.avisos().filter((a) => a !== this.alerta()));
+  protected readonly avisosCorteses = computed(() =>
+    this.avisos().filter((a) => a !== this.alerta()),
+  );
   protected readonly cargando = computed(
     () => this.bloque().datos === null && this.bloque().error === null,
   );

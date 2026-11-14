@@ -1,0 +1,3 @@
+# Servicio de fusión (013): lo del backend más PySpark (requiere Java 17, ver Dockerfile.fusion).
+-r requirements.txt
+pyspark==4.2.1

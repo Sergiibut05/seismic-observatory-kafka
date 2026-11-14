@@ -98,8 +98,8 @@ def test_el_historico_no_usa_la_plantilla_de_tabla():
 
 
 def test_lista_y_mapa_traen_la_ingesta_como_ultima_columna():
-    assert "e.ingested_at FROM" in consultas.SQL_LISTA
-    assert "sintetico, ingested_at FROM" in consultas.SQL_MAPA
+    assert "e.ingested_at, e.fuentes FROM" in consultas.SQL_LISTA
+    assert "sintetico, ingested_at, fuentes FROM" in consultas.SQL_MAPA
 
 
 def test_los_marcadores_coinciden_con_los_parametros():

@@ -31,6 +31,16 @@ describe('crearFicha', () => {
     expect(ficha.textContent).not.toMatch(/0,0|0 km/);
   });
 
+  it('dice de qué fuentes viene el evento (013) y no inventa la fila si no las hay', () => {
+    const fusionado = crearFicha({ ...base, fuentes: ['usgs', 'emsc'] });
+    const filas = Array.from(fusionado.querySelectorAll('dt')).map((d) => d.textContent);
+    expect(filas).toContain('Fuentes');
+    expect(fusionado.textContent).toContain('EMSC + USGS');
+    expect(
+      Array.from(crearFicha(base).querySelectorAll('dt')).map((d) => d.textContent),
+    ).not.toContain('Fuentes');
+  });
+
   it('el lugar va bajo el título y «Sin país asignado» explica por qué', () => {
     expect(crearFicha(base).querySelector('.ficha__lugar')?.textContent).toBe('México');
     const mar = crearFicha({ ...base, pais_nombre: 'Sin país asignado' });
@@ -39,9 +49,9 @@ describe('crearFicha', () => {
 
   it('el resumen al pasar el ratón es una línea de texto con magnitud y lugar', () => {
     expect(crearResumen(base).textContent).toBe('M 4,5, México');
-    expect(crearResumen({ ...base, pais_nombre: 'Sin país asignado', magnitud: null }).textContent).toBe(
-      'M ND, sin país asignado',
-    );
+    expect(
+      crearResumen({ ...base, pais_nombre: 'Sin país asignado', magnitud: null }).textContent,
+    ).toBe('M ND, sin país asignado');
     const xss = crearResumen({ ...base, pais_nombre: '<b>x</b>' });
     expect(xss.querySelector('b')).toBeNull();
   });

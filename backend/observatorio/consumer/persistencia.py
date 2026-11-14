@@ -37,8 +37,8 @@ async def guardar_version(
     identificador = _esquema(esquema)
     consulta = sql.SQL(
         "INSERT INTO {}.versiones_evento "
-        "(event_id, updated, schema_version, source, mode, sintetico, ingested_at, topic, particion, offset_kafka, original) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        "(event_id, updated, schema_version, source, mode, sintetico, ingested_at, topic, particion, offset_kafka, original, fuentes) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
         "ON CONFLICT (event_id, updated) DO NOTHING"
     ).format(identificador)
     parametros = (
@@ -53,6 +53,7 @@ async def guardar_version(
         registro.partition,
         registro.offset,
         Jsonb(version.mensaje),
+        list(version.fuentes or (version.source,)),
     )
     async with db.transaccion() as conn:
         cursor = await conn.execute(consulta, parametros)
@@ -70,6 +71,7 @@ async def guardar_version(
                 version.sintetico,
                 version.ingested_at,
                 None,
+                list(version.fuentes or (version.source,)),
             )
         return cursor.rowcount
 
@@ -91,8 +93,8 @@ def _upsert_sql(identificador: sql.Identifier) -> sql.Composed:
         """
         INSERT INTO {}.evento_actual (
             event_id, updated, ocurrencia, magnitud, profundidad, longitud, latitud,
-            pais_codigo, pais_nombre, source, mode, sintetico, ingested_at, processed_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, clock_timestamp()))
+            pais_codigo, pais_nombre, source, mode, sintetico, ingested_at, processed_at, fuentes
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, clock_timestamp()), %s)
         ON CONFLICT (event_id) DO UPDATE SET
             updated = EXCLUDED.updated,
             ocurrencia = EXCLUDED.ocurrencia,
@@ -106,7 +108,8 @@ def _upsert_sql(identificador: sql.Identifier) -> sql.Composed:
             mode = EXCLUDED.mode,
             sintetico = EXCLUDED.sintetico,
             ingested_at = EXCLUDED.ingested_at,
-            processed_at = EXCLUDED.processed_at
+            processed_at = EXCLUDED.processed_at,
+            fuentes = EXCLUDED.fuentes
         WHERE """
         + COMPARACION_REVISION
     ).format(identificador, identificador)
@@ -125,6 +128,7 @@ async def _upsert_actual(
     sintetico,
     ingested_at,
     processed_at,
+    fuentes: list[str],
 ) -> None:
     await conn.execute(
         _upsert_sql(identificador),
@@ -143,8 +147,17 @@ async def _upsert_actual(
             sintetico,
             ingested_at,
             processed_at,
+            fuentes,
         ),
     )
+
+
+def fuentes_de(original: dict, source: str) -> list[str]:
+    """Fuentes de una versión guardada: la lista del v2 o, en v1, la única fuente del mensaje."""
+    lista = original.get("fuentes") if isinstance(original, dict) else None
+    if isinstance(lista, list) and lista:
+        return sorted(f["fuente"] for f in lista if isinstance(f, dict) and isinstance(f.get("fuente"), str))
+    return [source]
 
 
 _DDL = (
@@ -225,6 +238,13 @@ _DDL = (
     "CREATE INDEX IF NOT EXISTS evento_actual_pais_ocurrencia_idx ON live.evento_actual (pais_nombre, ocurrencia)",
     "CREATE INDEX IF NOT EXISTS evento_replay_pais_ocurrencia_idx ON replay.evento_actual (pais_nombre, ocurrencia)",
     "CREATE INDEX IF NOT EXISTS evento_actual_ocurrencia_idx ON live.evento_actual (ocurrencia DESC, event_id)",
+    # 013 (db/init/006_multifuente.sql): las fuentes de cada evento.
+    "ALTER TABLE live.versiones_evento ADD COLUMN IF NOT EXISTS fuentes text[]",
+    "ALTER TABLE replay.versiones_evento ADD COLUMN IF NOT EXISTS fuentes text[]",
+    "ALTER TABLE live.evento_actual ADD COLUMN IF NOT EXISTS fuentes text[] NOT NULL DEFAULT '{}'",
+    "ALTER TABLE replay.evento_actual ADD COLUMN IF NOT EXISTS fuentes text[] NOT NULL DEFAULT '{}'",
+    "UPDATE live.evento_actual SET fuentes = ARRAY[source] WHERE fuentes = '{}'",
+    "UPDATE replay.evento_actual SET fuentes = ARRAY[source] WHERE fuentes = '{}'",
     "INSERT INTO ingesta.version_esquema (version, nombre) VALUES (4, 'estado_actual') ON CONFLICT (version) DO NOTHING",
 )
 
@@ -280,5 +300,6 @@ async def rellenar_estado(db: Database, indice: IndicePaises, esquema: str) -> i
                 sintetico,
                 ingested_at,
                 processed_at,
+                fuentes_de(original, source),
             )
     return len(filas)

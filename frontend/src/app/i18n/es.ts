@@ -5,7 +5,7 @@ export const ES = {
   'cabecera.titulo': 'Observatorio de actividad sísmica',
   'cabecera.saltar': 'Saltar al contenido',
   'cabecera.replay': 'REPRODUCCIÓN: no son datos en directo · tiempos en UTC',
-  'cabecera.directo': 'Eventos reales de USGS, tiempos en UTC',
+  'cabecera.directo': 'Eventos reales de USGS y EMSC, tiempos en UTC',
   'selector.idioma': 'Idioma',
 
   // Pantalla de error de configuración
@@ -51,12 +51,12 @@ export const ES = {
   'avisos.api_sin_respuesta': 'La API no responde: se muestran los últimos datos recibidos.',
   'avisos.base_fallida': 'La base de datos no responde: las cifras no están disponibles.',
   'avisos.datos_desactualizados':
-    'Los datos están desactualizados: la última ingesta de USGS es antigua.',
+    'Los datos están desactualizados: la última ingesta de las fuentes es antigua.',
 
   // Estado del sistema
   'estado.aria': 'Estado del sistema',
   'estado.ultimo_acceso': 'Último acceso correcto a la API',
-  'estado.ultima_ingesta': 'Última ingesta correcta de USGS',
+  'estado.ultima_ingesta': 'Última ingesta correcta (USGS y EMSC)',
   'estado.periodo': 'Periodo consultado',
   'estado.eventos_reales': 'Eventos reales',
   'estado.eventos_replay': 'Eventos en reproducción',
@@ -165,6 +165,7 @@ export const ES = {
   'mapa.alejar': 'Alejar',
   'mapa.cerrar_ficha': 'Cerrar ficha',
   'mapa.fuente_fronteras': 'Fronteras: Natural Earth',
+  'mapa.fuente_datos': 'Terremotos: USGS · EMSC (CC BY 4.0)',
   'globo.leyenda_altura': 'Columna más alta, magnitud mayor',
 
   // Ficha y resumen del evento
@@ -175,7 +176,8 @@ export const ES = {
   'ficha.profundidad': 'Profundidad',
   'ficha.actualizado': 'Actualizado',
   'ficha.reproducido': 'Reproducido',
-  'ficha.id': 'Identificador USGS',
+  'ficha.id': 'Identificador',
+  'ficha.fuentes': 'Fuentes',
   'ficha.resumen_sin_pais': 'sin país asignado',
 
   // Globo 3D
@@ -194,7 +196,7 @@ export const ES = {
   // Identidad (011): tema
   'tema.boton': 'Modo noche',
   'estado.corto_api': 'API',
-  'estado.corto_usgs': 'USGS',
+  'estado.corto_usgs': 'Ingesta',
   'estado.corto_periodo': 'Periodo',
   'estado.corto_eventos': 'Eventos',
   'estado.corto_replay': 'Reproducidos',
@@ -342,7 +344,7 @@ export const ES = {
   // Nota sobre el alcance de las cifras
   'nota.aria': 'Límite de las cifras',
   'nota.texto':
-    'Estas cifras describen lo que USGS ha publicado en el periodo filtrado. No predicen terremotos ni evalúan el riesgo. La red no detecta todos los eventos por igual y el tipo de magnitud puede cambiar de un evento a otro: compara solo muestras con los mismos filtros.',
+    'Estas cifras describen lo que USGS y EMSC han publicado en el periodo filtrado. No predicen terremotos ni evalúan el riesgo. La red no detecta todos los eventos por igual y el tipo de magnitud puede cambiar de un evento a otro: compara solo muestras con los mismos filtros.',
 } as const;
 
 export type Clave = keyof typeof ES;

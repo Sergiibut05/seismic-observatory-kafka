@@ -1,7 +1,13 @@
 import { T_ES, Traductor } from '../../i18n/traducir';
 import { PropiedadesEventoMapa } from '../../modelos/api';
 import { intervaloProfundidad } from '../../puro/escalas';
-import { formatearInstanteUtc, formatearMagnitud, formatearProfundidad, textoNd } from '../../puro/formato';
+import {
+  formatearInstanteUtc,
+  formatearMagnitud,
+  formatearProfundidad,
+  textoNd,
+} from '../../puro/formato';
+import { textoFuentes } from '../../puro/fuentes';
 
 const SIN_PAIS = 'Sin país asignado';
 
@@ -59,8 +65,14 @@ export function crearFicha(
   ];
   // Solo en REPRODUCCIÓN (en directo es `null`): «Ocurrencia» sigue siendo el tiempo original.
   if (p.reproducido_en != null) {
-    filas.splice(1, 0, { rotulo: t('ficha.reproducido'), valor: formatearInstanteUtc(p.reproducido_en, t) });
+    filas.splice(1, 0, {
+      rotulo: t('ficha.reproducido'),
+      valor: formatearInstanteUtc(p.reproducido_en, t),
+    });
   }
+  // 013: de qué fuentes viene el evento (fusionado si son varias).
+  const fuentes = textoFuentes(p.fuentes);
+  if (fuentes) filas.push({ rotulo: t('ficha.fuentes'), valor: fuentes });
   filas.push({ rotulo: t('ficha.id'), valor: p.event_id, esId: true });
   const nd = textoNd(t);
   for (const { rotulo, valor, color, esId } of filas) {
@@ -91,7 +103,8 @@ export function crearResumen(
 ): HTMLElement {
   const el = doc.createElement('span');
   const prefijo = p.sintetico ? `${t('dominio.sintetico')}: ` : '';
-  const sitio = !p.pais_nombre || p.pais_nombre === SIN_PAIS ? t('ficha.resumen_sin_pais') : p.pais_nombre;
+  const sitio =
+    !p.pais_nombre || p.pais_nombre === SIN_PAIS ? t('ficha.resumen_sin_pais') : p.pais_nombre;
   el.textContent = `${prefijo}M ${formatearMagnitud(p.magnitud, t)}, ${sitio}`;
   return el;
 }

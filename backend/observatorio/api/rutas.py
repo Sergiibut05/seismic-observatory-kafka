@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from observatorio.api import consultas as sql
 from observatorio.api.calculos import (
+    fuentes_de,
     BORDES_MAGNITUD,
     BORDES_PROFUNDIDAD,
     MAPA_TOPE,
@@ -112,10 +113,11 @@ def crear_router(db: Database, reloj: Callable[[], datetime] = ahora_utc) -> API
                         "subregion": subregion,
                         "sintetico": bool(sintetico),
                         "reproducido_en": reproducido_en(ingested_at, modo),
+                        "fuentes": fuentes_de(extra),
                     }
                     for (
                         event_id, ocurrencia, updated, magnitud, profundidad, longitud, latitud,
-                        pais_codigo, pais_nombre, subregion, sintetico, ingested_at,
+                        pais_codigo, pais_nombre, subregion, sintetico, ingested_at, *extra,
                     ) in filas
                 ],
                 "total": total,

@@ -1,4 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
+import { textoFuentes } from '../../puro/fuentes';
 import { EventoTabla } from '../../modelos/api';
 import { I18nService } from '../../i18n/i18n.service';
 import { FiltrosStore } from '../../nucleo/filtros.store';
@@ -13,6 +14,8 @@ import { SIN_PAIS, nombreVisible } from '../../puro/filtros';
   styleUrl: './tabla.css',
 })
 export class Tabla {
+  /** 013: «EMSC + USGS»; vacío si el evento no trae fuentes. */
+  protected readonly fuentes = textoFuentes;
   protected readonly store = inject(FiltrosStore);
   protected readonly i18n = inject(I18nService);
   private readonly datos = inject(PanelDatosService);

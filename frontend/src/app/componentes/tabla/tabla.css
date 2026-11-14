@@ -57,3 +57,12 @@
   border-top: 1px solid var(--linea);
   font-variant-numeric: tabular-nums;
 }
+
+/* 013: fuentes del evento bajo su identificador. */
+.tabla__fuentes {
+  display: block;
+  color: var(--tinta-suave);
+  font-family: var(--fuente);
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+}

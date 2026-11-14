@@ -22,6 +22,8 @@ export interface EstadoApi {
     processed_at: InstanteUtc;
   } | null;
   ultima_ingesta_correcta: InstanteUtc | null;
+  /** 013: última consulta correcta de cada fuente (`{ emsc, usgs }`); `null` sin base de datos. */
+  ingesta_por_fuente?: Record<string, InstanteUtc> | null;
   periodo_consultado: { desde: InstanteUtc; hasta: InstanteUtc } | null;
   datos_desactualizados: boolean | null;
   umbral_datos_desactualizados_segundos: number;
@@ -42,6 +44,8 @@ export interface EventoTabla {
   sintetico: boolean;
   /** Instante UTC en que se reprodujo (solo con `modo=replay`); `null` en directo. */
   reproducido_en: InstanteUtc | null;
+  /** 013: fuentes que componen el evento (`['emsc', 'usgs']`). */
+  fuentes?: string[];
 }
 
 export interface RespuestaEventos {
@@ -62,6 +66,8 @@ export interface PropiedadesEventoMapa {
   sintetico: boolean;
   /** Instante UTC en que se reprodujo (solo con `modo=replay`); `null` en directo. */
   reproducido_en: InstanteUtc | null;
+  /** 013: fuentes que componen el evento (`['emsc', 'usgs']`). */
+  fuentes?: string[];
 }
 
 export interface EventoMapa {

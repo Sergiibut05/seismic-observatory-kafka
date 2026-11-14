@@ -1,4 +1,8 @@
-<section class="bloque" aria-labelledby="titulo-tabla" [attr.aria-busy]="bloque().estado === 'cargando'">
+<section
+  class="bloque"
+  aria-labelledby="titulo-tabla"
+  [attr.aria-busy]="bloque().estado === 'cargando'"
+>
   <div class="bloque__cab">
     <h2 id="titulo-tabla" class="bloque__titulo">{{ i18n.tr('tabla.titulo') }}</h2>
     <span class="bloque__nota">{{ i18n.tr('tabla.nota') }}</span>
@@ -32,7 +36,13 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col">{{ esReplay() ? i18n.tr('tabla.col_ocurrencia_original') : i18n.tr('tabla.col_ocurrencia') }}</th>
+              <th scope="col">
+                {{
+                  esReplay()
+                    ? i18n.tr('tabla.col_ocurrencia_original')
+                    : i18n.tr('tabla.col_ocurrencia')
+                }}
+              </th>
               <th scope="col" class="num">{{ i18n.tr('tabla.col_magnitud') }}</th>
               <th scope="col" class="num">{{ i18n.tr('tabla.col_profundidad') }}</th>
               <th scope="col">{{ i18n.tr('tabla.col_pais') }}</th>
@@ -54,7 +64,9 @@
                     <span class="insignia-sintetico">{{ i18n.tr('dominio.sintetico') }}</span>
                   }
                 </th>
-                <td class="num" [class.nd]="e.magnitud === null">{{ i18n.magnitud(e.magnitud) }}</td>
+                <td class="num" [class.nd]="e.magnitud === null">
+                  {{ i18n.magnitud(e.magnitud) }}
+                </td>
                 <td class="num" [class.nd]="e.profundidad === null">
                   {{ i18n.profundidad(e.profundidad) }}
                 </td>
@@ -66,7 +78,12 @@
                     {{ i18n.instante(e.reproducido_en) }}
                   </td>
                 }
-                <td class="tabla__id">{{ e.event_id }}</td>
+                <td class="tabla__id">
+                  {{ e.event_id }}
+                  @if (fuentes(e.fuentes); as f) {
+                    <span class="tabla__fuentes">{{ f }}</span>
+                  }
+                </td>
                 <td>
                   <button
                     type="button"
@@ -87,11 +104,21 @@
 
     @if (resumen(); as s) {
       <nav class="tabla__paginacion" [attr.aria-label]="i18n.tr('tabla.paginacion_aria')">
-        <button type="button" class="boton boton--secundario" [disabled]="!s.hayAnterior" (click)="anterior()">
+        <button
+          type="button"
+          class="boton boton--secundario"
+          [disabled]="!s.hayAnterior"
+          (click)="anterior()"
+        >
           {{ i18n.tr('tabla.anterior') }}
         </button>
         <span>{{ i18n.tr('tabla.pagina', { pagina: s.pagina, paginas: s.paginas }) }}</span>
-        <button type="button" class="boton boton--secundario" [disabled]="!s.haySiguiente" (click)="siguiente()">
+        <button
+          type="button"
+          class="boton boton--secundario"
+          [disabled]="!s.haySiguiente"
+          (click)="siguiente()"
+        >
           {{ i18n.tr('tabla.siguiente') }}
         </button>
       </nav>

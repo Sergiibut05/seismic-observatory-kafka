@@ -15,27 +15,27 @@
 
 ## Fase 2 — Esquema
 
-- [ ] T7 `db/init/006_multifuente.sql` + DDL equivalente en `producer/ciclo.asegurar_tablas`, `consumer/persistencia._DDL` y `fusion/estado.asegurar_fusion` (siembra FR-009)
+- [x] T7 `db/init/006_multifuente.sql` + DDL equivalente en `producer/ciclo.asegurar_tablas`, `consumer/persistencia._DDL` y `fusion/estado.asegurar_fusion` (siembra FR-009)
 
 ## Fase 3 — Productores (US1)
 
 - [x] T8 `ciclo.una_pasada` y `app.py` genéricos por fuente; `config.py` (`FUENTE`, `TOPIC_FUENTE`, `EMSC_URL_BASE`); publicadas por fuente e ids de la respuesta
-- [ ] T9 Compose: `producer` (usgs → `eventos.usgs`) y `producer-emsc`; `.env.example`
+- [x] T9 Compose: `producer` (usgs → `eventos.usgs`) y `producer-emsc`; `.env.example`
 
 ## Fase 4 — Fusión con Spark (US2)
 
-- [ ] T10 `fusion/estado.py`, `fusion/job.py`, `fusion/salud.py`, `fusion/__main__.py`
-- [ ] T11 `backend/Dockerfile.fusion`, `requirements-fusion.txt`; servicio `fusion` en Compose con volumen de *checkpoint* y healthcheck
+- [x] T10 `fusion/estado.py`, `fusion/job.py`, `fusion/salud.py`, `fusion/__main__.py`
+- [x] T11 `backend/Dockerfile.fusion`, `requirements-fusion.txt`; servicio `fusion` en Compose con volumen de *checkpoint* y healthcheck
 
 ## Fase 5 — Consumidor, API y panel (US2)
 
-- [ ] T12 Consumidor: `fuentes` en historial y estado actual; `rellenar_estado` (FR-011)
-- [ ] T13 API: `fuentes` en `/eventos` y `/eventos/mapa`; `ingesta_por_fuente` en `/status`; `docs/CONTRATO-API.md`
-- [ ] T14 Panel: modelo, ficha, tabla, cabecera y atribución
+- [x] T12 Consumidor: `fuentes` en historial y estado actual; `rellenar_estado` (FR-011)
+- [x] T13 API: `fuentes` en `/eventos` y `/eventos/mapa`; `ingesta_por_fuente` en `/status`; `docs/CONTRATO-API.md`
+- [x] T14 Panel: modelo, ficha, tabla, cabecera y atribución
 
 ## Fase 6 — Relleno (US3)
 
-- [ ] T15 `observatorio/relleno.py` (descarga, original, publicación, marca) y orden `docker compose run --rm producer python -m observatorio.relleno …`
+- [x] T15 `observatorio/relleno.py` (descarga, original, publicación, marca) y orden `docker compose run --rm producer python -m observatorio.relleno …`
 
 ## Fase 7 — Verificación y documentación
 

@@ -6,7 +6,7 @@ export const EN: Record<Clave, string> = {
   'cabecera.titulo': 'Seismic activity observatory',
   'cabecera.saltar': 'Skip to content',
   'cabecera.replay': 'REPLAY: not live data · times in UTC',
-  'cabecera.directo': 'Real USGS events, times in UTC',
+  'cabecera.directo': 'Real USGS and EMSC events, times in UTC',
   'selector.idioma': 'Language',
 
   // Configuration error screen
@@ -50,12 +50,13 @@ export const EN: Record<Clave, string> = {
   // System status warnings
   'avisos.api_sin_respuesta': 'The API is not responding: showing the last data received.',
   'avisos.base_fallida': 'The database is not responding: figures are unavailable.',
-  'avisos.datos_desactualizados': 'Data is out of date: the last USGS ingestion is old.',
+  'avisos.datos_desactualizados':
+    'Data is out of date: the last ingestion from the sources is old.',
 
   // System status
   'estado.aria': 'System status',
   'estado.ultimo_acceso': 'Last successful API access',
-  'estado.ultima_ingesta': 'Last successful USGS ingestion',
+  'estado.ultima_ingesta': 'Last successful ingestion (USGS and EMSC)',
   'estado.periodo': 'Period queried',
   'estado.eventos_reales': 'Real events',
   'estado.eventos_replay': 'Replayed events',
@@ -163,6 +164,7 @@ export const EN: Record<Clave, string> = {
   'mapa.alejar': 'Zoom out',
   'mapa.cerrar_ficha': 'Close card',
   'mapa.fuente_fronteras': 'Borders: Natural Earth',
+  'mapa.fuente_datos': 'Earthquakes: USGS · EMSC (CC BY 4.0)',
   'globo.leyenda_altura': 'Taller column, greater magnitude',
 
   // Event card and summary
@@ -173,7 +175,8 @@ export const EN: Record<Clave, string> = {
   'ficha.profundidad': 'Depth',
   'ficha.actualizado': 'Updated',
   'ficha.reproducido': 'Replayed',
-  'ficha.id': 'USGS identifier',
+  'ficha.id': 'Identifier',
+  'ficha.fuentes': 'Sources',
   'ficha.resumen_sin_pais': 'no country assigned',
 
   // 3D globe
@@ -191,7 +194,7 @@ export const EN: Record<Clave, string> = {
   // Identity (011): theme
   'tema.boton': 'Night mode',
   'estado.corto_api': 'API',
-  'estado.corto_usgs': 'USGS',
+  'estado.corto_usgs': 'Ingest',
   'estado.corto_periodo': 'Period',
   'estado.corto_eventos': 'Events',
   'estado.corto_replay': 'Replayed',
@@ -339,5 +342,5 @@ export const EN: Record<Clave, string> = {
   // Note on the scope of the figures
   'nota.aria': 'Limits of the figures',
   'nota.texto':
-    'These figures describe what USGS has published for the filtered period. They do not predict earthquakes or assess risk. The network does not detect all events equally and the magnitude type can change from one event to another: compare only samples with the same filters.',
+    'These figures describe what USGS and EMSC have published for the filtered period. They do not predict earthquakes or assess risk. The network does not detect all events equally and the magnitude type can change from one event to another: compare only samples with the same filters.',
 };

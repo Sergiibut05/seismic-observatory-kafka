@@ -279,7 +279,8 @@ export class Mapa {
   private ponerAtribucion(mapa: L.Map): void {
     const control = mapa.attributionControl;
     if (this.atribucionPuesta !== null) control.removeAttribution(this.atribucionPuesta);
-    this.atribucionPuesta = atribucion(this.i18n.tr('mapa.fuente_fronteras'));
+    // 013: fronteras (Natural Earth) y terremotos (USGS, EMSC con licencia CC BY 4.0).
+    this.atribucionPuesta = `${atribucion(this.i18n.tr('mapa.fuente_fronteras'))} | ${this.i18n.tr('mapa.fuente_datos')}`;
     control.addAttribution(this.atribucionPuesta);
   }
 

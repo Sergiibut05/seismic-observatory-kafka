@@ -178,6 +178,7 @@ def test_geojson_con_coordenadas_lon_lat_y_propiedades():
         "profundidad": 10.0,
         "pais_nombre": "Estados Unidos",
         "sintetico": False,
+        "fuentes": [],
         "reproducido_en": None,
     }
     assert (datos["total"], datos["devueltos"], datos["limite"], datos["truncado"]) == (1, 1, MAPA_TOPE, False)
@@ -253,3 +254,8 @@ def test_dentro_del_umbral_no():
 def test_en_el_umbral_exacto_no_y_pasado_si():
     assert desactualizado(AHORA - timedelta(seconds=300), AHORA, 300) is False
     assert desactualizado(AHORA - timedelta(seconds=300, milliseconds=1), AHORA, 300) is True
+
+
+def test_geojson_con_las_fuentes_del_evento():
+    datos = geojson_mapa([(*fila(1), ["emsc", "usgs"])], 1, MAPA_TOPE, GENERADO)
+    assert datos["features"][0]["properties"]["fuentes"] == ["emsc", "usgs"]

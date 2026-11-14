@@ -5,14 +5,20 @@ import { textoAviso } from '../puro/desactualizado';
 import { clasificarError } from '../puro/errores';
 import { notaOrigenDatos, validarFiltros, FILTROS_VACIOS } from '../puro/filtros';
 import { etiquetaVentanaUtc } from '../puro/barras';
-import { formatearDecimal, formatearInstanteUtc, formatearMagnitud, formatearProfundidad } from '../puro/formato';
+import {
+  formatearDecimal,
+  formatearInstanteUtc,
+  formatearMagnitud,
+  formatearProfundidad,
+} from '../puro/formato';
 import { etiquetaGlobo } from '../puro/globo';
 import { EN } from './en';
 import { ES } from './es';
 import { CLAVE_IDIOMA, I18nService } from './i18n.service';
 import { T_ES, crearTraductor, localeDe } from './traducir';
 
-const marcadores = (texto: string): string[] => [...texto.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+const marcadores = (texto: string): string[] =>
+  [...texto.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 const T_EN = crearTraductor('en');
 
@@ -28,8 +34,10 @@ describe('diccionarios (AC-1)', () => {
   });
 
   it('ninguna traducción está vacía', () => {
-    for (const [clave, texto] of Object.entries(ES)) expect(texto.trim(), `es:${clave}`).not.toBe('');
-    for (const [clave, texto] of Object.entries(EN)) expect(texto.trim(), `en:${clave}`).not.toBe('');
+    for (const [clave, texto] of Object.entries(ES))
+      expect(texto.trim(), `es:${clave}`).not.toBe('');
+    for (const [clave, texto] of Object.entries(EN))
+      expect(texto.trim(), `en:${clave}`).not.toBe('');
   });
 
   it('el inglés no repite por descuido el texto español de las frases largas', () => {
@@ -103,7 +111,7 @@ describe('números, fechas y textos en inglés (FR-004, FR-005)', () => {
     const texto = ficha.textContent ?? '';
     expect(ficha.querySelector('.ficha__titulo')?.textContent).toBe('Magnitude 4.5');
     expect(texto).toContain('Occurrence');
-    expect(texto).toContain('USGS identifier');
+    expect(texto).toContain('Identifier');
     expect(texto).toContain('2 Nov 2026 10:15:30 UTC');
     expect(texto).toContain('México');
     expect(ficha.getAttribute('aria-label')).toBe('Card of earthquake us7000abcd');
@@ -115,8 +123,12 @@ describe('números, fechas y textos en inglés (FR-004, FR-005)', () => {
     expect(crearFicha(mar, document, T_EN).querySelector('.ficha__lugar')?.textContent).toBe(
       'No country assigned (at sea or outside borders)',
     );
-    expect(crearFicha(mar, document, T_EN).querySelector('.ficha__marca')?.textContent).toBe('SYNTHETIC');
-    expect(crearResumen(mar, document, T_EN).textContent).toBe('SYNTHETIC: M 4.5, no country assigned');
+    expect(crearFicha(mar, document, T_EN).querySelector('.ficha__marca')?.textContent).toBe(
+      'SYNTHETIC',
+    );
+    expect(crearResumen(mar, document, T_EN).textContent).toBe(
+      'SYNTHETIC: M 4.5, no country assigned',
+    );
     expect(etiquetaGlobo(mar, T_EN)).toContain('SYNTHETIC');
     expect(etiquetaGlobo(mar, T_EN)).toContain('No country assigned');
   });
