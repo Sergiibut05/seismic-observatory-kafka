@@ -1,6 +1,6 @@
 [build]
   base = "frontend"
-  command = "npm ci && npm run build"
+  command = "test -n \"$API_BASE_URL\" && printf '{\"apiBaseUrl\":\"%s\"}' \"$API_BASE_URL\" > public/config.json && npm ci && npm run build"
   publish = "dist/panel/browser"
 
 [build.environment]
