@@ -29,7 +29,11 @@ export interface CapaColumnas {
   luces: { ambiente: THREE.AmbientLight; dir: THREE.DirectionalLight };
 }
 
-function nuevaMalla(material: THREE.Material, capacidad: number, orden: number): THREE.InstancedMesh {
+function nuevaMalla(
+  material: THREE.Material,
+  capacidad: number,
+  orden: number,
+): THREE.InstancedMesh {
   const mesh = new THREE.InstancedMesh(GEO, material, Math.max(capacidad, 1));
   mesh.frustumCulled = false;
   mesh.renderOrder = orden;
@@ -137,29 +141,82 @@ export function actualizarColumnas(
   capa.aro.visible = true;
 }
 
+/** ¿Tapa la esfera del globo el punto `p` visto desde la cámara? */
+function oculto(p: THREE.Vector3, cam: THREE.Vector3, radio: number): boolean {
+  const dir = p.clone().sub(cam);
+  const dist = dir.length();
+  dir.divideScalar(dist || 1);
+  const b = cam.dot(dir);
+  const disc = b * b - (cam.lengthSq() - radio * radio);
+  if (disc < 0) return false;
+  const t = -b - Math.sqrt(disc);
+  return t > 0 && t < dist - radio * 0.01;
+}
+
+/** Distancia en px del punto (x, y) al segmento a–b. */
+function distSegmento(x: number, y: number, a: THREE.Vector2, b: THREE.Vector2): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l2 = dx * dx + dy * dy;
+  const t = l2 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2)) : 0;
+  return Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy));
+}
+
+/**
+ * Columna bajo el puntero con tolerancia en píxeles: las agujas miden 1–3 px de ancho y un
+ * rayo exacto casi nunca las toca. Se proyecta cada columna (base y techo) a pantalla y gana
+ * la más cercana dentro de `tolerancia`; las que quedan detrás del globo no cuentan.
+ */
 export function recogerColumna(
   capa: CapaColumnas,
   globo: GlobeInstance,
-  evento: MouseEvent,
+  clientX: number,
+  clientY: number,
+  tolerancia = 10,
 ): PuntoGlobo | null {
   if (!capa.puntos.length) return null;
-  const canvas = globo.renderer().domElement;
-  const rect = canvas.getBoundingClientRect();
-  const mouse = new THREE.Vector2(
-    ((evento.clientX - rect.left) / rect.width) * 2 - 1,
-    -((evento.clientY - rect.top) / rect.height) * 2 + 1,
-  );
-  const raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse, globo.camera());
-  const hits = raycaster.intersectObject(capa.mesh);
-  const id = hits[0]?.instanceId;
-  if (id === undefined) return null;
-  return capa.puntos[id] ?? null;
+  const camara = globo.camera();
+  const rect = globo.renderer().domElement.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const cam = camara.position;
+  const radio = globo.getGlobeRadius();
+  const aPantalla = (v: THREE.Vector3, out: THREE.Vector2): boolean => {
+    const ndc = v.clone().project(camara);
+    if (ndc.z > 1) return false;
+    out.set(((ndc.x + 1) / 2) * rect.width, ((1 - ndc.y) / 2) * rect.height);
+    return true;
+  };
+  const base = new THREE.Vector3();
+  const techo = new THREE.Vector3();
+  const a = new THREE.Vector2();
+  const b = new THREE.Vector2();
+  let mejor: PuntoGlobo | null = null;
+  let mejorDist = tolerancia;
+  for (const p of capa.puntos) {
+    const c0 = globo.getCoords(p.lat, p.lng, 0);
+    const c1 = globo.getCoords(p.lat, p.lng, Math.max(p.altura, ALTURA_COLUMNA_ND));
+    base.set(c0.x, c0.y, c0.z);
+    techo.set(c1.x, c1.y, c1.z);
+    const baseVisible = !oculto(base, cam, radio);
+    if (!baseVisible && oculto(techo, cam, radio)) continue;
+    if (!aPantalla(techo, b)) continue;
+    // Base oculta (columna asomando por el borde): solo cuenta la punta.
+    const d =
+      baseVisible && aPantalla(base, a) ? distSegmento(x, y, a, b) : Math.hypot(x - b.x, y - b.y);
+    if (d <= mejorDist) {
+      mejorDist = d;
+      mejor = p;
+    }
+  }
+  return mejor;
 }
 
 export function destruirCapa(capa: CapaColumnas, globo: GlobeInstance): void {
   const escena = globo.scene();
-  for (const o of [capa.mesh, capa.contorno, capa.aro, capa.luces.ambiente, capa.luces.dir]) escena.remove(o);
+  for (const o of [capa.mesh, capa.contorno, capa.aro, capa.luces.ambiente, capa.luces.dir])
+    escena.remove(o);
   capa.mesh.dispose();
   capa.contorno.dispose();
   (capa.contorno.material as THREE.Material).dispose();

@@ -61,6 +61,9 @@ const PIXEL_RATIO_MAX = 1.5;
 const ALTITUD_APERTURA_MIN = 0.9;
 /** Altura en px de la columna M7 en la leyenda. */
 const LEYENDA_ALTO_PX = 34;
+/** Margen alrededor de cada columna para acertar el clic (las agujas miden 1–3 px). */
+const TOLERANCIA_RATON_PX = 10;
+const TOLERANCIA_TACTIL_PX = 22;
 const SERIES: readonly { id: SerieEscena; clave: Clave; titulo: Clave }[] = [
   { id: 'hora', clave: 'escena.serie_hora', titulo: 'recuentos.hora_titulo' },
   { id: 'magnitud', clave: 'escena.serie_magnitud', titulo: 'distribuciones.grafico_magnitud' },
@@ -136,6 +139,7 @@ export class Globo {
   private visibilidad: IntersectionObserver | null = null;
   private enPantalla = true;
   private destruido = false;
+  private ultimoClicColumna = 0;
 
   constructor() {
     // Pase lo que pase (también sin WebGL), el panel espera a este aviso para revelar la escena.
@@ -270,6 +274,7 @@ export class Globo {
       this.globo = globo;
       this.capa = mallas.crearCapaColumnas(globo);
       mallas.aplicarTemaMallas(this.capa, temaMallas(p0));
+      this.escucharPuntero(el);
       this.ajustarTamano(el);
       this.observador = new ResizeObserver(() => this.ajustarTamano(el));
       this.observador.observe(el);
@@ -330,14 +335,12 @@ export class Globo {
   private pintar(features: readonly EventoMapa[]): void {
     if (!this.globo) return;
     const puntos = puntosGlobo(features);
-    this.globo
-      .pointsData(puntos)
-      .ringsData(
-        anillosGlobo(features, {
-          movimientoReducido: this.movimientoReducido,
-          tema: this.temas.tema(),
-        }),
-      );
+    this.globo.pointsData(puntos).ringsData(
+      anillosGlobo(features, {
+        movimientoReducido: this.movimientoReducido,
+        tema: this.temas.tema(),
+      }),
+    );
     if (this.capa && this.mallas) {
       this.mallas.actualizarColumnas(
         this.capa,
@@ -374,14 +377,61 @@ export class Globo {
     return el;
   }
 
-  private alClicGlobo(coords: { lat: number; lng: number }, ev: MouseEvent): void {
-    if (this.capa && this.globo && this.mallas) {
-      const col = this.mallas.recogerColumna(this.capa, this.globo, ev);
-      if (col) {
+  /** Columna a menos de unos px del puntero (más margen con el dedo). */
+  private columnaEn(x: number, y: number, tactil: boolean) {
+    if (!this.capa || !this.globo || !this.mallas) return null;
+    return this.mallas.recogerColumna(
+      this.capa,
+      this.globo,
+      x,
+      y,
+      tactil ? TOLERANCIA_TACTIL_PX : TOLERANCIA_RATON_PX,
+    );
+  }
+
+  /**
+   * Clic y cursor sobre columnas con nuestro propio puntero: globe.gl no conoce la malla de
+   * columnas, así que un clic encima de una no le llega como clic en el globo.
+   */
+  private escucharPuntero(el: HTMLElement): void {
+    const corte = new AbortController();
+    this.destroyRef.onDestroy(() => corte.abort());
+    const opts = { signal: corte.signal, passive: true };
+    let inicio: { x: number; y: number } | null = null;
+    let pendiente = 0;
+    el.addEventListener('pointerdown', (ev) => (inicio = { x: ev.clientX, y: ev.clientY }), opts);
+    el.addEventListener(
+      'pointerup',
+      (ev) => {
+        const ini = inicio;
+        inicio = null;
+        if (!ini || ev.button !== 0 || Math.hypot(ev.clientX - ini.x, ev.clientY - ini.y) > 6)
+          return;
+        const col = this.columnaEn(ev.clientX, ev.clientY, ev.pointerType !== 'mouse');
+        if (!col) return;
+        this.ultimoClicColumna = performance.now();
         this.store.eventoSeleccionado.set(col.id);
-        return;
-      }
-    }
+      },
+      opts,
+    );
+    el.addEventListener(
+      'pointermove',
+      (ev) => {
+        if (ev.pointerType !== 'mouse' || ev.buttons || pendiente) return;
+        pendiente = requestAnimationFrame(() => {
+          pendiente = 0;
+          const canvas = this.globo?.renderer().domElement;
+          if (!canvas) return;
+          canvas.style.cursor = this.columnaEn(ev.clientX, ev.clientY, false) ? 'pointer' : '';
+        });
+      },
+      opts,
+    );
+  }
+
+  private alClicGlobo(coords: { lat: number; lng: number }, _ev: MouseEvent): void {
+    // El mismo clic ya seleccionó una columna: no es un clic en el país de debajo.
+    if (performance.now() - this.ultimoClicColumna < 500) return;
     const pais = paisEnPunto(this.paises, coords.lat, coords.lng);
     this.globo?.polygonsData(pais ? [pais] : []);
     const codigo = pais?.properties.ADM0_A3;
