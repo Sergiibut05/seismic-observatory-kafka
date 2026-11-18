@@ -383,9 +383,6 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 011-identidad | Identidad «papel y tinta»: temas papel y noche con una gota de tinta como transición, un mismo mundo para plano y globo, estilo suave y bloques de análisis rediseñados (ampliación) |
 | 013-multifuente | EMSC como segunda fuente, un topic por fuente, fusión con PySpark y relleno de 2025–2026 (ampliación) |
 
-**Pendiente de hacer a mano por el alumno:** publicar el panel en Netlify. El túnel real de ngrok ya está probado
-([memoria, §13](docs/MEMORIA.md#s13)) y la explicación individual está redactada para que el alumno la revise
-([memoria, §15](docs/MEMORIA.md#s15)).
 
 ### Datos y licencias
 
