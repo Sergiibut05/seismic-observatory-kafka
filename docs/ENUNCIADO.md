@@ -7,8 +7,8 @@ evidencias de calidad)
 
 > Transcripción literal del enunciado. Es la fuente de verdad del proyecto:
 > constitución, specs, planes y agentes se contrastan contra este documento.
-> Nota del alumno: el «material de partida» del apartado 3 no se ha
-> proporcionado; se construye en el propio repositorio (véase
+> Nota del alumno: el «material de partida» del apartado 3 se proporcionó,
+> pero no se ha usado: todo se construye en el propio repositorio (véase
 > [FUENTES-Y-LICENCIAS.md](FUENTES-Y-LICENCIAS.md)).
 
 ## 1. El reto

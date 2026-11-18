@@ -1,8 +1,8 @@
 # Fuentes, licencias y huella del catálogo
 
 Registro de procedencia de los datos y componentes de terceros. Sustituye al
-`FUENTES-Y-LICENCIAS.md` que el enunciado (apartado 3) da por entregado y que
-no se ha proporcionado.
+`FUENTES-Y-LICENCIAS.md` del material de partida del enunciado (apartado 3),
+que no se ha usado: este proyecto construye su propio registro.
 
 ## Datos
 
