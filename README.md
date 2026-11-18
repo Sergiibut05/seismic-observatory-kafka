@@ -13,6 +13,9 @@ equivalente?**
 
 > Proyecto de Sistemas de Big Data (sesiones 1–8, RA1). La memoria técnica, con el análisis y las pruebas de aceptación,
 > está en [docs/MEMORIA.md](docs/MEMORIA.md).
+>
+> **Panel publicado:** <https://seismic-observatory-kafka.netlify.app/> (tiene datos mientras el backend y el túnel están
+> encendidos en el equipo del alumno). **Vídeo de demostración:** <https://youtu.be/sGycpZkdeCE>.
 
 ## Índice
 
@@ -299,12 +302,13 @@ con el plan B local, está en la [memoria, §14](docs/MEMORIA.md#s14)):
 
 1. Levanta la pila y espera a que esté `healthy`.
 2. Abre el túnel: `ngrok http 8000`, y copia la URL HTTPS.
-3. Pon esa URL en `frontend/public/config.json` (`apiBaseUrl`, sin barra final). No la subas a Git.
-4. En `.env`, `CORS_ORIGEN_NETLIFY=https://<tu-sitio>.netlify.app` y `docker compose up -d api`.
-5. `npm run build` en `frontend/` y publica en Netlify (`netlify.toml` fija la carpeta y la redirección de la SPA).
+3. Pon esa URL en la variable de entorno `API_BASE_URL` del sitio en Netlify (sin barra final): al compilar, `netlify.toml`
+   genera con ella `public/config.json`. En local se edita `frontend/public/config.json`, que no se sube a Git.
+4. En `.env`, `CORS_ORIGEN_NETLIFY=https://seismic-observatory-kafka.netlify.app` y `docker compose up -d api`.
+5. Despliega en Netlify: compila desde el repositorio con `netlify.toml` (carpeta, `npm run build` y redirección de la SPA).
 
 > [!NOTE]
-> La URL gratuita de ngrok puede cambiar cada vez que reinicias el túnel; si cambia, repite los pasos 3 a 5. El
+> La URL gratuita de ngrok puede cambiar cada vez que reinicias el túnel; si cambia, repite los pasos 3 y 5. El
 > authtoken de ngrok se configura en tu equipo, nunca en Git ni en Angular.
 
 ---
@@ -363,6 +367,12 @@ compose.yaml      Los siete servicios
 
 ## Cómo se ha desarrollado
 
+**Origen del repositorio.** El repositorio parte de la plantilla
+[juanarrow/binance-kafka](https://github.com/juanarrow/binance-kafka) (remoto `upstream`), un ejemplo con Kafka y
+cotizaciones de Binance. De ella se conserva la configuración de Spec Kit (`.specify/` y las skills de `.cursor/skills/`);
+su código (productor, consumidor en Node, panel y `docker-compose.yml`) se retiró, y todo lo demás (backend, esquema SQL,
+panel Angular, catálogo, memoria y specs) se ha desarrollado en este repositorio.
+
 Con Spec-Driven Development ([GitHub Spec Kit](https://github.com/github/spec-kit)): cada feature tiene su carpeta en
 `specs/NNN-nombre/` con `spec.md`, `plan.md` y `tasks.md` antes de escribir código, y su propia rama. En Cursor hay
 cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en `.cursor/agents/`; la
@@ -382,7 +392,6 @@ cuatro subagentes (`analyst`, `architect`, `developer`, `verifier`) definidos en
 | 010-escena | Globo a pantalla completa y panel adaptado al móvil (ampliación) |
 | 011-identidad | Identidad «papel y tinta»: temas papel y noche con una gota de tinta como transición, un mismo mundo para plano y globo, estilo suave y bloques de análisis rediseñados (ampliación) |
 | 013-multifuente | EMSC como segunda fuente, un topic por fuente, fusión con PySpark y relleno de 2025–2026 (ampliación) |
-
 
 ### Datos y licencias
 

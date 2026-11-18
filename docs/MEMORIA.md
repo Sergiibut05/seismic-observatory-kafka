@@ -6,7 +6,8 @@ contrato de la API en [CONTRATO-API.md](CONTRATO-API.md).
 
 **Estado de esta versión.** Están escritas las partes técnicas, las once pruebas de aceptación (§13) y las tres
 conclusiones del análisis (§12), con cifras reales del **2026-11-08**. Las pruebas 9 y 10 se repitieron con el **túnel real
-de ngrok**, y la explicación individual (§15) está escrita. Solo falta la URL del panel en Netlify (**PENDIENTE (alumno)**).
+de ngrok**, y la explicación individual (§15) está escrita. El panel está publicado en
+<https://seismic-observatory-kafka.netlify.app/> y hay un vídeo de demostración en <https://youtu.be/sGycpZkdeCE>.
 
 ## Cómo leer las cifras
 
@@ -1322,7 +1323,7 @@ las salidas, es [aceptacion.md](../specs/007-memoria/evidencias/aceptacion.md); 
 **Matices que no se ocultan.**
 
 - **Túnel real, panel local.** Las pruebas 9 y 10 se hicieron con ngrok de verdad (T25), pero el panel corría en
-  `http://localhost:4200` con `config.json` apuntando al túnel: no está publicado en Netlify (§16). Los tiempos de
+  `http://localhost:4200` con `config.json` apuntando al túnel. Los tiempos de
   recuperación (24 s y 39 s) dependen de en qué punto de la ronda de 60 s se cierra o se abre el túnel.
 - **Primera lectura, corregida.** El verifier de T11 anotó tres «fallos» del panel; al repetirlos con la pestaña visible dos no
   eran fallos (el refresco se pausa con la pestaña oculta, y los totales distintos eran periodos distintos documentados) y el
@@ -1344,8 +1345,14 @@ duplicado no crea fila.
 <a id="s14"></a>
 ## 14. Procedimiento de defensa
 
-**URL del panel en Netlify: PENDIENTE (alumno).** No hay ninguna URL pública en este repositorio ni en esta memoria, y el
-authtoken de ngrok se configura fuera de Git.
+**URL del panel en Netlify: <https://seismic-observatory-kafka.netlify.app/>.** Vídeo de demostración:
+<https://youtu.be/sGycpZkdeCE>. El panel solo tiene datos mientras la pila y el túnel están encendidos en el equipo del
+alumno; si no, avisa de que la API no responde. El authtoken de ngrok se configura fuera de Git.
+
+**Comprobado el 2026-11-18** desde el anfitrión: el sitio responde 200 y sirve su `config.json`; el preflight `OPTIONS`
+con `Origin: https://seismic-observatory-kafka.netlify.app` y la cabecera `ngrok-skip-browser-warning` responde 200 con
+`Access-Control-Allow-Origin` igual a ese origen, tanto en `127.0.0.1:8000` como a través del túnel, y `/health` por el
+túnel responde 200.
 
 Antes de la defensa, con la guía [quickstart.md](../specs/006-panel/quickstart.md) del panel:
 
@@ -1359,19 +1366,20 @@ Antes de la defensa, con la guía [quickstart.md](../specs/006-panel/quickstart.
    ngrok http 8000
    ```
    Copia la URL HTTPS que muestra.
-3. **Poner esa URL en el panel antes de compilar**: edita `frontend/public/config.json` (`apiBaseUrl`, sin barra final;
-   plantilla en `config.ejemplo.json`). No subas ese fichero a Git con la URL real.
-4. **Permitir el origen de Netlify**: en `.env`, `CORS_ORIGEN_NETLIFY=https://<tu-sitio>.netlify.app` (sin ruta ni barra
-   final) y recrear la API:
+3. **Poner esa URL en el panel antes de compilar**: en Netlify, variable de entorno del sitio `API_BASE_URL` (la URL
+   HTTPS, sin barra final). Al compilar, `netlify.toml` genera con ella `public/config.json`. En local, para `npm start`,
+   se edita `frontend/public/config.json` (plantilla en `config.ejemplo.json`); no subas ese fichero a Git con la URL real.
+4. **Permitir el origen de Netlify**: en `.env`, `CORS_ORIGEN_NETLIFY=https://seismic-observatory-kafka.netlify.app`
+   (sin ruta ni barra final) y recrear la API:
    ```powershell
    docker compose up -d api
    ```
-5. **Comprobar el preflight** desde el origen de Netlify:
+5. **Comprobar el preflight** desde el origen de Netlify (debe responder 200 con `access-control-allow-origin`):
    ```powershell
-   curl.exe -i -X OPTIONS -H "Origin: https://<tu-sitio>.netlify.app" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: ngrok-skip-browser-warning" http://127.0.0.1:8000/eventos
+   curl.exe -i -X OPTIONS -H "Origin: https://seismic-observatory-kafka.netlify.app" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: ngrok-skip-browser-warning" http://127.0.0.1:8000/eventos
    ```
-6. **Compilar y publicar**: `npm run build` en `frontend/` y el sitio de Netlify desde el repositorio (`netlify.toml`
-   fija la carpeta y la redirección de la SPA).
+6. **Compilar y publicar**: Netlify compila el sitio desde el repositorio con `netlify.toml` (carpeta `frontend`,
+   `npm ci && npm run build`, publica `dist/panel/browser` y redirige las rutas de la SPA a `index.html`).
 
 **Probado el 2026-11-08** con el túnel real ([t25-tunel-ngrok.md](../specs/007-memoria/evidencias/t25-tunel-ngrok.md)):
 la cuenta tiene un dominio fijo gratuito, así que al reabrir el túnel la URL fue la misma y no hubo que recompilar. Si
@@ -1379,8 +1387,8 @@ ngrok se instaló desde Microsoft Store y otra terminal no encuentra el authtoke
 `--config "$env:LOCALAPPDATA\Packages\ngrok.ngrok_*\LocalCache\Local\ngrok\ngrok.yml"` (con la ruta real).
 
 **Aviso:** sin dominio fijo, la URL de ngrok gratuita **puede cambiar cada vez que se reinicia el túnel**; si cambia, hay que repetir los
-pasos 3 a 6 (editar `config.json`, recompilar y volver a publicar), y actualizar `CORS_ORIGEN_NETLIFY` si el sitio de
-Netlify cambia.
+pasos 3 y 6 (cambiar `API_BASE_URL` en Netlify y volver a desplegar), y actualizar `CORS_ORIGEN_NETLIFY` si el sitio
+de Netlify cambia.
 
 **Plan B si falla el túnel:** el panel local en `http://localhost:4200` contra la API local.
 ```powershell
@@ -1529,34 +1537,25 @@ Cómo se hizo de verdad, sin maquillar. Fechas y orden de [C8](memoria/comandos.
 - **En 006**, los dos `developer` que trabajaban en paralelo se quedaron cortados por el límite de uso y **el orquestador
   terminó el trabajo**.
 - **Lo no verificado en vivo.**
-  - **Netlify.** Nunca se publicó el panel en Netlify: no hay URL del panel (§14, «PENDIENTE (alumno)»). El túnel de
-    ngrok sí se probó de verdad (T25, pruebas 9 y 10), pero con el panel en `http://localhost:4200` apuntando al túnel.
-  - **CORS con el origen de Netlify.** `CORS_ORIGEN_NETLIFY` está vacío en el entorno de pruebas; solo se comprobó el
-    preflight de `localhost` en vivo, y el de Netlify con pruebas unitarias (005, AC-9).
   - **Lo que cita 005 como no verificable en vivo** ([verificacion.md](../specs/005-api/evidencias/verificacion.md)): AC-1 y
     AC-2 (inserción y reenvío con datos reales de USGS), AC-3 (un evento con magnitud nula real, que no había) y AC-10 con el
     umbral real de 300 s en el puerto 8000 (la lógica de 60 s sí se demostró en el 8001). Se cubren con pruebas unitarias.
     La feature 007 ejerció después, en vivo, casos equivalentes (§13: un evento real publicado y persistido, el reenvío
-    como duplicado y la magnitud nula con un evento sintético), pero **no repitió la verificación de 005**, y la magnitud
-    nula sigue sin haberse visto en un evento real.
-  - **Pestaña oculta = 0 rondas.** Es lo que pedía T11 y no se instrumentó con un contador
-    ([red.md](../specs/006-panel/evidencias/red.md)). Hay evidencia indirecta: con la pestaña oculta el refresco no
-    arrancó en la sesión del verifier, y con la pestaña visible sí (2 peticiones a `/status` en 80 s).
-  - **Accesibilidad (AC-10 de 006).** Revisión parcial: no se repitió en el navegador real en T11
-    ([verificacion.md](../specs/006-panel/evidencias/verificacion.md)).
+    como duplicado y la magnitud nula con un evento sintético), pero **no repitió la verificación de 005**. La magnitud
+    nula sigue sin haberse visto en un evento real: el 2026-11-18, ninguno de los 183.056 terremotos reales de
+    `live.evento_actual` llega sin magnitud, así que solo se puede ejercer con el caso sintético.
 - **Estado de T11 (006).** **Hecha**: el panel se verificó en un navegador real (`cursor-ide-browser`) contra la pila en
   Compose, con las capturas `01` a `08` y `07b`/`08b`, [red.md](../specs/006-panel/evidencias/red.md) y
   [verificacion.md](../specs/006-panel/evidencias/verificacion.md). Su primera pasada anotó tres «fallos»: al revisarlos, **dos
   no eran fallos** (el refresco se pausa con la pestaña oculta, y los totales distintos eran periodos distintos) y **el
-  tercero se mejoró** («Aplicar» con los mismos filtros pide una ronda inmediata). Quedan declaradas como excepciones la
-  pestaña oculta y la accesibilidad (arriba).
+  tercero se mejoró** («Aplicar» con los mismos filtros pide una ronda inmediata).
 - **Pruebas automáticas.** `pytest` da 779 pruebas verdes dentro de la imagen (C9), 28 de ellas de las mediciones.
 - **El túnel real y la explicación individual (2026-11-08).** El alumno pidió al asistente que hiciera él la prueba del
   túnel real de ngrok (T25, con el authtoken del alumno configurado fuera del repositorio) y que redactara §15. La
   decisión de §15.2 la eligió el asistente entre las candidatas. **El alumno tiene que revisar §15 y poder contarlo con
   sus palabras en la defensa**; si cambia algo, esta nota debe decirlo.
 - **Lo que esta memoria no comprueba.** El tráfico sostenido por ngrok (solo se probó el corte y la recuperación), el
-  comportamiento de Netlify, el consumo eléctrico, el
+  consumo eléctrico, el
   coste de escritura de los índices y el filtro de tipo de evento sobre datos reales. El análisis (§12) describe un solo día
   y no es una predicción.
 - **Condiciones de las mediciones.** Se hicieron con la pila encendida y otros procesos de desarrollo activos; los tiempos
